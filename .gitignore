@@ -1,0 +1,8 @@
+/target/
+crates/*/target
+**/*.rs.bk
+**/*.rs.pending-snap
+.idea/*
+*.log
+*.iml
+.vscode/settings.json

@@ -1,0 +1,94 @@
+// Stores definitions which must be used in multiple places
+// See `cargo gen-syntax` (defined in crates/tools/src/main.rs)
+Grammar(
+    symbols: [
+        // Original Lua symbols
+        ["+", "PLUS"],
+        ["-", "MINUS"],
+        ["*", "STAR"],
+        ["/", "SLASH"],
+        ["%", "PERCENT"],
+        ["^", "CARET"],
+        ["#", "HASH"],
+        ["== ", "EQEQ"],
+        // Not equals differs from Lua in that != is used.
+        ["!= ", "NEQ"], //["~= ", ""]
+        ["<= ", "LTEQ"],
+        [">= ", "GTEQ"],
+        ["<", "LT"],
+        [">", "GT"],
+        ["=", "EQ"],
+        ["(", "L_PAREN"],
+        [")", "R_PAREN"],
+        ["{", "L_CURLY"],
+        ["}", "R_CURLY"],
+        ["[", "L_BRACKET"],
+        ["]", "R_BRACKET"],
+        [";", "SEMI"],
+        [":", "COLON"],
+        [",", "COMMA"],
+        [".", "DOT"],
+        [".. ", "DOTDOT"],
+        ["...", "DOTDOTDOT"],
+
+        // Extended symbols
+        ["+=", "PLUSEQ"],
+        ["-=", "MINUSEQ"],
+        ["*=", "STAREQ"],
+        ["/=", "SLASHEQ"],
+        ["^=", "CARETEQ"],
+        ["%=", "PERCENTEQ"],
+        ["..=", "DOTDOTEQ"],
+        ["&&", "AMPAMP"],
+        ["||", "PIPEPIPE"],
+        ["::", "COLONCOLON"],
+    ],
+    keywords: [
+        // Original Lua keywords
+        // "and",       // We use && instead
+        "break",
+        "do",
+        "else",
+        // "elseif",    // Simply use else if
+        // "end",       // We use braces
+        "false",
+        "for",
+        "function",
+        "if",
+        "in",
+        // "local",     // We use let
+        "nil",
+        "not",
+        "or",
+        // "repeat",    // Not supported
+        "return",
+        "then",
+        "true",
+        // "until",     // Not supported
+        "while",
+
+        // Extended keywords
+        "let",
+        "mut",
+        "class",
+        "public",
+        "protected",
+        "private"
+    ],
+    literals: [
+        "INT_NUMBER",
+        "FLOAT_NUMBER",
+        "STRING",
+        "RAW_STRING",
+    ],
+    tokens: [
+        "ERROR",
+        "IDENT",
+        "WHITESPACE",
+        "LIFETIME",
+        "COMMENT",
+    ],
+    nodes: [
+        "SOURCE_FILE"
+    ]
+)
