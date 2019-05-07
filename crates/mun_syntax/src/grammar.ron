@@ -1,7 +1,7 @@
 // Stores definitions which must be used in multiple places
 // See `cargo gen-syntax` (defined in crates/tools/src/main.rs)
 Grammar(
-    symbols: [
+    single_char_tokens: [
         // Original Lua symbols
         ["+", "PLUS"],
         ["-", "MINUS"],
@@ -10,11 +10,7 @@ Grammar(
         ["%", "PERCENT"],
         ["^", "CARET"],
         ["#", "HASH"],
-        ["== ", "EQEQ"],
-        // Not equals differs from Lua in that != is used.
-        ["!= ", "NEQ"], //["~= ", ""]
-        ["<= ", "LTEQ"],
-        [">= ", "GTEQ"],
+        [".", "DOT"],
         ["<", "LT"],
         [">", "GT"],
         ["=", "EQ"],
@@ -27,7 +23,18 @@ Grammar(
         [";", "SEMI"],
         [":", "COLON"],
         [",", "COMMA"],
-        [".", "DOT"],
+
+        // Extended symbols
+        ["_", "UNDERSCORE"],
+    ],
+    // Tokens for which the longest match must be chosen (e.g. `..` is a DOTDOT, but `.` is a DOT)
+    multi_char_tokens: [
+        // Original Lua symbols
+        ["== ", "EQEQ"],
+        // Not equals differs from Lua in that != is used.
+        ["!= ", "NEQ"], //["~= ", ""]
+        ["<= ", "LTEQ"],
+        [">= ", "GTEQ"],
         [".. ", "DOTDOT"],
         ["...", "DOTDOTDOT"],
 
@@ -79,7 +86,6 @@ Grammar(
         "INT_NUMBER",
         "FLOAT_NUMBER",
         "STRING",
-        "RAW_STRING",
     ],
     tokens: [
         "ERROR",

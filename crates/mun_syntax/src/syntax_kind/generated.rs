@@ -22,10 +22,7 @@ pub enum SyntaxKind {
     PERCENT,
     CARET,
     HASH,
-    EQEQ,
-    NEQ,
-    LTEQ,
-    GTEQ,
+    DOT,
     LT,
     GT,
     EQ,
@@ -38,7 +35,11 @@ pub enum SyntaxKind {
     SEMI,
     COLON,
     COMMA,
-    DOT,
+    UNDERSCORE,
+    EQEQ,
+    NEQ,
+    LTEQ,
+    GTEQ,
     DOTDOT,
     DOTDOTDOT,
     PLUSEQ,
@@ -68,10 +69,13 @@ pub enum SyntaxKind {
     WHILE_KW,
     LET_KW,
     MUT_KW,
+    CLASS_KW,
+    PUBLIC_KW,
+    PROTECTED_KW,
+    PRIVATE_KW,
     INT_NUMBER,
     FLOAT_NUMBER,
     STRING,
-    RAW_STRING,
     ERROR,
     IDENT,
     WHITESPACE,
@@ -117,6 +121,10 @@ impl SyntaxKind {
             | WHILE_KW
             | LET_KW
             | MUT_KW
+            | CLASS_KW
+            | PUBLIC_KW
+            | PROTECTED_KW
+            | PRIVATE_KW
                 => true,
             _ => false
         }
@@ -131,10 +139,7 @@ impl SyntaxKind {
                 | PERCENT
                 | CARET
                 | HASH
-                | EQEQ
-                | NEQ
-                | LTEQ
-                | GTEQ
+                | DOT
                 | LT
                 | GT
                 | EQ
@@ -147,7 +152,11 @@ impl SyntaxKind {
                 | SEMI
                 | COLON
                 | COMMA
-                | DOT
+                | UNDERSCORE
+                | EQEQ
+                | NEQ
+                | LTEQ
+                | GTEQ
                 | DOTDOT
                 | DOTDOTDOT
                 | PLUSEQ
@@ -170,7 +179,6 @@ impl SyntaxKind {
                 | INT_NUMBER
                 | FLOAT_NUMBER
                 | STRING
-                | RAW_STRING
                     => true,
                 _ => false
             }
@@ -185,10 +193,7 @@ impl SyntaxKind {
                 PERCENT => &SyntaxInfo { name: "PERCENT" },
                 CARET => &SyntaxInfo { name: "CARET" },
                 HASH => &SyntaxInfo { name: "HASH" },
-                EQEQ => &SyntaxInfo { name: "EQEQ" },
-                NEQ => &SyntaxInfo { name: "NEQ" },
-                LTEQ => &SyntaxInfo { name: "LTEQ" },
-                GTEQ => &SyntaxInfo { name: "GTEQ" },
+                DOT => &SyntaxInfo { name: "DOT" },
                 LT => &SyntaxInfo { name: "LT" },
                 GT => &SyntaxInfo { name: "GT" },
                 EQ => &SyntaxInfo { name: "EQ" },
@@ -201,7 +206,11 @@ impl SyntaxKind {
                 SEMI => &SyntaxInfo { name: "SEMI" },
                 COLON => &SyntaxInfo { name: "COLON" },
                 COMMA => &SyntaxInfo { name: "COMMA" },
-                DOT => &SyntaxInfo { name: "DOT" },
+                UNDERSCORE => &SyntaxInfo { name: "UNDERSCORE" },
+                EQEQ => &SyntaxInfo { name: "EQEQ" },
+                NEQ => &SyntaxInfo { name: "NEQ" },
+                LTEQ => &SyntaxInfo { name: "LTEQ" },
+                GTEQ => &SyntaxInfo { name: "GTEQ" },
                 DOTDOT => &SyntaxInfo { name: "DOTDOT" },
                 DOTDOTDOT => &SyntaxInfo { name: "DOTDOTDOT" },
                 PLUSEQ => &SyntaxInfo { name: "PLUSEQ" },
@@ -231,10 +240,13 @@ impl SyntaxKind {
                 WHILE_KW => &SyntaxInfo { name: "WHILE_KW" },
                 LET_KW => &SyntaxInfo { name: "LET_KW" },
                 MUT_KW => &SyntaxInfo { name: "MUT_KW" },
+                CLASS_KW => &SyntaxInfo { name: "CLASS_KW" },
+                PUBLIC_KW => &SyntaxInfo { name: "PUBLIC_KW" },
+                PROTECTED_KW => &SyntaxInfo { name: "PROTECTED_KW" },
+                PRIVATE_KW => &SyntaxInfo { name: "PRIVATE_KW" },
                 INT_NUMBER => &SyntaxInfo { name: "INT_NUMBER" },
                 FLOAT_NUMBER => &SyntaxInfo { name: "FLOAT_NUMBER" },
                 STRING => &SyntaxInfo { name: "STRING" },
-                RAW_STRING => &SyntaxInfo { name: "RAW_STRING" },
                 ERROR => &SyntaxInfo { name: "ERROR" },
                 IDENT => &SyntaxInfo { name: "IDENT" },
                 WHITESPACE => &SyntaxInfo { name: "WHITESPACE" },
@@ -246,7 +258,8 @@ impl SyntaxKind {
                 __LAST => &SyntaxInfo { name: "__LAST" },
             }
         }
-        pub fn from_keyword(ident: &str) -> Option<SyntaxKind> {
+
+    pub fn from_keyword(ident: &str) -> Option<SyntaxKind> {
             let kw = match ident {
                 "break" => BREAK_KW,
                 "do" => DO_KW,
@@ -265,10 +278,42 @@ impl SyntaxKind {
                 "while" => WHILE_KW,
                 "let" => LET_KW,
                 "mut" => MUT_KW,
+                "class" => CLASS_KW,
+                "public" => PUBLIC_KW,
+                "protected" => PROTECTED_KW,
+                "private" => PRIVATE_KW,
                 _ => return None,
             };
             Some(kw)
     }
+
+    pub fn from_char(c: char) -> Option<SyntaxKind> {
+            let tok = match c {
+                '+' => PLUS,
+                '-' => MINUS,
+                '*' => STAR,
+                '/' => SLASH,
+                '%' => PERCENT,
+                '^' => CARET,
+                '#' => HASH,
+                '.' => DOT,
+                '<' => LT,
+                '>' => GT,
+                '=' => EQ,
+                '(' => L_PAREN,
+                ')' => R_PAREN,
+                '{' => L_CURLY,
+                '}' => R_CURLY,
+                '[' => L_BRACKET,
+                ']' => R_BRACKET,
+                ';' => SEMI,
+                ':' => COLON,
+                ',' => COMMA,
+                '_' => UNDERSCORE,
+                _ => return None,
+            };
+            Some(tok)
+        }
 }
 
 

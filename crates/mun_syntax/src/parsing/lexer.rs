@@ -1,7 +1,20 @@
+mod classes;
+mod comments;
 mod cursor;
+mod numbers;
+mod strings;
 
-use crate::{SyntaxKind, TextUnit};
-use self::cursor::Cursor;
+use crate::{
+    SyntaxKind::{self, *},
+    TextUnit,
+};
+use self::{
+    classes::*,
+    numbers::scan_number,
+    comments::scan_comment,
+    strings::scan_string,
+    cursor::Cursor,
+};
 
 /// A token of Mun source
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -34,4 +47,75 @@ pub fn next_token(text: &str) -> Token {
     let kind = next_token_inner(c, &mut ptr);
     let len = ptr.into_len();
     Token { kind, len }
+}
+
+fn next_token_inner(c: char, cursor: &mut Cursor) -> SyntaxKind {
+    if is_whitespace(c) {
+        cursor.bump_while(is_whitespace);
+        return WHITESPACE;
+    }
+
+    match c {
+        '/' => {
+            if let Some(kind) = scan_comment(cursor) {
+                return kind;
+            }
+        }
+        _ => (),
+    }
+
+    let ident_start = is_ident_start(c);
+    if ident_start {
+        return scan_identifier_or_keyword(c, cursor);
+    }
+
+    if is_dec_digit(c) {
+        return scan_number(c, cursor);
+    }
+
+    if let Some(kind) = SyntaxKind::from_char(c) {
+        return kind;
+    }
+
+    match c {
+        '`' | '"' | '\'' => {
+            scan_string(c, cursor);
+            return STRING
+        }
+        _ => (),
+    }
+    ERROR
+}
+
+fn scan_identifier_or_keyword(c: char, cursor:&mut Cursor) -> SyntaxKind {
+    match (c, cursor.current()) {
+        ('_', None) => return UNDERSCORE,
+        ('_', Some(c)) if !is_ident_continue(c) => return UNDERSCORE,
+        _ => ()
+    };
+    cursor.bump_while(is_ident_continue);
+    if let Some(kind) = SyntaxKind::from_keyword(cursor.current_token_text()) {
+        return kind;
+    }
+    IDENT
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    pub fn test_number() {
+        let mut tokens = tokenize("1 1.34 0x3Af 1e-3 100_000").into_iter();
+        assert_eq!(tokens.next().map(|t| t.kind), Some(INT_NUMBER));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(FLOAT_NUMBER));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(INT_NUMBER));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(FLOAT_NUMBER));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(INT_NUMBER));
+        assert_eq!(tokens.next().map(|t| t.kind), None);
+    }
 }

@@ -275,6 +275,7 @@ dependencies = [
  "rowan 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "smol_str 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "text_unit 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unicode-xid 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

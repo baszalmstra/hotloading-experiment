@@ -18,7 +18,7 @@ pub enum SyntaxKind {
     #[doc(hidden)]
     EOF,
 
-{%- for t in symbols %}
+{%- for t in concat(a=single_char_tokens, b=multi_char_tokens) %}
     {{t.1}},
 {%- endfor -%}
 {% for kw in keywords %}
@@ -59,7 +59,7 @@ impl SyntaxKind {
 
     pub fn is_symbol(self) -> bool {
             match self {
-    {%- for t in symbols %}
+    {%- for t in concat(a=single_char_tokens, b=multi_char_tokens) %}
                 | {{t.1}}
     {%- endfor %}
                     => true,
@@ -79,7 +79,7 @@ impl SyntaxKind {
 
     pub(crate) fn info(self) -> &'static SyntaxInfo {
             match self {
-    {%- for t in symbols %}
+    {%- for t in concat(a=single_char_tokens, b=multi_char_tokens) %}
                 {{t.1}} => &SyntaxInfo { name: "{{t.1}}" },
     {%- endfor -%}
     {% for kw in keywords %}
@@ -93,7 +93,8 @@ impl SyntaxKind {
                 __LAST => &SyntaxInfo { name: "__LAST" },
             }
         }
-        pub fn from_keyword(ident: &str) -> Option<SyntaxKind> {
+
+    pub fn from_keyword(ident: &str) -> Option<SyntaxKind> {
             let kw = match ident {
     {%- for kw in keywords %}
                 "{{kw}}" => {{kw | upper}}_KW,
@@ -102,6 +103,16 @@ impl SyntaxKind {
             };
             Some(kw)
     }
+
+    pub fn from_char(c: char) -> Option<SyntaxKind> {
+            let tok = match c {
+    {%- for t in single_char_tokens %}
+                '{{t.0}}' => {{t.1}},
+    {%- endfor %}
+                _ => return None,
+            };
+            Some(tok)
+        }
 }
 
 
