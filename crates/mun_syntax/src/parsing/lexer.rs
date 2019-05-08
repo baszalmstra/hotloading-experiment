@@ -78,7 +78,7 @@ fn next_token_inner(c: char, cursor: &mut Cursor) -> SyntaxKind {
     }
 
     match c {
-        '`' | '"' | '\'' => {
+        '"' | '\'' => {
             scan_string(c, cursor);
             return STRING
         }
@@ -116,6 +116,53 @@ mod tests {
         assert_eq!(tokens.next().map(|t| t.kind), Some(FLOAT_NUMBER));
         assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
         assert_eq!(tokens.next().map(|t| t.kind), Some(INT_NUMBER));
+        assert_eq!(tokens.next().map(|t| t.kind), None);
+    }
+
+    #[test]
+    pub fn test_comment() {
+        let mut tokens = tokenize("// hello, world!\n/*multiline\ncomment*/").into_iter();
+        assert_eq!(tokens.next().map(|t| t.kind), Some(COMMENT));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(COMMENT));
+        assert_eq!(tokens.next().map(|t| t.kind), None);
+    }
+
+    #[test]
+    pub fn test_identifiers_and_keywords() {
+        let mut tokens = tokenize("for a in b").into_iter();
+        assert_eq!(tokens.next().map(|t| t.kind), Some(FOR_KW));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(IDENT));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(IN_KW));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(IDENT));
+        assert_eq!(tokens.next().map(|t| t.kind), None);
+    }
+
+    #[test]
+    pub fn test_strings() {
+        let mut tokens = tokenize("\"hel\\\"lo,\"'world!'").into_iter();
+        assert_eq!(tokens.next().map(|t| t.kind), Some(STRING));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(STRING));
+        assert_eq!(tokens.next().map(|t| t.kind), None);
+    }
+
+    #[test]
+    pub fn test_symbols() {
+        let mut tokens = tokenize(". :: + - +=").into_iter();
+        assert_eq!(tokens.next().map(|t| t.kind), Some(DOT));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(COLON));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(COLON));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(PLUS));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(MINUS));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(WHITESPACE));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(PLUS));
+        assert_eq!(tokens.next().map(|t| t.kind), Some(EQ));
         assert_eq!(tokens.next().map(|t| t.kind), None);
     }
 }

@@ -12,7 +12,7 @@ pub(crate) fn scan_string(c: char, cursor: &mut Cursor) {
                     cursor.bump();
                 }
             }
-            quote_type => {
+            c if c == quote_type => {
                 cursor.bump();
                 return;
             }
