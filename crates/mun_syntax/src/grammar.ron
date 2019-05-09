@@ -30,12 +30,12 @@ Grammar(
     // Tokens for which the longest match must be chosen (e.g. `..` is a DOTDOT, but `.` is a DOT)
     multi_char_tokens: [
         // Original Lua symbols
-        ["== ", "EQEQ"],
+        ["==", "EQEQ"],
         // Not equals differs from Lua in that != is used.
-        ["!= ", "NEQ"], //["~= ", ""]
-        ["<= ", "LTEQ"],
-        [">= ", "GTEQ"],
-        [".. ", "DOTDOT"],
+        ["!=", "NEQ"], //["~= ", ""]
+        ["<=", "LTEQ"],
+        [">=", "GTEQ"],
+        ["..", "DOTDOT"],
         ["...", "DOTDOTDOT"],
 
         // Extended symbols
@@ -46,13 +46,11 @@ Grammar(
         ["^=", "CARETEQ"],
         ["%=", "PERCENTEQ"],
         ["..=", "DOTDOTEQ"],
-        ["&&", "AMPAMP"],
-        ["||", "PIPEPIPE"],
         ["::", "COLONCOLON"],
     ],
     keywords: [
         // Original Lua keywords
-        // "and",       // We use && instead
+        "and",
         "break",
         "do",
         "else",

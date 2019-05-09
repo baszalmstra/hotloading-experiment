@@ -16,7 +16,7 @@ fn scan_block_comment(cursor: &mut Cursor) -> Option<SyntaxKind> {
         cursor.bump();
         let mut depth: u32 = 1;
         while depth > 0 {
-            if cursor.matches_str("/*") {
+            if cursor.matches_str("*/") {
                 depth -= 1;
                 cursor.bump();
                 cursor.bump();

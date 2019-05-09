@@ -49,9 +49,8 @@ pub enum SyntaxKind {
     CARETEQ,
     PERCENTEQ,
     DOTDOTEQ,
-    AMPAMP,
-    PIPEPIPE,
     COLONCOLON,
+    AND_KW,
     BREAK_KW,
     DO_KW,
     ELSE_KW,
@@ -104,6 +103,7 @@ impl From<SyntaxKind> for u16 {
 impl SyntaxKind {
     pub fn is_keyword(self) -> bool {
         match self {
+            | AND_KW
             | BREAK_KW
             | DO_KW
             | ELSE_KW
@@ -166,8 +166,6 @@ impl SyntaxKind {
                 | CARETEQ
                 | PERCENTEQ
                 | DOTDOTEQ
-                | AMPAMP
-                | PIPEPIPE
                 | COLONCOLON
                     => true,
                 _ => false
@@ -220,9 +218,8 @@ impl SyntaxKind {
                 CARETEQ => &SyntaxInfo { name: "CARETEQ" },
                 PERCENTEQ => &SyntaxInfo { name: "PERCENTEQ" },
                 DOTDOTEQ => &SyntaxInfo { name: "DOTDOTEQ" },
-                AMPAMP => &SyntaxInfo { name: "AMPAMP" },
-                PIPEPIPE => &SyntaxInfo { name: "PIPEPIPE" },
                 COLONCOLON => &SyntaxInfo { name: "COLONCOLON" },
+                AND_KW => &SyntaxInfo { name: "AND_KW" },
                 BREAK_KW => &SyntaxInfo { name: "BREAK_KW" },
                 DO_KW => &SyntaxInfo { name: "DO_KW" },
                 ELSE_KW => &SyntaxInfo { name: "ELSE_KW" },
@@ -261,6 +258,7 @@ impl SyntaxKind {
 
     pub fn from_keyword(ident: &str) -> Option<SyntaxKind> {
             let kw = match ident {
+                "and" => AND_KW,
                 "break" => BREAK_KW,
                 "do" => DO_KW,
                 "else" => ELSE_KW,

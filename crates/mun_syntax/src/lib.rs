@@ -22,5 +22,5 @@ pub use crate::{
     syntax_error::{SyntaxError, SyntaxErrorKind, Location},
     syntax_text::SyntaxText,
     syntax_node::{Direction, SyntaxNode, WalkEvent, TreeArc, SyntaxTreeBuilder, SyntaxElement, SyntaxToken, InsertPosition},
-    parsing::{Token}
+    parsing::{Token, tokenize}
 };

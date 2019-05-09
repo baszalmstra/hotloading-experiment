@@ -3,7 +3,7 @@ use crate::SyntaxKind;
 mod lexer;
 mod text_token_source;
 
-pub use lexer::{Token};
+pub use lexer::{Token, tokenize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ParseError(pub String);
