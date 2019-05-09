@@ -5,13 +5,16 @@ use std::str::Chars;
 /// A simple view into the characters of a string.
 pub(crate) struct Cursor<'s> {
     text: &'s str,
-    len: TextUnit
+    len: TextUnit,
 }
 
 impl<'s> Cursor<'s> {
     /// Creates a new `Cursor` from a string.
     pub fn new(text: &'s str) -> Cursor<'s> {
-        Cursor {text, len: 0.into()}
+        Cursor {
+            text,
+            len: 0.into(),
+        }
     }
 
     /// Gets the length of the remaining string.
@@ -78,7 +81,7 @@ impl<'s> Cursor<'s> {
 
     /// Returns an iterator over the remaining characters.
     fn chars(&self) -> Chars {
-        let len:u32 = self.len.into();
+        let len: u32 = self.len.into();
         self.text[len as usize..].chars()
     }
 }

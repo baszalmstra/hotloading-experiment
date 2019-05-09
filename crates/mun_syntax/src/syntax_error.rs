@@ -1,14 +1,11 @@
-use std::fmt;
-use crate::{
-    parsing::ParseError,
-    TextRange, TextUnit,
-};
+use crate::{parsing::ParseError, TextRange, TextUnit};
 use std::cmp::min;
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SyntaxError {
     kind: SyntaxErrorKind,
-    location: Location
+    location: Location,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -30,8 +27,11 @@ impl Into<Location> for TextRange {
 }
 
 impl SyntaxError {
-    pub fn new<L:Into<Location>>(kind: SyntaxErrorKind, loc: L) -> SyntaxError {
-        SyntaxError { kind, location: loc.into() }
+    pub fn new<L: Into<Location>>(kind: SyntaxErrorKind, loc: L) -> SyntaxError {
+        SyntaxError {
+            kind,
+            location: loc.into(),
+        }
     }
 
     pub fn kind(&self) -> SyntaxErrorKind {
@@ -45,7 +45,7 @@ impl SyntaxError {
     pub fn offset(&self) -> TextUnit {
         match self.location {
             Location::Offset(offset) => offset,
-            Location::Range(range) => range.start()
+            Location::Range(range) => range.start(),
         }
     }
 
@@ -73,7 +73,7 @@ impl fmt::Display for SyntaxErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::SyntaxErrorKind::*;
         match self {
-            ParseError(msg) => write!(f, "{}", msg.0)
+            ParseError(msg) => write!(f, "{}", msg.0),
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::{
     fs,
-    path::{Path, PathBuf}
+    path::{Path, PathBuf},
 };
 
 #[macro_export]
@@ -80,7 +80,12 @@ fn test_from_dir(dir: &Path) -> Vec<PathBuf> {
 
 pub fn project_dir() -> PathBuf {
     let dir = env!("CARGO_MANIFEST_DIR");
-    PathBuf::from(dir).parent().unwrap().parent().unwrap().to_owned()
+    PathBuf::from(dir)
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .to_owned()
 }
 
 fn assert_equal_text(expected: &str, actual: &str, path: &Path) {
@@ -95,9 +100,9 @@ fn assert_equal_text(expected: &str, actual: &str, path: &Path) {
         fs::write(path, actual).unwrap();
         return;
     }
-//        println!("rewriting {}", pretty_path.display());
-//        fs::write(path, actual).unwrap();
-//        return;
+    //        println!("rewriting {}", pretty_path.display());
+    //        fs::write(path, actual).unwrap();
+    //        return;
 
     assert_eq_text!(expected, actual, "file: {}", pretty_path.display());
 }

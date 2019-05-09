@@ -6,9 +6,9 @@ pub fn is_whitespace(c: char) -> bool {
 
 pub fn is_ident_start(c: char) -> bool {
     (c >= 'a' && c <= 'z')
-    || (c >= 'A' && c <= 'Z')
-    || c == '_'
-    || (c > '\x7f' && UnicodeXID::is_xid_start(c))
+        || (c >= 'A' && c <= 'Z')
+        || c == '_'
+        || (c > '\x7f' && UnicodeXID::is_xid_start(c))
 }
 
 pub fn is_ident_continue(c: char) -> bool {
@@ -19,6 +19,6 @@ pub fn is_ident_continue(c: char) -> bool {
         || (c > '\x7f' && UnicodeXID::is_xid_continue(c))
 }
 
-pub fn is_dec_digit(c:char) -> bool {
+pub fn is_dec_digit(c: char) -> bool {
     '0' <= c && c <= '9'
 }

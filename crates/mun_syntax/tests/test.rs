@@ -1,10 +1,7 @@
 extern crate mun_syntax;
 
+use std::{fmt::Write, path::PathBuf};
 use test_utils::{dir_tests, project_dir};
-use std::{
-    fmt::Write,
-    path::PathBuf
-};
 
 #[test]
 fn lexer_tests() {

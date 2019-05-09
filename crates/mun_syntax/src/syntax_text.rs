@@ -1,6 +1,6 @@
 use std::{fmt, ops};
 
-use crate::{SyntaxNode, TextRange, TextUnit, SyntaxElement};
+use crate::{SyntaxElement, SyntaxNode, TextRange, TextUnit};
 
 #[derive(Clone)]
 pub struct SyntaxText<'a> {
@@ -10,20 +10,25 @@ pub struct SyntaxText<'a> {
 
 impl<'a> SyntaxText<'a> {
     pub(crate) fn new(node: &'a SyntaxNode) -> SyntaxText<'a> {
-        SyntaxText { node, range: node.range() }
+        SyntaxText {
+            node,
+            range: node.range(),
+        }
     }
 
     pub fn chunks(&self) -> impl Iterator<Item = &'a str> {
         let range = self.range;
-        self.node.descendants_with_tokens().filter_map(move |el| match el {
-            SyntaxElement::Token(t) => {
-                let text = t.text();
-                let range = range.intersection(&t.range())?;
-                let range = range - t.range().start();
-                Some(&text[range])
-            }
-            SyntaxElement::Node(_) => None,
-        })
+        self.node
+            .descendants_with_tokens()
+            .filter_map(move |el| match el {
+                SyntaxElement::Token(t) => {
+                    let text = t.text();
+                    let range = range.intersection(&t.range())?;
+                    let range = range - t.range().start();
+                    Some(&text[range])
+                }
+                SyntaxElement::Node(_) => None,
+            })
     }
 
     pub fn push_to(&self, buf: &mut String) {
@@ -58,7 +63,10 @@ impl<'a> SyntaxText<'a> {
         let range = range.restrict(self.range).unwrap_or_else(|| {
             panic!("invalid slice, range: {:?}, slice: {:?}", self.range, range)
         });
-        SyntaxText { node: self.node, range }
+        SyntaxText {
+            node: self.node,
+            range,
+        }
     }
 
     pub fn char_at(&self, offset: impl Into<TextUnit>) -> Option<char> {

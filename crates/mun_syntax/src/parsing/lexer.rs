@@ -4,16 +4,12 @@ mod cursor;
 mod numbers;
 mod strings;
 
+use self::{
+    classes::*, comments::scan_comment, cursor::Cursor, numbers::scan_number, strings::scan_string,
+};
 use crate::{
     SyntaxKind::{self, *},
     TextUnit,
-};
-use self::{
-    classes::*,
-    numbers::scan_number,
-    comments::scan_comment,
-    strings::scan_string,
-    cursor::Cursor,
 };
 
 /// A token of Mun source
@@ -23,7 +19,7 @@ pub struct Token {
     pub kind: SyntaxKind,
 
     /// The length of the token
-    pub len: TextUnit
+    pub len: TextUnit,
 }
 
 /// Break a string up into its component tokens
@@ -80,18 +76,18 @@ fn next_token_inner(c: char, cursor: &mut Cursor) -> SyntaxKind {
     match c {
         '"' | '\'' => {
             scan_string(c, cursor);
-            return STRING
+            return STRING;
         }
         _ => (),
     }
     ERROR
 }
 
-fn scan_identifier_or_keyword(c: char, cursor:&mut Cursor) -> SyntaxKind {
+fn scan_identifier_or_keyword(c: char, cursor: &mut Cursor) -> SyntaxKind {
     match (c, cursor.current()) {
         ('_', None) => return UNDERSCORE,
         ('_', Some(c)) if !is_ident_continue(c) => return UNDERSCORE,
-        _ => ()
+        _ => (),
     };
     cursor.bump_while(is_ident_continue);
     if let Some(kind) = SyntaxKind::from_keyword(cursor.current_token_text()) {

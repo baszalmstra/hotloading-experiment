@@ -10,8 +10,8 @@ use std::{any::Any, borrow::Borrow, fmt, iter::successors};
 
 use crate::{
     parsing::ParseError,
-    SyntaxKind, TextUnit, TextRange, SmolStr, SyntaxText,
     syntax_error::{SyntaxError, SyntaxErrorKind},
+    SmolStr, SyntaxKind, SyntaxText, TextRange, TextUnit,
 };
 use rowan::{GreenNodeBuilder, TransparentNewType};
 
@@ -386,7 +386,7 @@ impl<'a> SyntaxElement<'a> {
             SyntaxElement::Node(it) => it,
             SyntaxElement::Token(it) => it.parent(),
         }
-            .ancestors()
+        .ancestors()
     }
 
     fn text_len(&self) -> TextUnit {
@@ -456,7 +456,10 @@ pub struct SyntaxTreeBuilder {
 
 impl Default for SyntaxTreeBuilder {
     fn default() -> SyntaxTreeBuilder {
-        SyntaxTreeBuilder { errors: Vec::new(), inner: GreenNodeBuilder::new() }
+        SyntaxTreeBuilder {
+            errors: Vec::new(),
+            inner: GreenNodeBuilder::new(),
+        }
     }
 }
 
@@ -469,9 +472,9 @@ impl SyntaxTreeBuilder {
     pub fn finish(self) -> TreeArc<SyntaxNode> {
         let (green, errors) = self.finish_raw();
         let node = SyntaxNode::new(green, errors);
-//        if cfg!(debug_assertions) {
-//            crate::validation::validate_block_structure(&node);
-//        }
+        //        if cfg!(debug_assertions) {
+        //            crate::validation::validate_block_structure(&node);
+        //        }
         node
     }
 

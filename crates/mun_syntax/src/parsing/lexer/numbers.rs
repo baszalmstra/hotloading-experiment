@@ -1,21 +1,18 @@
-use crate::parsing::lexer::{
-    cursor::Cursor,
-    classes::*
-};
+use crate::parsing::lexer::{classes::*, cursor::Cursor};
 
 use crate::SyntaxKind::{self, *};
 
 pub(crate) fn scan_number(c: char, cursor: &mut Cursor) -> SyntaxKind {
     if c == '0' {
-        match cursor.current().unwrap_or('\0' ) {
+        match cursor.current().unwrap_or('\0') {
             'b' | 'o' => {
                 cursor.bump();
                 scan_digits(cursor, false);
-            },
+            }
             'x' => {
                 cursor.bump();
                 scan_digits(cursor, true);
-            },
+            }
             '0'...'9' | '_' | '.' | 'e' | 'E' => {
                 scan_digits(cursor, true);
             }
@@ -25,7 +22,9 @@ pub(crate) fn scan_number(c: char, cursor: &mut Cursor) -> SyntaxKind {
         scan_digits(cursor, false);
     }
 
-    if cursor.matches('.') && !(cursor.matches_str("..") || cursor.matches_nth_if(1, is_ident_start)) {
+    if cursor.matches('.')
+        && !(cursor.matches_str("..") || cursor.matches_nth_if(1, is_ident_start))
+    {
         cursor.bump();
         scan_digits(cursor, false);
         scan_float_exponent(cursor);
@@ -46,7 +45,7 @@ fn scan_digits(cursor: &mut Cursor, allow_hex: bool) {
             '_' | '0'...'9' => {
                 cursor.bump();
             }
-            'a' ... 'f' | 'A' ... 'F' if allow_hex => {
+            'a'...'f' | 'A'...'F' if allow_hex => {
                 cursor.bump();
             }
             _ => return,

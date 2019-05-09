@@ -4,6 +4,7 @@ use crate::{
     TextUnit,
 };
 
+/// An implementation of `TokenSource` for text.
 pub(crate) struct TextTokenSource<'t> {
     text: &'t str,
 

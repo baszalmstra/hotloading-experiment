@@ -94,5 +94,9 @@ Grammar(
     ],
     nodes: [
         "SOURCE_FILE"
-    ]
+    ],
+    ast: {
+        "SourceFile": (
+        )
+    }
 )

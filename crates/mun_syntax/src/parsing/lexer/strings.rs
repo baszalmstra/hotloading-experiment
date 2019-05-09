@@ -1,6 +1,4 @@
-use crate::parsing::lexer::{
-    cursor::Cursor,
-};
+use crate::parsing::lexer::cursor::Cursor;
 
 pub(crate) fn scan_string(c: char, cursor: &mut Cursor) {
     let quote_type = c;

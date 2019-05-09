@@ -10,17 +10,39 @@
 //!
 //!
 
+mod ast;
 mod parsing;
 mod syntax_error;
 mod syntax_kind;
 mod syntax_node;
 mod syntax_text;
 
-pub use rowan::{SmolStr, TextRange, TextUnit};
 pub use crate::{
+    ast::AstNode,
+    parsing::{tokenize, Token},
+    syntax_error::{Location, SyntaxError, SyntaxErrorKind},
     syntax_kind::SyntaxKind,
-    syntax_error::{SyntaxError, SyntaxErrorKind, Location},
+    syntax_node::{
+        Direction, InsertPosition, SyntaxElement, SyntaxNode, SyntaxToken, SyntaxTreeBuilder,
+        TreeArc, WalkEvent,
+    },
     syntax_text::SyntaxText,
-    syntax_node::{Direction, SyntaxNode, WalkEvent, TreeArc, SyntaxTreeBuilder, SyntaxElement, SyntaxToken, InsertPosition},
-    parsing::{Token, tokenize}
 };
+pub use rowan::{SmolStr, TextRange, TextUnit};
+
+/// `SourceFile` represents a parse tree for a single Mun file.
+pub use crate::ast::SourceFile;
+use rowan::GreenNode;
+
+impl SourceFile {
+    fn new(green: GreenNode, errors: Vec<SyntaxError>) -> TreeArc<SourceFile> {
+        let root = SyntaxNode::new(green, errors);
+        assert_eq!(root.kind(), SyntaxKind::SOURCE_FILE);
+        TreeArc::cast(root)
+    }
+
+    pub fn parse(text: &str) -> TreeArc<SourceFile> {
+        let (green, errors) = parsing::parse_text(text);
+        SourceFile::new(green, errors)
+    }
+}
