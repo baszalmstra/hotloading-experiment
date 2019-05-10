@@ -108,6 +108,16 @@ impl ast::{{ t }} for {{ node }} {}
 {%- endif -%}
 
 impl {{ node }} {
+{%- if methods.collections -%}
+{%- for m in methods.collections -%}
+{%- set method_name = m.0 -%}
+{%- set ChildName = m.1 %}
+    pub fn {{ method_name }}(&self) -> impl Iterator<Item = &{{ ChildName }}> {
+        super::children(self)
+    }
+{% endfor -%}
+{%- endif -%}
+
 {%- if methods.options -%}
 {%- for m in methods.options -%}
 

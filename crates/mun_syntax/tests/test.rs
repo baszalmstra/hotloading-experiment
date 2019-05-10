@@ -9,7 +9,7 @@ fn lexer_tests() {
     dir_tests(&test_data_dir(), &["lexer"], |text, _| {
         let tokens = mun_syntax::tokenize(text);
         dump_tokens(&tokens, text)
-    })
+    });
 }
 
 #[test]

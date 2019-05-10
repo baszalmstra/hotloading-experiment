@@ -99,6 +99,13 @@ Grammar(
         "PARAM_LIST",
         "PARAM",
 
+        "LET_STMT",
+        "EXPR_STMT",
+
+        "PREFIX_EXPR",
+        "LITERAL",
+        "BIN_EXPR",
+
         "NAME",
         "NAME_REF",
 
@@ -128,12 +135,41 @@ Grammar(
                 "TypeAscriptionOwner"
             ],
         ),
+        "LetStmt": (
+            traits: [
+                "NameOwner",
+                "TypeAscriptionOwner"
+            ]
+        ),
+        "ExprStmt": (
+            options: [ ["expr", "Expr"] ]
+        ),
+        "Stmt": (
+            enum: ["LetStmt", "ExprStmt"]
+        ),
+
+        "PrefixExpr": (options: ["Expr"]),
+        "BinExpr": (),
+        "Literal": (),
+
+        "Expr": (
+            enum: [
+                "Literal",
+                "PrefixExpr",
+                "BinExpr"
+            ]
+        ),
+
         "Name": (),
         "NameRef": (),
         "TypeRef": (
             enum: ["NameRef"]
         ),
         "Block": (
+            options: [ "Expr" ],
+            collections: [
+                ["statements", "Stmt"],
+            ],
         )
     }
 )

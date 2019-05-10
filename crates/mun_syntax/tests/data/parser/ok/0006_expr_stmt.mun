@@ -1,0 +1,4 @@
+function foo() {
+    not -5+2;
+    -3
+}
