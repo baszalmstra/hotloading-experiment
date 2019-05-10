@@ -89,14 +89,28 @@ Grammar(
         "ERROR",
         "IDENT",
         "WHITESPACE",
-        "LIFETIME",
         "COMMENT",
     ],
     nodes: [
-        "SOURCE_FILE"
+        "SOURCE_FILE",
+
+        "FUNCTION_DEF",
+
+        "NAME",
+
+        "BLOCK",
     ],
     ast: {
         "SourceFile": (
+            traits: [ "ModuleItemOwner", "FunctionDefOwner" ],
+        ),
+        "ModuleItem": (
+            enum: ["FunctionDef"]
+        ),
+        "FunctionDef": (
+        ),
+        "Name": (),
+        "Block": (
         )
     }
 )

@@ -1,8 +1,12 @@
 mod generated;
+mod traits;
 
 use crate::{syntax_node::SyntaxNodeChildren, SmolStr, SyntaxNode, SyntaxToken, TreeArc};
 
-pub use self::generated::*;
+pub use self::{
+    generated::*,
+    traits::*
+};
 
 use std::marker::PhantomData;
 
@@ -50,4 +54,12 @@ impl<'a, N: AstNode + 'a> Iterator for AstChildren<'a, N> {
     fn next(&mut self) -> Option<&'a N> {
         self.inner.by_ref().find_map(N::cast)
     }
+}
+
+fn child_opt<P: AstNode, C: AstNode>(parent: &P) -> Option<&C> {
+    children(parent).next()
+}
+
+fn children<P: AstNode, C: AstNode>(parent: &P) -> AstChildren<C> {
+    AstChildren::new(parent.syntax())
 }

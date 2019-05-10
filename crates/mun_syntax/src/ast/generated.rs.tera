@@ -33,7 +33,7 @@ unsafe impl TransparentNewType for {{ node }} {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum {{ node }}Kind<'a>{
 {%- for kind in methods.enum %}
-    {{ kind }}(&a {{ kind }}),
+    {{ kind }}(&'a {{ kind }}),
 {%- endfor %}
 }
 
@@ -46,7 +46,7 @@ impl<'a> From<&'a {{ kind }}> for &'a {{ node }} {
 {%- endfor %}
 
 impl AstNode for {{ node }} {
-    fn cast(syntax: &SyntaxNode) -> Option<&self> {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
         match syntax.kind() {
             {% for kind in methods.enum %}
             | {{ kind | SCREAM }}
@@ -68,7 +68,7 @@ impl {{ node }} {
             {%- for kind in methods.enum %}
             {{ kind | SCREAM }} => {{ node }}Kind::{{ kind }}({{ kind }}::cast(&self.syntax).unwrap()),
             {%- endfor %}
-            _ => unreachable(),
+            _ => unreachable!(),
         }
     }
 }
@@ -99,6 +99,13 @@ impl ToOwned for {{ node }} {
 }
 
 {% endif %}
+{% if methods.traits -%}
+
+{%- for t in methods.traits -%}
+impl ast::{{ t }} for {{ node }} {}
+{% endfor -%}
+
+{%- endif -%}
 
 impl {{ node }} {
 }

@@ -1,5 +1,8 @@
 use crate::{syntax_node::GreenNode, SyntaxError, SyntaxKind};
 
+#[macro_use]
+mod token_set;
+
 mod event;
 mod lexer;
 mod parser;

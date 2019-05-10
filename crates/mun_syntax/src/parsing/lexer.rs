@@ -74,6 +74,10 @@ fn next_token_inner(c: char, cursor: &mut Cursor) -> SyntaxKind {
     }
 
     match c {
+        '!' if cursor.matches('=') => {
+            cursor.bump();
+            return NEQ;
+        }
         '"' | '\'' => {
             scan_string(c, cursor);
             return STRING;

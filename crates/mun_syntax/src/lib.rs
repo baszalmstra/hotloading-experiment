@@ -33,6 +33,7 @@ pub use rowan::{SmolStr, TextRange, TextUnit};
 /// `SourceFile` represents a parse tree for a single Mun file.
 pub use crate::ast::SourceFile;
 use rowan::GreenNode;
+use crate::ast::FunctionDef;
 
 impl SourceFile {
     fn new(green: GreenNode, errors: Vec<SyntaxError>) -> TreeArc<SourceFile> {
@@ -50,4 +51,38 @@ impl SourceFile {
         let mut errors = self.syntax.root_data().to_vec();
         errors
     }
+}
+
+/// This test does not assert anything and instead just shows off the crate's API.
+#[test]
+fn api_walkthrough() {
+    use ast::{ModuleItemOwner};
+
+    let source_code = "
+        function foo() {
+
+        }
+    ";
+
+    // `SourceFile` is the main entry point.
+    //
+    // Since all source can be parsed even invalid source code (which will result in a lot of
+    // errors) the `parse` method does not return a `Result`.
+    let file = SourceFile::parse(source_code);
+
+    // `SourceFile` is the root of the syntax tree. We can iterate file's items:
+    let mut func = None;
+    for item in file.items() {
+        match item.kind() {
+            ast::ModuleItemKind::FunctionDef(f) => func = Some(f),
+            _ => unreachable!()
+        }
+    }
+
+    // The returned items are always references.
+    let func: &ast::FunctionDef = func.unwrap();
+
+    // All nodes implement the `ToOwned` trait, which `Owned = TreeArc<Self>`. A `TreeArc` is
+    // similar to `Arc` but references the root of the tree.
+    let _owned_func: TreeArc<ast::FunctionDef> = func.to_owned();
 }

@@ -1,6 +1,6 @@
 use crate::{
     SyntaxKind::{self, *},
-    parsing::{TokenSource, ParseError, event::Event}
+    parsing::{TokenSource, ParseError, event::Event, token_set::TokenSet}
 };
 use std::cell::Cell;
 use drop_bomb::DropBomb;
@@ -61,14 +61,34 @@ impl<'t> Parser<'t> {
 
     /// Lookahead operation: returns the kind of the next nth token.
     pub(crate) fn nth(&self, n: usize) -> SyntaxKind {
-        self.token_source.token_kind(n)
+        let steps = self.steps.get();
+        assert!(steps <= 10_000, "the parser seems stuck");
+        self.steps.set(steps + 1);
+
+        let mut i = 0;
+        let mut count = 0;
+        loop {
+            let mut kind = self.token_source.token_kind(self.token_pos + i);
+            if let Some((composited, step)) = self.is_composite(kind, i) {
+                kind = composited;
+                i += step;
+            } else {
+                i += 1;
+            }
+
+            match kind {
+                EOF => return EOF,
+                _ if count == n => return kind,
+                _ => count += 1,
+            }
+        }
     }
 
     /// Checks if the current token is `kind`
     pub(crate) fn matches(&self, kind:SyntaxKind) -> bool { self.current() == kind }
 
     /// Checks if the current tokens is in `kinds`
-    // pub(crate) fn matches_any(&self, kinds:TokenSet) -> bool { kinds.contains(self.current()) }
+    pub(crate) fn matches_any(&self, kinds:TokenSet) -> bool { kinds.contains(self.current()) }
 
     /// Starts a new node in the syntax tree. All nodes and tokens consumed between the `start` and
     /// the corresponding `Marker::complete` belong to the same node.
@@ -78,8 +98,101 @@ impl<'t> Parser<'t> {
         Marker::new(pos)
     }
 
+    pub(crate) fn bump(&mut self) {
+        let kind = self.nth(0);
+        if kind == EOF {
+            return;
+        }
+
+        use SyntaxKind::*;
+        match kind {
+            DOTDOTDOT => {
+                self.bump_compound(kind, 3);
+            },
+            DOTDOT|COLONCOLON|EQEQ => {
+                self.bump_compound(kind, 2);
+            }
+            _ => {
+                self.do_bump(kind, 1);
+            }
+        }
+    }
+
+    pub fn is_composite(&self, kind:SyntaxKind, n: usize) -> Option<(SyntaxKind, usize)> {
+        let joint1 = self.token_source.is_token_joint_to_next(self.token_pos + n);
+        let kind1 = self.token_source.token_kind(self.token_pos + n + 1);
+        let joint2 = self.token_source.is_token_joint_to_next(self.token_pos + n + 1);
+        let kind2 = self.token_source.token_kind(self.token_pos + n + 2);
+
+        use SyntaxKind::*;
+
+        /// This does not match all the multi character symbols because they are still context
+        /// sensitive (for example `+=` and `..=`).
+
+        match kind {
+            DOT if joint1 && kind1 == DOT && joint2 && kind2 == DOT => Some((DOTDOTDOT, 3)),
+            DOT if joint1 && kind1 == DOT => Some((DOTDOT, 2)),
+
+            COLON if joint1 && kind1 == COLON => Some((COLONCOLON, 2)),
+            EQ if joint2 && kind1 == EQ => Some((EQEQ, 2)),
+
+            _ => None,
+        }
+    }
+
+    /// Advances the parser by `n` tokens, remapping its kind. This is useful to create compound
+    /// tokens from parts. For example an `::` is two consecutive remapped `<` tokens.
+    pub(crate) fn bump_compound(&mut self, kind: SyntaxKind, n: u8) { self.do_bump(kind, n); }
+
+    fn do_bump(&mut self, kind: SyntaxKind, n_raw_tokens: u8) {
+        self.token_pos += n_raw_tokens as usize;
+        self.push_event(Event::Token {kind, n_raw_tokens });
+    }
+
+    /// Emit error with the `message`
+    pub(crate) fn error<T: Into<String>>(&mut self, message: T) {
+        let msg = ParseError(message.into());
+        self.push_event(Event::Error{ msg});
+    }
+
+    /// Create an error node and consume the next token.
+    pub(crate) fn error_and_bump(&mut self, message: &str) {
+        self.error_recover(message, TokenSet::empty())
+    }
+
+    /// Create an error node and consume the next token.
+    pub(crate) fn error_recover(&mut self, message: &str, recovery: TokenSet) {
+        if self.matches(L_CURLY ) || self.matches( R_CURLY ) || self.matches_any(recovery) {
+            self.error(message);
+        } else {
+            let m = self.start();
+            self.error(message);
+            self.bump();
+            m.complete(self, ERROR);
+        }
+    }
+
     fn push_event(&mut self, event: Event) {
         self.events.push(event)
+    }
+
+    /// Consume the next token if `kind` matches.
+    pub(crate) fn eat(&mut self, kind: SyntaxKind) -> bool {
+        if self.matches(kind) {
+            self.bump();
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Consume the next token if it is `kind` or emit an error otherwise.
+    pub(crate) fn expect(&mut self, kind: SyntaxKind) -> bool {
+        if self.eat(kind) {
+            return true;
+        }
+        self.error(format!("expected {:?}", kind));
+        false
     }
 }
 
