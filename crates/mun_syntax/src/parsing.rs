@@ -1,8 +1,11 @@
 use crate::{syntax_node::GreenNode, SyntaxError, SyntaxKind};
 
+mod event;
 mod lexer;
+mod parser;
 mod text_token_source;
 mod text_tree_sink;
+mod grammar;
 
 pub use lexer::{tokenize, Token};
 
@@ -39,21 +42,21 @@ pub(crate) fn parse_text(text: &str) -> (GreenNode, Vec<SyntaxError>) {
     let tokens = tokenize(&text);
     let token_source = text_token_source::TextTokenSource::new(text, &tokens);
     let mut tree_sink = text_tree_sink::TextTreeSink::new(text, &tokens);
-    //parse(&token_source, &mut tree_sink);
+    parse(&token_source, &mut tree_sink);
     tree_sink.finish()
 }
 
-//fn parse_from_tokens<F>(token_source: &dyn TokenSource, tree_sink: &mut dyn TreeSink, f: F)
-//    where
-//        F: FnOnce(&mut parser::Parser),
-//{
-//    let mut p = parser::Parser::new(token_source);
-//    f(&mut p);
-//    let events = p.finish();
-//    event::process(tree_sink, events);
-//}
-//
-///// Parse given tokens into the given sink as a rust file.
-//pub fn parse(token_source: &dyn TokenSource, tree_sink: &mut dyn TreeSink) {
-//    parse_from_tokens(token_source, tree_sink, grammar::root);
-//}
+fn parse_from_tokens<F>(token_source: &dyn TokenSource, tree_sink: &mut dyn TreeSink, f: F)
+    where
+        F: FnOnce(&mut parser::Parser),
+{
+    let mut p = parser::Parser::new(token_source);
+    f(&mut p);
+    let events = p.finish();
+    event::process(tree_sink, events);
+}
+
+/// Parse given tokens into the given sink as a rust file.
+fn parse(token_source: &dyn TokenSource, tree_sink: &mut dyn TreeSink) {
+    parse_from_tokens(token_source, tree_sink, grammar::root);
+}

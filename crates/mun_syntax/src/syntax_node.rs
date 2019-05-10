@@ -6,10 +6,11 @@
 //! The *real* implementation is in the (language-agnostic) `rowan` crate, this
 //! modules just wraps its API.
 
-use std::{any::Any, borrow::Borrow, fmt, iter::successors};
+use std::{any::Any, borrow::Borrow, fmt::{self, Write}, iter::successors};
 
 use crate::{
     parsing::ParseError,
+    SourceFile, AstNode,
     syntax_error::{SyntaxError, SyntaxErrorKind},
     SmolStr, SyntaxKind, SyntaxText, TextRange, TextUnit,
 };
@@ -245,6 +246,63 @@ impl SyntaxNode {
 
     pub fn memory_size_of_subtree(&self) -> usize {
         self.0.memory_size_of_subtree()
+    }
+
+    pub fn debug_dump(&self) -> String {
+        let mut errors: Vec<_> = match self.ancestors().find_map(SourceFile::cast) {
+            Some(file) => file.errors(),
+            None => self.root_data().to_vec(),
+        };
+        errors.sort_by_key(|e| e.offset());
+        let mut err_pos = 0;
+        let mut level = 0;
+        let mut buf = String::new();
+        macro_rules! indent {
+            () => {
+                for _ in 0..level {
+                    buf.push_str("  ");
+                }
+            };
+        }
+
+        for event in self.preorder_with_tokens() {
+            match event {
+                WalkEvent::Enter(element) => {
+                    indent!();
+                    match element {
+                        SyntaxElement::Node(node) => writeln!(buf, "{:?}", node).unwrap(),
+                        SyntaxElement::Token(token) => {
+                            writeln!(buf, "{:?}", token).unwrap();
+                            let off = token.range().end();
+                            while err_pos < errors.len() && errors[err_pos].offset() <= off {
+                                indent!();
+                                writeln!(buf, "err: `{}`", errors[err_pos]).unwrap();
+                                err_pos += 1;
+                            }
+                        }
+                    }
+                    level += 1;
+                }
+                WalkEvent::Leave(_) => level -= 1,
+            }
+        }
+
+        assert_eq!(level, 0);
+        for err in errors[err_pos..].iter() {
+            writeln!(buf, "err: `{}`", err).unwrap();
+        }
+
+        buf
+    }
+
+    pub(crate) fn root_data(&self) -> &[SyntaxError] {
+        match self.0.root_data() {
+            None => &[],
+            Some(data) => {
+                let data: &Vec<SyntaxError> = std::any::Any::downcast_ref(data).unwrap();
+                data.as_slice()
+            }
+        }
     }
 }
 

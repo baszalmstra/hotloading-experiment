@@ -45,4 +45,9 @@ impl SourceFile {
         let (green, errors) = parsing::parse_text(text);
         SourceFile::new(green, errors)
     }
+
+    pub fn errors(&self) -> Vec<SyntaxError> {
+        let mut errors = self.syntax.root_data().to_vec();
+        errors
+    }
 }

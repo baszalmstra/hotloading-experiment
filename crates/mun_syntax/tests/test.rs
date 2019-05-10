@@ -2,12 +2,28 @@ extern crate mun_syntax;
 
 use std::{fmt::Write, path::PathBuf};
 use test_utils::{dir_tests, project_dir};
+use mun_syntax::{SourceFile, AstNode};
 
 #[test]
 fn lexer_tests() {
     dir_tests(&test_data_dir(), &["lexer"], |text, _| {
         let tokens = mun_syntax::tokenize(text);
         dump_tokens(&tokens, text)
+    })
+}
+
+#[test]
+fn parser_tests() {
+    dir_tests(&test_data_dir(), &["parser/ok"], |text, path| {
+        let file = SourceFile::parse(text);
+        let errors = file.errors();
+        assert_eq!(
+            &*errors,
+            &[] as &[mun_syntax::SyntaxError],
+            "There should be no errors in the file {:?}",
+            path.display()
+        );
+        file.syntax().debug_dump()
     })
 }
 
