@@ -1,5 +1,7 @@
 mod expressions;
 mod items;
+mod params;
+mod types;
 
 use super::{
     parser::{Marker, CompletedMarker, Parser},
@@ -25,6 +27,16 @@ fn name_recovery(p: &mut Parser, recovery: TokenSet) {
 
 fn name(p: &mut Parser) {
     name_recovery(p, TokenSet::empty())
+}
+
+fn name_ref(p: &mut Parser) {
+    if p.matches(IDENT) {
+        let m = p.start();
+        p.bump();
+        m.complete(p, NAME_REF);
+    } else {
+        p.error_and_bump("expected identifier");
+    }
 }
 
 fn error_block(p: &mut Parser, message: &str) {

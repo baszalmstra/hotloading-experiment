@@ -96,7 +96,11 @@ Grammar(
 
         "FUNCTION_DEF",
 
+        "PARAM_LIST",
+        "PARAM",
+
         "NAME",
+        "NAME_REF",
 
         "BLOCK",
     ],
@@ -108,8 +112,27 @@ Grammar(
             enum: ["FunctionDef"]
         ),
         "FunctionDef": (
+            traits: [
+                "NameOwner",
+            ],
+            options: [ "ParamList", ["body", "Block"] ],
+        ),
+        "ParamList": (
+            collections: [
+                ["params", "Param"]
+            ]
+        ),
+        "Param": (
+            traits: [
+                "NameOwner",
+                "TypeAscriptionOwner"
+            ],
         ),
         "Name": (),
+        "NameRef": (),
+        "TypeRef": (
+            enum: ["NameRef"]
+        ),
         "Block": (
         )
     }

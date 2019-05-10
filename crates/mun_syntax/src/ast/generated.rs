@@ -43,8 +43,7 @@ impl ToOwned for Block {
 }
 
 
-impl Block {
-}
+impl Block {}
 
 
 // FunctionDef
@@ -74,7 +73,15 @@ impl ToOwned for FunctionDef {
 }
 
 
+impl ast::NameOwner for FunctionDef {}
 impl FunctionDef {
+    pub fn param_list(&self) -> Option<&ParamList> {
+        super::child_opt(self)
+    }
+
+    pub fn body(&self) -> Option<&Block> {
+        super::child_opt(self)
+    }
 }
 
 
@@ -123,8 +130,7 @@ impl ModuleItem {
     }
 }
 
-impl ModuleItem {
-}
+impl ModuleItem {}
 
 
 // Name
@@ -154,8 +160,99 @@ impl ToOwned for Name {
 }
 
 
-impl Name {
+impl Name {}
+
+
+// NameRef
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct NameRef {
+    pub(crate) syntax: SyntaxNode,
 }
+
+unsafe impl TransparentNewType for NameRef {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for NameRef {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            NAME_REF => Some(NameRef::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for NameRef {
+    type Owned = TreeArc<NameRef>;
+    fn to_owned(&self) -> TreeArc<NameRef> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl NameRef {}
+
+
+// Param
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct Param {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for Param {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for Param {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            PARAM => Some(Param::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for Param {
+    type Owned = TreeArc<Param>;
+    fn to_owned(&self) -> TreeArc<Param> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl ast::NameOwner for Param {}
+impl ast::TypeAscriptionOwner for Param {}
+impl Param {}
+
+
+// ParamList
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct ParamList {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for ParamList {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for ParamList {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            PARAM_LIST => Some(ParamList::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for ParamList {
+    type Owned = TreeArc<ParamList>;
+    fn to_owned(&self) -> TreeArc<ParamList> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl ParamList {}
 
 
 // SourceFile
@@ -187,6 +284,53 @@ impl ToOwned for SourceFile {
 
 impl ast::ModuleItemOwner for SourceFile {}
 impl ast::FunctionDefOwner for SourceFile {}
-impl SourceFile {
+impl SourceFile {}
+
+
+// TypeRef
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct TypeRef {
+    pub(crate) syntax: SyntaxNode,
 }
+unsafe impl TransparentNewType for TypeRef {
+    type Repr = rowan::SyntaxNode;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TypeRefKind<'a>{
+    NameRef(&'a NameRef),
+}
+impl<'a> From<&'a NameRef> for &'a TypeRef {
+    fn from(n: &'a NameRef) -> &'a TypeRef {
+        TypeRef::cast(&n.syntax).unwrap()
+    }
+}
+
+impl AstNode for TypeRef {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            
+            | NAME_REF => Some(TypeRef::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for TypeRef {
+    type Owned = TreeArc<TypeRef>;
+    fn to_owned(&self) -> TreeArc<TypeRef> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+impl TypeRef {
+    pub fn kind(&self) -> TypeRefKind {
+        match self.syntax.kind() {
+            NAME_REF => TypeRefKind::NameRef(NameRef::cast(&self.syntax).unwrap()),
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl TypeRef {}
 

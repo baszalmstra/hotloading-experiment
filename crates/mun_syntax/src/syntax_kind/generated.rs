@@ -81,7 +81,10 @@ pub enum SyntaxKind {
     COMMENT,
     SOURCE_FILE,
     FUNCTION_DEF,
+    PARAM_LIST,
+    PARAM,
     NAME,
+    NAME_REF,
     BLOCK,
     // Technical kind so that we can cast from u16 safely
     #[doc(hidden)]
@@ -252,7 +255,10 @@ impl SyntaxKind {
                 COMMENT => &SyntaxInfo { name: "COMMENT" },
                 SOURCE_FILE => &SyntaxInfo { name: "SOURCE_FILE" },
                 FUNCTION_DEF => &SyntaxInfo { name: "FUNCTION_DEF" },
+                PARAM_LIST => &SyntaxInfo { name: "PARAM_LIST" },
+                PARAM => &SyntaxInfo { name: "PARAM" },
                 NAME => &SyntaxInfo { name: "NAME" },
+                NAME_REF => &SyntaxInfo { name: "NAME_REF" },
                 BLOCK => &SyntaxInfo { name: "BLOCK" },
                 TOMBSTONE => &SyntaxInfo { name: "TOMBSTONE" },
                 EOF => &SyntaxInfo { name: "EOF" },

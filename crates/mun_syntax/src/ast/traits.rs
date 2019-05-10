@@ -1,4 +1,4 @@
-use crate::ast::{self, AstChildren, AstNode, children};
+use crate::ast::{self, AstChildren, AstNode, children, child_opt};
 
 pub trait ModuleItemOwner: AstNode {
     fn items(&self) -> AstChildren<ast::ModuleItem> {
@@ -9,5 +9,17 @@ pub trait ModuleItemOwner: AstNode {
 pub trait FunctionDefOwner: AstNode {
     fn functions(&self) -> AstChildren<ast::FunctionDef> {
         children(self)
+    }
+}
+
+pub trait NameOwner: AstNode {
+    fn name(&self) -> Option<&ast::Name> {
+        child_opt(self)
+    }
+}
+
+pub trait TypeAscriptionOwner: AstNode {
+    fn ascribed_type(&self) -> Option<&ast::TypeRef> {
+        child_opt(self)
     }
 }

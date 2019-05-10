@@ -33,7 +33,7 @@ pub use rowan::{SmolStr, TextRange, TextUnit};
 /// `SourceFile` represents a parse tree for a single Mun file.
 pub use crate::ast::SourceFile;
 use rowan::GreenNode;
-use crate::ast::FunctionDef;
+use crate::ast::{FunctionDef, NameOwner};
 
 impl SourceFile {
     fn new(green: GreenNode, errors: Vec<SyntaxError>) -> TreeArc<SourceFile> {
@@ -85,4 +85,6 @@ fn api_walkthrough() {
     // All nodes implement the `ToOwned` trait, which `Owned = TreeArc<Self>`. A `TreeArc` is
     // similar to `Arc` but references the root of the tree.
     let _owned_func: TreeArc<ast::FunctionDef> = func.to_owned();
+
+    assert_eq!(func.name().unwrap().syntax().text(), "foo")
 }

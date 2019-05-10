@@ -49,9 +49,11 @@ pub(super) fn fn_def(p: &mut Parser) {
 
     name_recovery(p, ITEM_RECOVERY_SET);
 
-    // TODO: Argument list
-    p.expect(L_PAREN);
-    p.expect(R_PAREN);
+    if p.matches(L_PAREN) {
+        params::param_list(p);
+    } else {
+        p.error("expected function arguments")
+    }
 
     expressions::block(p);
 }
