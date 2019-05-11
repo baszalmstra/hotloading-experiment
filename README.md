@@ -89,3 +89,27 @@ Literal =
   | "true"
   | "false"
 ```
+
+## Whats missing?
+
+A lot, but notably:
+
+### `if`/`while`/`for`/`loop`/...
+
+I've not implemented any form of control flow yet.
+
+### `import`/`use`
+
+Using stuff from other modules. I mean we do have `export`, but you can't `import` anything from other modules. 
+
+### `class`
+
+Any mention of classes or objects or anything with field or method access.
+
+### Type checking
+
+There is no type checking whatsoever yet
+
+### Code generation
+
+There is not code generation as of yet.
