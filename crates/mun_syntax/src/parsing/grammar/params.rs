@@ -13,7 +13,7 @@ fn list(p:&mut Parser) {
             p.error("expected value parameter");
             break;
         }
-        value_parameter(p);
+        param(p);
         if !p.matches(R_PAREN) {
             p.expect(COMMA);
         }
@@ -22,7 +22,7 @@ fn list(p:&mut Parser) {
     m.complete(p, PARAM_LIST);
 }
 
-fn value_parameter(p: &mut Parser) {
+fn param(p: &mut Parser) {
     let m = p.start();
     name_recovery(p, token_set![COLON, R_PAREN]);
     types::ascription(p);

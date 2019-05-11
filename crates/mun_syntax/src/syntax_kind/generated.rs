@@ -72,6 +72,7 @@ pub enum SyntaxKind {
     PUBLIC_KW,
     PROTECTED_KW,
     PRIVATE_KW,
+    EXPORT_KW,
     INT_NUMBER,
     FLOAT_NUMBER,
     STRING,
@@ -81,6 +82,7 @@ pub enum SyntaxKind {
     COMMENT,
     SOURCE_FILE,
     FUNCTION_DEF,
+    VISIBILITY,
     PARAM_LIST,
     PARAM,
     LET_STMT,
@@ -135,6 +137,7 @@ impl SyntaxKind {
             | PUBLIC_KW
             | PROTECTED_KW
             | PRIVATE_KW
+            | EXPORT_KW
                 => true,
             _ => false
         }
@@ -251,6 +254,7 @@ impl SyntaxKind {
                 PUBLIC_KW => &SyntaxInfo { name: "PUBLIC_KW" },
                 PROTECTED_KW => &SyntaxInfo { name: "PROTECTED_KW" },
                 PRIVATE_KW => &SyntaxInfo { name: "PRIVATE_KW" },
+                EXPORT_KW => &SyntaxInfo { name: "EXPORT_KW" },
                 INT_NUMBER => &SyntaxInfo { name: "INT_NUMBER" },
                 FLOAT_NUMBER => &SyntaxInfo { name: "FLOAT_NUMBER" },
                 STRING => &SyntaxInfo { name: "STRING" },
@@ -260,6 +264,7 @@ impl SyntaxKind {
                 COMMENT => &SyntaxInfo { name: "COMMENT" },
                 SOURCE_FILE => &SyntaxInfo { name: "SOURCE_FILE" },
                 FUNCTION_DEF => &SyntaxInfo { name: "FUNCTION_DEF" },
+                VISIBILITY => &SyntaxInfo { name: "VISIBILITY" },
                 PARAM_LIST => &SyntaxInfo { name: "PARAM_LIST" },
                 PARAM => &SyntaxInfo { name: "PARAM" },
                 LET_STMT => &SyntaxInfo { name: "LET_STMT" },
@@ -300,6 +305,7 @@ impl SyntaxKind {
                 "public" => PUBLIC_KW,
                 "protected" => PROTECTED_KW,
                 "private" => PRIVATE_KW,
+                "export" => EXPORT_KW,
                 _ => return None,
             };
             Some(kw)

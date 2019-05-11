@@ -78,7 +78,8 @@ Grammar(
         "class",
         "public",
         "protected",
-        "private"
+        "private",
+        "export"
     ],
     literals: [
         "INT_NUMBER",
@@ -95,6 +96,7 @@ Grammar(
         "SOURCE_FILE",
 
         "FUNCTION_DEF",
+        "VISIBILITY",
 
         "PARAM_LIST",
         "PARAM",
@@ -118,9 +120,11 @@ Grammar(
         "ModuleItem": (
             enum: ["FunctionDef"]
         ),
+        "Visibility": (),
         "FunctionDef": (
             traits: [
                 "NameOwner",
+                "VisibilityOwner"
             ],
             options: [ "ParamList", ["body", "Block"] ],
         ),

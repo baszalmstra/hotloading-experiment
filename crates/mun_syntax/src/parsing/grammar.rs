@@ -1,5 +1,5 @@
 mod expressions;
-mod items;
+mod declarations;
 mod params;
 mod types;
 
@@ -11,7 +11,7 @@ use super::{
 
 pub(crate) fn root(p: &mut Parser) {
     let m = p.start();
-    items::mod_contents(p);
+    declarations::mod_contents(p);
     m.complete(p, SOURCE_FILE);
 }
 
@@ -36,6 +36,17 @@ fn name_ref(p: &mut Parser) {
         m.complete(p, NAME_REF);
     } else {
         p.error_and_bump("expected identifier");
+    }
+}
+
+fn opt_visibility(p:&mut Parser) -> bool {
+    if p.matches(EXPORT_KW) {
+        let m = p.start();
+        p.bump();
+        m.complete(p, VISIBILITY);
+        true
+    } else {
+        false
     }
 }
 

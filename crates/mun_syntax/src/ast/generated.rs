@@ -210,6 +210,7 @@ impl ToOwned for FunctionDef {
 
 
 impl ast::NameOwner for FunctionDef {}
+impl ast::VisibilityOwner for FunctionDef {}
 impl FunctionDef {
     pub fn param_list(&self) -> Option<&ParamList> {
         super::child_opt(self)
@@ -625,4 +626,34 @@ impl TypeRef {
 }
 
 impl TypeRef {}
+
+
+// Visibility
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct Visibility {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for Visibility {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for Visibility {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            VISIBILITY => Some(Visibility::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for Visibility {
+    type Owned = TreeArc<Visibility>;
+    fn to_owned(&self) -> TreeArc<Visibility> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl Visibility {}
 
