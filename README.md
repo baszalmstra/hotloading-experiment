@@ -57,6 +57,7 @@ Param ::= Name TypeAscription
 TypeAscription ::= ":" Type
 Type ::= NameRef
 Name ::= Identifier
+NameRef ::= Identifier
 Block ::= Statement*
 Statement ::= 
     LetStatement
@@ -66,10 +67,21 @@ ExprStatement ::= Expr [";"]
 Expr ::= ExprLhs [Op Expr]
 ExprLhs ::= 
     PrefixExpr
-  | AtomExpr
+  | PostfixExpr
 PrefixExpr ::= "-"|"not" Expr
+PostfixExpr ::= 
+    AtomExpr
+  | CallExpr
+CallExpr ::= ExprLhs ArgList
+ArgList ::= "(" ArgListElements ")"
+ArgListElements ::= 
+  | Expr
+  | Expr "," ArgListElements
 AtomExpr ::= 
     Literal
+  | NameRef
+  | ParenExpr
+ParenExpr ::= "(" Expr ")" 
 Literal = 
     STRING
   | INT_NUMBER

@@ -8,6 +8,15 @@ pub(crate) const LITERAL_FIRST: TokenSet = token_set![
     STRING
 ];
 
+const EXPR_RECOVERY_SET: TokenSet = token_set![LET_KW];
+
+const ATOM_EXPR_FIRST: TokenSet = LITERAL_FIRST.union(token_set![IDENT, L_PAREN]);
+
+const LHS_FIRST: TokenSet =
+    ATOM_EXPR_FIRST.union(token_set![NOT_KW, MINUS]);
+
+const EXPR_FIRST: TokenSet = LHS_FIRST;
+
 pub(crate) fn expr_block_contents(p: &mut Parser) {
     while !p.matches(EOF) && !p.matches(R_CURLY) {
         if p.eat(SEMI) {
@@ -154,16 +163,60 @@ fn lhs(p: &mut Parser) -> Option<CompletedMarker> {
 }
 
 fn postfix_expr(p: &mut Parser, mut lhs: CompletedMarker) -> CompletedMarker {
-    // TODO: Implement field access
-    // TODO: Implement function call
+    loop {
+        lhs = match p.current() {
+            L_PAREN => call_expr(p, lhs),
+            _ => break
+        }
+    }
     lhs
+}
+
+fn call_expr(p: &mut Parser, lhs: CompletedMarker) -> CompletedMarker {
+    assert!(p.matches(L_PAREN));
+    let m = lhs.precede(p);
+    arg_list(p);
+    m.complete(p, CALL_EXPR)
+}
+
+fn arg_list(p: &mut Parser) {
+    assert!(p.matches(L_PAREN));
+    let m = p.start();
+    p.bump();
+    while !p.matches(R_PAREN) && !p.matches(EOF) {
+        if !p.matches_any(EXPR_FIRST) {
+            p.error("expected expression");
+            break;
+        }
+
+        expr(p);
+        if !p.matches(R_PAREN) && !p.expect(COMMA) {
+            break;
+        }
+    }
+    p.eat(R_PAREN);
+    m.complete(p, ARG_LIST);
 }
 
 fn atom_expr(p: &mut Parser) -> Option<CompletedMarker> {
     if let Some(m) = literal(p) {
         return Some(m);
     }
-    None
+
+    if p.matches(IDENT) {
+        let m = p.start();
+        p.bump();
+        return Some(m.complete(p, NAME_REF));
+    }
+
+    let marker = match p.current() {
+        L_PAREN => paren_expr(p),
+        _ => {
+            p.error_recover("expected expression", EXPR_RECOVERY_SET);
+            return None;
+        }
+    };
+    Some(marker)
 }
 
 fn literal(p: &mut Parser) -> Option<CompletedMarker> {
@@ -173,4 +226,13 @@ fn literal(p: &mut Parser) -> Option<CompletedMarker> {
     let m = p.start();
     p.bump();
     Some(m.complete(p, LITERAL))
+}
+
+fn paren_expr(p: &mut Parser) -> CompletedMarker {
+    assert!(p.matches(L_PAREN));
+    let m = p.start();
+    p.bump();
+    expr(p);
+    p.expect(R_PAREN);
+    m.complete(p, PAREN_EXPR)
 }

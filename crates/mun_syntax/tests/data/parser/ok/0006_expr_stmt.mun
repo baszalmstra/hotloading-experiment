@@ -1,4 +1,8 @@
 function foo() {
-    not -5+2;
+    let a = "hello"
+    let b = "world"
+    let c
+    b = "Hello, world!"
+    not -5+2*(a+b);
     -3
 }

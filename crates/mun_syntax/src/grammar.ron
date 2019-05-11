@@ -107,6 +107,10 @@ Grammar(
         "PREFIX_EXPR",
         "LITERAL",
         "BIN_EXPR",
+        "PAREN_EXPR",
+        "CALL_EXPR",
+
+        "ARG_LIST",
 
         "NAME",
         "NAME_REF",
@@ -155,12 +159,24 @@ Grammar(
         "PrefixExpr": (options: ["Expr"]),
         "BinExpr": (),
         "Literal": (),
+        "ParenExpr": (options: ["Expr"]),
+        "CallExpr": (
+            options: [ "Expr" ],
+        ),
+        "ArgList": (
+            collections: [
+                ["args", "Expr"]
+            ]
+        ),
 
         "Expr": (
             enum: [
                 "Literal",
                 "PrefixExpr",
-                "BinExpr"
+                "BinExpr",
+                "NameRef",
+                "ParenExpr",
+                "CallExpr"
             ]
         ),
 
