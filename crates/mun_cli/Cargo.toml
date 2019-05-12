@@ -5,7 +5,7 @@ authors = ["Bas Zalmstra <zalmstra.bas@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-clap = "2.32.0"
+linefeed = "0.6"
 failure = "0.1.4"
 mun_syntax = { path="../mun_syntax" }
 mun_codegen = { path="../mun_codegen" }
