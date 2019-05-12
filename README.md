@@ -120,13 +120,13 @@ There is not code generation as of yet.
 
 Now that we got actual parsing we need to be able to generate some form of code.
 
-#### Type inferencing
-
-We'll have to add type inferencing as soon as we can. 
-
 ### Execute mun
 
 Basically be able to run Mun code
+
+#### Type inferencing
+
+We'll have to add type inferencing as soon as we can. 
 
 ### Embed API
 

@@ -1,4 +1,5 @@
 mod context;
+mod diagnostic;
 mod line_index;
 
 use std::io;
@@ -7,7 +8,7 @@ use std::io::Write;
 use mun_syntax::ast;
 use mun_syntax::ast::AstNode;
 
-use colored::*;
+use diagnostic::Diagnostic;
 
 fn main() {
     let stdin = io::stdin();
@@ -30,13 +31,8 @@ fn main() {
         if errors.len() > 0 {
             // TODO: Improve errors
             for err in errors {
-                let loc = err.offset();
-                let line_col = line_index.line_col(loc);
-                println!(
-                    "{} {}",
-                    "error".red(),
-                    format!("({}:{}): {}", line_col.line + 1, line_col.col, err)
-                );
+                let diagnostic = Diagnostic::new(&line_index, err);
+                println!("{}", diagnostic);
             }
         } else {
             print!("{}", source.syntax().debug_dump());
