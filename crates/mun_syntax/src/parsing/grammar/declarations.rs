@@ -47,7 +47,7 @@ pub(super) fn fn_def(p: &mut Parser) {
     assert!(p.matches(FUNCTION_KW));
     p.bump();
 
-    name_recovery(p, DECLARATION_RECOVERY_SET);
+    name_recovery(p, DECLARATION_RECOVERY_SET.union(token_set![L_PAREN]));
 
     if p.matches(L_PAREN) {
         params::param_list(p);
