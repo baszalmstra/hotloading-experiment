@@ -1,9 +1,9 @@
 use crate::{
+    parsing::{event::Event, token_set::TokenSet, ParseError, TokenSource},
     SyntaxKind::{self, *},
-    parsing::{TokenSource, ParseError, event::Event, token_set::TokenSet}
 };
-use std::cell::Cell;
 use drop_bomb::DropBomb;
+use std::cell::Cell;
 
 /// `Parser` struct provides the low-level API for navigating through the stream of tokens and
 /// constructing the parse tree. The actual parsing happens in the `grammar` module.
@@ -15,13 +15,16 @@ pub(crate) struct Parser<'t> {
     token_source: &'t dyn TokenSource,
     token_pos: usize,
     events: Vec<Event>,
-    steps: Cell<u32>
+    steps: Cell<u32>,
 }
 
 impl<'t> Parser<'t> {
     pub(super) fn new(token_source: &'t dyn TokenSource) -> Parser<'t> {
         Parser {
-            token_source, token_pos: 0, events: Vec::new(), steps: Cell::new(0)
+            token_source,
+            token_pos: 0,
+            events: Vec::new(),
+            steps: Cell::new(0),
         }
     }
 
@@ -31,7 +34,9 @@ impl<'t> Parser<'t> {
 
     /// Returns the kind of the current token.
     /// If the parser has already reach the end of the input the special `EOF` kind is returned.
-    pub(crate) fn current(&self) -> SyntaxKind { self.nth(0) }
+    pub(crate) fn current(&self) -> SyntaxKind {
+        self.nth(0)
+    }
 
     /// Returns the kind of the current two tokens, if they are not separated by trivia.
     pub(crate) fn current2(&self) -> Option<(SyntaxKind, SyntaxKind)> {
@@ -39,7 +44,7 @@ impl<'t> Parser<'t> {
         let c2 = self.nth(1);
 
         if self.token_source.is_token_joint_to_next(self.token_pos) {
-            Some((c1,c2))
+            Some((c1, c2))
         } else {
             None
         }
@@ -50,10 +55,10 @@ impl<'t> Parser<'t> {
         let c1 = self.nth(0);
         let c2 = self.nth(1);
         let c3 = self.nth(2);
-        if self.token_source.is_token_joint_to_next(self.token_pos) &&
-            self.token_source.is_token_joint_to_next(self.token_pos + 1)
+        if self.token_source.is_token_joint_to_next(self.token_pos)
+            && self.token_source.is_token_joint_to_next(self.token_pos + 1)
         {
-            Some((c1,c2,c3))
+            Some((c1, c2, c3))
         } else {
             None
         }
@@ -85,16 +90,20 @@ impl<'t> Parser<'t> {
     }
 
     /// Checks if the current token is `kind`
-    pub(crate) fn matches(&self, kind:SyntaxKind) -> bool { self.current() == kind }
+    pub(crate) fn matches(&self, kind: SyntaxKind) -> bool {
+        self.current() == kind
+    }
 
     /// Checks if the current tokens is in `kinds`
-    pub(crate) fn matches_any(&self, kinds:TokenSet) -> bool { kinds.contains(self.current()) }
+    pub(crate) fn matches_any(&self, kinds: TokenSet) -> bool {
+        kinds.contains(self.current())
+    }
 
     /// Starts a new node in the syntax tree. All nodes and tokens consumed between the `start` and
     /// the corresponding `Marker::complete` belong to the same node.
     pub(crate) fn start(&mut self) -> Marker {
         let pos = self.events.len() as u32;
-        self.push_event( Event::tombstone() );
+        self.push_event(Event::tombstone());
         Marker::new(pos)
     }
 
@@ -108,8 +117,8 @@ impl<'t> Parser<'t> {
         match kind {
             DOTDOTDOT => {
                 self.bump_compound(kind, 3);
-            },
-            DOTDOT|COLONCOLON|EQEQ => {
+            }
+            DOTDOT | COLONCOLON | EQEQ => {
                 self.bump_compound(kind, 2);
             }
             _ => {
@@ -118,17 +127,18 @@ impl<'t> Parser<'t> {
         }
     }
 
-    pub fn is_composite(&self, kind:SyntaxKind, n: usize) -> Option<(SyntaxKind, usize)> {
+    pub fn is_composite(&self, kind: SyntaxKind, n: usize) -> Option<(SyntaxKind, usize)> {
         let joint1 = self.token_source.is_token_joint_to_next(self.token_pos + n);
         let kind1 = self.token_source.token_kind(self.token_pos + n + 1);
-        let joint2 = self.token_source.is_token_joint_to_next(self.token_pos + n + 1);
+        let joint2 = self
+            .token_source
+            .is_token_joint_to_next(self.token_pos + n + 1);
         let kind2 = self.token_source.token_kind(self.token_pos + n + 2);
 
         use SyntaxKind::*;
 
         /// This does not match all the multi character symbols because they are still context
         /// sensitive (for example `+=` and `..=`).
-
         match kind {
             DOT if joint1 && kind1 == DOT && joint2 && kind2 == DOT => Some((DOTDOTDOT, 3)),
             DOT if joint1 && kind1 == DOT => Some((DOTDOT, 2)),
@@ -142,17 +152,19 @@ impl<'t> Parser<'t> {
 
     /// Advances the parser by `n` tokens, remapping its kind. This is useful to create compound
     /// tokens from parts. For example an `::` is two consecutive remapped `<` tokens.
-    pub(crate) fn bump_compound(&mut self, kind: SyntaxKind, n: u8) { self.do_bump(kind, n); }
+    pub(crate) fn bump_compound(&mut self, kind: SyntaxKind, n: u8) {
+        self.do_bump(kind, n);
+    }
 
     fn do_bump(&mut self, kind: SyntaxKind, n_raw_tokens: u8) {
         self.token_pos += n_raw_tokens as usize;
-        self.push_event(Event::Token {kind, n_raw_tokens });
+        self.push_event(Event::Token { kind, n_raw_tokens });
     }
 
     /// Emit error with the `message`
     pub(crate) fn error<T: Into<String>>(&mut self, message: T) {
         let msg = ParseError(message.into());
-        self.push_event(Event::Error{ msg});
+        self.push_event(Event::Error { msg });
     }
 
     /// Create an error node and consume the next token.
@@ -162,7 +174,7 @@ impl<'t> Parser<'t> {
 
     /// Create an error node and consume the next token.
     pub(crate) fn error_recover(&mut self, message: &str, recovery: TokenSet) {
-        if self.matches(L_CURLY ) || self.matches( R_CURLY ) || self.matches_any(recovery) {
+        if self.matches(L_CURLY) || self.matches(R_CURLY) || self.matches_any(recovery) {
             self.error(message);
         } else {
             let m = self.start();
@@ -199,12 +211,15 @@ impl<'t> Parser<'t> {
 /// See `Parser::start`
 pub(crate) struct Marker {
     pos: u32,
-    bomb: DropBomb
+    bomb: DropBomb,
 }
 
 impl Marker {
     fn new(pos: u32) -> Marker {
-        Marker { pos, bomb: DropBomb::new("Marker must be either completed or abandoned")}
+        Marker {
+            pos,
+            bomb: DropBomb::new("Marker must be either completed or abandoned"),
+        }
     }
 
     /// Finishes the syntax tree node and assigns `kind` to it, and create a `CompletedMarker` for
@@ -213,7 +228,9 @@ impl Marker {
         self.bomb.defuse();
         let idx = self.pos as usize;
         match p.events[idx] {
-            Event::Start { kind: ref mut slot, .. } => {
+            Event::Start {
+                kind: ref mut slot, ..
+            } => {
                 *slot = kind;
             }
             _ => unreachable!(),
@@ -229,7 +246,10 @@ impl Marker {
         let idx = self.pos as usize;
         if idx == p.events.len() - 1 {
             match p.events.pop() {
-                Some(Event::Start { kind: TOMBSTONE, forward_parent: None }) => (),
+                Some(Event::Start {
+                    kind: TOMBSTONE,
+                    forward_parent: None,
+                }) => (),
                 _ => unreachable!(),
             }
         }
@@ -239,12 +259,16 @@ impl Marker {
 pub(crate) struct CompletedMarker {
     start_pos: u32,
     finish_pos: u32,
-    kind: SyntaxKind
+    kind: SyntaxKind,
 }
 
 impl CompletedMarker {
-    fn new(start_pos: u32, finish_pos: u32, kind:SyntaxKind) -> Self {
-        CompletedMarker { start_pos, finish_pos, kind }
+    fn new(start_pos: u32, finish_pos: u32, kind: SyntaxKind) -> Self {
+        CompletedMarker {
+            start_pos,
+            finish_pos,
+            kind,
+        }
     }
 
     /// This method allws to create a new node which starts *before* the current one. That is,
@@ -259,7 +283,10 @@ impl CompletedMarker {
         let new_pos = p.start();
         let idx = self.start_pos as usize;
         match p.events[idx] {
-            Event::Start { ref mut forward_parent, .. } => {
+            Event::Start {
+                ref mut forward_parent,
+                ..
+            } => {
                 *forward_parent = Some(new_pos.pos - self.start_pos);
             }
             _ => unreachable!(),
@@ -272,8 +299,11 @@ impl CompletedMarker {
         let start_idx = self.start_pos as usize;
         let finish_idx = self.finish_pos as usize;
         match p.events[start_idx] {
-            Event::Start { ref mut kind, forward_parent: None } => *kind = TOMBSTONE,
-            _ => unreachable!()
+            Event::Start {
+                ref mut kind,
+                forward_parent: None,
+            } => *kind = TOMBSTONE,
+            _ => unreachable!(),
         }
         match p.events[finish_idx] {
             ref mut slot @ Event::Finish => *slot = Event::tombstone(),
@@ -282,5 +312,7 @@ impl CompletedMarker {
         Marker::new(self.start_pos)
     }
 
-    pub(crate) fn kind(&self) -> SyntaxKind { self.kind }
+    pub(crate) fn kind(&self) -> SyntaxKind {
+        self.kind
+    }
 }

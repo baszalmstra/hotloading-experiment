@@ -4,11 +4,11 @@ use crate::{syntax_node::GreenNode, SyntaxError, SyntaxKind};
 mod token_set;
 
 mod event;
+mod grammar;
 mod lexer;
 mod parser;
 mod text_token_source;
 mod text_tree_sink;
-mod grammar;
 
 pub use lexer::{tokenize, Token};
 
@@ -50,8 +50,8 @@ pub(crate) fn parse_text(text: &str) -> (GreenNode, Vec<SyntaxError>) {
 }
 
 fn parse_from_tokens<F>(token_source: &dyn TokenSource, tree_sink: &mut dyn TreeSink, f: F)
-    where
-        F: FnOnce(&mut parser::Parser),
+where
+    F: FnOnce(&mut parser::Parser),
 {
     let mut p = parser::Parser::new(token_source);
     f(&mut p);

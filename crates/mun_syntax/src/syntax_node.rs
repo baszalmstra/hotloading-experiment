@@ -6,13 +6,17 @@
 //! The *real* implementation is in the (language-agnostic) `rowan` crate, this
 //! modules just wraps its API.
 
-use std::{any::Any, borrow::Borrow, fmt::{self, Write}, iter::successors};
+use std::{
+    any::Any,
+    borrow::Borrow,
+    fmt::{self, Write},
+    iter::successors,
+};
 
 use crate::{
     parsing::ParseError,
-    SourceFile, AstNode,
     syntax_error::{SyntaxError, SyntaxErrorKind},
-    SmolStr, SyntaxKind, SyntaxText, TextRange, TextUnit,
+    AstNode, SmolStr, SourceFile, SyntaxKind, SyntaxText, TextRange, TextUnit,
 };
 use rowan::{GreenNodeBuilder, TransparentNewType};
 

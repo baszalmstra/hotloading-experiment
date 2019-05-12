@@ -1,8 +1,8 @@
 extern crate mun_syntax;
 
+use mun_syntax::{AstNode, SourceFile};
 use std::{fmt::Write, path::PathBuf};
 use test_utils::{dir_tests, project_dir};
-use mun_syntax::{SourceFile, AstNode};
 
 #[test]
 fn lexer_tests() {

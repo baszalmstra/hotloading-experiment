@@ -4,7 +4,7 @@ pub(super) fn param_list(p: &mut Parser) {
     list(p)
 }
 
-fn list(p:&mut Parser) {
+fn list(p: &mut Parser) {
     assert!(p.matches(L_PAREN));
     let m = p.start();
     p.bump();

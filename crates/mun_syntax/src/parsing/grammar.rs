@@ -1,12 +1,12 @@
-mod expressions;
 mod declarations;
+mod expressions;
 mod params;
 mod types;
 
 use super::{
-    parser::{Marker, CompletedMarker, Parser},
+    parser::{CompletedMarker, Marker, Parser},
+    token_set::TokenSet,
     SyntaxKind::{self, *},
-    token_set::TokenSet
 };
 
 pub(crate) fn root(p: &mut Parser) {
@@ -39,7 +39,7 @@ fn name_ref(p: &mut Parser) {
     }
 }
 
-fn opt_visibility(p:&mut Parser) -> bool {
+fn opt_visibility(p: &mut Parser) -> bool {
     if p.matches(EXPORT_KW) {
         let m = p.start();
         p.bump();

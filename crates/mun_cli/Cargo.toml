@@ -1,0 +1,13 @@
+[package]
+name = "mun_cli"
+version = "0.1.0"
+authors = ["Bas Zalmstra <zalmstra.bas@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+clap = "2.32.0"
+failure = "0.1.4"
+mun_syntax = { path="../mun_syntax" }
+mun_codegen = { path="../mun_codegen" }
+colored = "1.8"
+superslice = "1"

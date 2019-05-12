@@ -1,19 +1,13 @@
 use super::*;
 
-pub(crate) const LITERAL_FIRST: TokenSet = token_set![
-    TRUE_KW,
-    FALSE_KW,
-    INT_NUMBER,
-    FLOAT_NUMBER,
-    STRING
-];
+pub(crate) const LITERAL_FIRST: TokenSet =
+    token_set![TRUE_KW, FALSE_KW, INT_NUMBER, FLOAT_NUMBER, STRING];
 
 const EXPR_RECOVERY_SET: TokenSet = token_set![LET_KW];
 
 const ATOM_EXPR_FIRST: TokenSet = LITERAL_FIRST.union(token_set![IDENT, L_PAREN]);
 
-const LHS_FIRST: TokenSet =
-    ATOM_EXPR_FIRST.union(token_set![NOT_KW, MINUS]);
+const LHS_FIRST: TokenSet = ATOM_EXPR_FIRST.union(token_set![NOT_KW, MINUS]);
 
 const EXPR_FIRST: TokenSet = LHS_FIRST;
 
@@ -63,18 +57,18 @@ pub(super) fn stmt(p: &mut Parser) {
     }
 }
 
-fn let_stmt(p: &mut Parser, m:Marker) {
+fn let_stmt(p: &mut Parser, m: Marker) {
     assert!(p.matches(LET_KW));
     p.bump();
     name(p);
     if p.matches(COLON) {
         types::ascription(p);
     }
-    if p.eat(EQ ) {
+    if p.eat(EQ) {
         expressions::expr(p);
     }
 
-    p.eat(SEMI);    // Semicolon at the end of statement belongs to the statement
+    p.eat(SEMI); // Semicolon at the end of statement belongs to the statement
     m.complete(p, LET_STMT);
 }
 
@@ -90,7 +84,7 @@ fn expr_bp(p: &mut Parser, mut bp: u8) -> Option<CompletedMarker> {
     // Parse left hand side of the expression
     let mut lhs = match lhs(p) {
         Some(lhs) => lhs,
-        None => return None
+        None => return None,
     };
 
     loop {
@@ -119,7 +113,7 @@ enum Op {
     Composite(SyntaxKind, u8),
 }
 
-fn current_op(p:&Parser) -> (u8, Op)  {
+fn current_op(p: &Parser) -> (u8, Op) {
     if let Some(t) = p.current2() {
         match t {
             (PLUS, EQ) => return (1, Op::Composite(PLUSEQ, 2)),
@@ -130,7 +124,7 @@ fn current_op(p:&Parser) -> (u8, Op)  {
             (PERCENT, EQ) => return (1, Op::Composite(PERCENTEQ, 2)),
             (LT, EQ) => return (5, Op::Composite(LTEQ, 2)),
             (GT, EQ) => return (5, Op::Composite(GTEQ, 2)),
-            _ => ()
+            _ => (),
         }
     }
 
@@ -148,14 +142,14 @@ fn current_op(p:&Parser) -> (u8, Op)  {
 fn lhs(p: &mut Parser) -> Option<CompletedMarker> {
     let m;
     let kind = match p.current() {
-        MINUS|NOT_KW => {
+        MINUS | NOT_KW => {
             m = p.start();
             p.bump();
             PREFIX_EXPR
-        },
+        }
         _ => {
             let lhs = atom_expr(p)?;
-            return Some(postfix_expr(p, lhs))
+            return Some(postfix_expr(p, lhs));
         }
     };
     expr_bp(p, 255);
@@ -166,7 +160,7 @@ fn postfix_expr(p: &mut Parser, mut lhs: CompletedMarker) -> CompletedMarker {
     loop {
         lhs = match p.current() {
             L_PAREN => call_expr(p, lhs),
-            _ => break
+            _ => break,
         }
     }
     lhs

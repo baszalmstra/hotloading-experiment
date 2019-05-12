@@ -4,12 +4,11 @@
 ///! The `TreeSink` trait is the bridge between the parser and the tree builder: the parses
 ///! produces a stream of events like `start node`, `finish node` and `TreeSink` converts
 ///! this stream to a real tree.
-
 use std::mem;
 
 use crate::{
+    parsing::{ParseError, TreeSink},
     SyntaxKind::{self, *},
-    parsing::{ParseError, TreeSink}
 };
 
 /// `Parser` produces a flat list of `Events`'s. They are converted to a tree structure in a
@@ -23,7 +22,7 @@ pub(crate) enum Event {
     /// All tokens between a `Start` and a `Finish` become the children of the respective node.
     Start {
         kind: SyntaxKind,
-        forward_parent: Option<u32>
+        forward_parent: Option<u32>,
     },
 
     /// Completes the previous `Start` event
@@ -39,12 +38,17 @@ pub(crate) enum Event {
     },
 
     Error {
-        msg: ParseError
-    }
+        msg: ParseError,
+    },
 }
 
 impl Event {
-    pub(crate) fn tombstone() -> Self { Event::Start { kind: TOMBSTONE, forward_parent: None } }
+    pub(crate) fn tombstone() -> Self {
+        Event::Start {
+            kind: TOMBSTONE,
+            forward_parent: None,
+        }
+    }
 }
 
 pub(super) fn process(sink: &mut dyn TreeSink, mut events: Vec<Event>) {
@@ -53,21 +57,29 @@ pub(super) fn process(sink: &mut dyn TreeSink, mut events: Vec<Event>) {
     for i in 0..events.len() {
         for i in 0..events.len() {
             match mem::replace(&mut events[i], Event::tombstone()) {
-                Event::Start { kind: TOMBSTONE, .. } => (),
-                Event::Start { kind, forward_parent } => {
+                Event::Start {
+                    kind: TOMBSTONE, ..
+                } => (),
+                Event::Start {
+                    kind,
+                    forward_parent,
+                } => {
                     forward_parents.push(kind);
                     let mut idx = i;
                     let mut fp = forward_parent;
                     while let Some(fwd) = fp {
                         idx += fwd as usize;
                         fp = match mem::replace(&mut events[idx], Event::tombstone()) {
-                            Event::Start { kind, forward_parent } => {
+                            Event::Start {
+                                kind,
+                                forward_parent,
+                            } => {
                                 if kind != TOMBSTONE {
                                     forward_parents.push(kind);
                                 }
                                 forward_parent
                             }
-                            _ => unreachable!()
+                            _ => unreachable!(),
                         }
                     }
 
@@ -78,8 +90,8 @@ pub(super) fn process(sink: &mut dyn TreeSink, mut events: Vec<Event>) {
                 Event::Finish => sink.finish_node(),
                 Event::Token { kind, n_raw_tokens } => {
                     sink.token(kind, n_raw_tokens);
-                },
-                Event::Error { msg } => sink.error(msg)
+                }
+                Event::Error { msg } => sink.error(msg),
             }
         }
     }

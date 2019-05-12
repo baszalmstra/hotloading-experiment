@@ -1,8 +1,6 @@
 use super::*;
 
-pub(super) const DECLARATION_RECOVERY_SET: TokenSet = token_set![
-    FUNCTION_KW, EXPORT_KW
-];
+pub(super) const DECLARATION_RECOVERY_SET: TokenSet = token_set![FUNCTION_KW, EXPORT_KW];
 
 pub(super) fn mod_contents(p: &mut Parser) {
     while !p.matches(EOF) {
@@ -14,7 +12,7 @@ pub(super) fn declaration(p: &mut Parser) {
     let m = p.start();
     let m = match maybe_declaration(p, m) {
         Ok(()) => return,
-        Err(m) => m
+        Err(m) => m,
     };
 
     m.abandon(p);
@@ -40,7 +38,7 @@ pub(super) fn maybe_declaration(p: &mut Parser, m: Marker) -> Result<(), Marker>
             fn_def(p);
             m.complete(p, FUNCTION_DEF);
         }
-        _ => return Err(m)
+        _ => return Err(m),
     }
     Ok(())
 }

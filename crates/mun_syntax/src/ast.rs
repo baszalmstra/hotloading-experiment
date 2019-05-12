@@ -3,10 +3,7 @@ mod traits;
 
 use crate::{syntax_node::SyntaxNodeChildren, SmolStr, SyntaxNode, SyntaxToken, TreeArc};
 
-pub use self::{
-    generated::*,
-    traits::*
-};
+pub use self::{generated::*, traits::*};
 
 use std::marker::PhantomData;
 

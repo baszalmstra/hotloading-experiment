@@ -112,4 +112,22 @@ There is no type checking whatsoever yet
 
 ### Code generation
 
-There is not code generation as of yet.   
+There is not code generation as of yet.  
+
+## Large todo's
+
+### Generate code
+
+Now that we got actual parsing we need to be able to generate some form of code.
+
+#### Type inferencing
+
+We'll have to add type inferencing as soon as we can. 
+
+### Execute mun
+
+Basically be able to run Mun code
+
+### Embed API
+
+Write and implement the API

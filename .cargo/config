@@ -1,0 +1,2 @@
+[alias]
+cli = "run --bin mun_cli"

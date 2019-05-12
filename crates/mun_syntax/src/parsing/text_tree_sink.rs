@@ -142,14 +142,13 @@ fn n_attached_trivias<'a>(
     trivias: impl Iterator<Item = (SyntaxKind, &'a str)>,
 ) -> usize {
     match kind {
-        FUNCTION_DEF => {
-            trivias.take_while(|(kind, text)| match kind {
+        FUNCTION_DEF => trivias
+            .take_while(|(kind, text)| match kind {
                 WHITESPACE => !text.contains("\n\n"),
                 COMMENT => true,
-                _ => unreachable!()
+                _ => unreachable!(),
             })
-            .count()
-        }
+            .count(),
         _ => 0,
     }
 }

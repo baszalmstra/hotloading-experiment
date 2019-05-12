@@ -7,10 +7,8 @@
 //!     - graceful handling of errors
 //!     - full-fidelity representation (*any* text can be precisely represented as
 //!       a syntax tree)
-//!
-//!
 
-mod ast;
+pub mod ast;
 mod parsing;
 mod syntax_error;
 mod syntax_kind;
@@ -32,8 +30,8 @@ pub use rowan::{SmolStr, TextRange, TextUnit};
 
 /// `SourceFile` represents a parse tree for a single Mun file.
 pub use crate::ast::SourceFile;
-use rowan::GreenNode;
 use crate::ast::{FunctionDef, NameOwner};
+use rowan::GreenNode;
 
 impl SourceFile {
     fn new(green: GreenNode, errors: Vec<SyntaxError>) -> TreeArc<SourceFile> {
@@ -56,7 +54,7 @@ impl SourceFile {
 /// This test does not assert anything and instead just shows off the crate's API.
 #[test]
 fn api_walkthrough() {
-    use ast::{ModuleItemOwner};
+    use ast::ModuleItemOwner;
 
     let source_code = "
         function foo() {
@@ -75,7 +73,7 @@ fn api_walkthrough() {
     for item in file.items() {
         match item.kind() {
             ast::ModuleItemKind::FunctionDef(f) => func = Some(f),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
