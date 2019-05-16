@@ -18,7 +18,7 @@ mod syntax_text;
 pub use crate::{
     ast::AstNode,
     parsing::{tokenize, Token},
-    syntax_error::{Location, SyntaxError, SyntaxErrorKind},
+    syntax_error::{SyntaxError, SyntaxErrorKind},
     syntax_kind::SyntaxKind,
     syntax_node::{
         Direction, InsertPosition, SyntaxElement, SyntaxNode, SyntaxToken, SyntaxTreeBuilder,

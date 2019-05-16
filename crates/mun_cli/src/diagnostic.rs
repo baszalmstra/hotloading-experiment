@@ -1,29 +1,19 @@
 use crate::line_index::{LineCol, LineIndex};
 use colored::*;
-use mun_syntax::SyntaxError;
+use mun_errors::Diagnostic;
 use std::fmt;
 
-pub struct Diagnostic {
-    line_col: LineCol,
-    err: SyntaxError,
+pub trait Emit {
+    fn emit(&self, line_index: &LineIndex);
 }
 
-impl Diagnostic {
-    pub fn new(line_index: &LineIndex, err: SyntaxError) -> Diagnostic {
-        let line_col = line_index.line_col(err.offset());
-        Diagnostic { line_col, err }
-    }
-}
-
-impl fmt::Display for Diagnostic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{} ({}:{}): {}",
-            "error".red(),
-            self.line_col.line + 1,
-            self.line_col.col,
-            self.err
-        )
+impl Emit for Diagnostic {
+    fn emit(&self, line_index: &LineIndex) {
+        let line_col = line_index.line_col(self.loc.offset());
+        println!("{} ({}:{}): {}",
+                 "error".red(),
+                 line_col.line + 1,
+                 line_col.col,
+                 self.message);
     }
 }

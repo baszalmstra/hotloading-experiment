@@ -9,5 +9,6 @@ linefeed = "0.6"
 failure = "0.1.4"
 mun_syntax = { path="../mun_syntax" }
 mun_codegen = { path="../mun_codegen" }
+mun_errors = { path="../mun_errors" }
 colored = "1.8"
 superslice = "1"

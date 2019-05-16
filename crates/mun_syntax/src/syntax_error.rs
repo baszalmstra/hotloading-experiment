@@ -1,29 +1,12 @@
 use crate::{parsing::ParseError, TextRange, TextUnit};
 use std::cmp::min;
 use std::fmt;
+use mun_errors::{Location, Diagnostic};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SyntaxError {
     kind: SyntaxErrorKind,
     location: Location,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Location {
-    Offset(TextUnit),
-    Range(TextRange),
-}
-
-impl Into<Location> for TextUnit {
-    fn into(self) -> Location {
-        Location::Offset(self)
-    }
-}
-
-impl Into<Location> for TextRange {
-    fn into(self) -> Location {
-        Location::Range(self)
-    }
 }
 
 impl SyntaxError {
@@ -40,21 +23,6 @@ impl SyntaxError {
 
     pub fn location(&self) -> Location {
         self.location.clone()
-    }
-
-    pub fn offset(&self) -> TextUnit {
-        match self.location {
-            Location::Offset(offset) => offset,
-            Location::Range(range) => range.start(),
-        }
-    }
-
-    pub fn add_offset(mut self, plus_offset: TextUnit, minus_offset: TextUnit) -> SyntaxError {
-        self.location = match self.location {
-            Location::Range(range) => Location::Range(range + plus_offset - minus_offset),
-            Location::Offset(offset) => Location::Offset(offset + plus_offset - minus_offset),
-        };
-        self
     }
 }
 
@@ -74,6 +42,16 @@ impl fmt::Display for SyntaxErrorKind {
         use self::SyntaxErrorKind::*;
         match self {
             ParseError(msg) => write!(f, "{}", msg.0),
+        }
+    }
+}
+
+impl Into<mun_errors::Diagnostic> for SyntaxError {
+    fn into(self) -> mun_errors::Diagnostic {
+        Diagnostic {
+            level: mun_errors::Level::Error,
+            loc: self.location,
+            message: format!("{}", self.kind)
         }
     }
 }

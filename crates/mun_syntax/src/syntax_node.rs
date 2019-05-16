@@ -257,7 +257,7 @@ impl SyntaxNode {
             Some(file) => file.errors(),
             None => self.root_data().to_vec(),
         };
-        errors.sort_by_key(|e| e.offset());
+        errors.sort_by_key(|e| e.location().offset());
         let mut err_pos = 0;
         let mut level = 0;
         let mut buf = String::new();
@@ -278,7 +278,7 @@ impl SyntaxNode {
                         SyntaxElement::Token(token) => {
                             writeln!(buf, "{:?}", token).unwrap();
                             let off = token.range().end();
-                            while err_pos < errors.len() && errors[err_pos].offset() <= off {
+                            while err_pos < errors.len() && errors[err_pos].location().offset() <= off {
                                 indent!();
                                 writeln!(buf, "err: `{}`", errors[err_pos]).unwrap();
                                 err_pos += 1;
