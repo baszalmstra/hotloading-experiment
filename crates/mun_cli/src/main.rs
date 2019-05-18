@@ -51,7 +51,7 @@ fn main() -> Result<(), failure::Error> {
                         }
                     } else {
                         for function in result.functions.values() {
-                            println!("{}", function.print_to_string());
+                            println!("{}", function.print_to_string().to_string());
                         }
                     }
                 }

@@ -55,5 +55,9 @@ pub(super) fn fn_def(p: &mut Parser) {
         p.error("expected function arguments")
     }
 
+    if p.matches(COLON) {
+        types::ascription(p);
+    }
+
     expressions::block(p);
 }

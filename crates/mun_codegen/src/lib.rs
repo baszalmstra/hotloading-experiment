@@ -1,5 +1,8 @@
 pub use inkwell;
 
+mod function;
+mod types;
+
 use inkwell::{
     values, builder, module
 };
@@ -7,7 +10,7 @@ use inkwell::{
 use mun_syntax::ast;
 use mun_errors::Diagnostic;
 use std::collections::HashMap;
-use mun_syntax::ast::FunctionDefOwner;
+use mun_syntax::ast::{FunctionDefOwner, FunctionDef};
 
 pub struct CodeGenResult {
     pub functions: HashMap<String, values::FunctionValue>,
@@ -15,13 +18,13 @@ pub struct CodeGenResult {
 }
 
 pub fn code_gen<'a>(sourceFile:&ast::SourceFile, module: &'a module::Module, builder: &'a builder::Builder) -> CodeGenResult {
-    let builder = Context::new(module, builder);
+    let mut context = Context::new(module, builder);
 
     for function in sourceFile.functions() {
-
+        function::emit(function, &mut context);
     }
 
-    builder.complete()
+    context.complete()
 }
 
 struct Context<'a> {
@@ -44,4 +47,8 @@ impl<'a> Context<'a> {
             functions: self.functions
         }
     }
+}
+
+trait IRCodeGen {
+    fn generate(&self, context: &mut Context);
 }
