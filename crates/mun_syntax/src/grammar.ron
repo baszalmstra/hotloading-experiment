@@ -128,7 +128,8 @@ Grammar(
         "FunctionDef": (
             traits: [
                 "NameOwner",
-                "VisibilityOwner"
+                "VisibilityOwner",
+                "TypeAscriptionOwner"
             ],
             options: [ "ParamList", ["body", "Block"] ],
         ),

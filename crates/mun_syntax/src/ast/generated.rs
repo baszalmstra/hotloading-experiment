@@ -10,11 +10,11 @@
 use rowan::TransparentNewType;
 
 use crate::{
+    SyntaxNode, SyntaxKind::*,
+    syntax_node::{TreeArc},
     ast::{self, AstNode},
-    syntax_node::TreeArc,
-    SyntaxKind::*,
-    SyntaxNode,
 };
+
 
 // ArgList
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -34,23 +34,21 @@ impl AstNode for ArgList {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for ArgList {
     type Owned = TreeArc<ArgList>;
-    fn to_owned(&self) -> TreeArc<ArgList> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<ArgList> { TreeArc::cast(self.syntax.to_owned()) }
 }
+
 
 impl ArgList {
     pub fn args(&self) -> impl Iterator<Item = &Expr> {
         super::children(self)
     }
 }
+
 
 // BinExpr
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -70,19 +68,17 @@ impl AstNode for BinExpr {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for BinExpr {
     type Owned = TreeArc<BinExpr>;
-    fn to_owned(&self) -> TreeArc<BinExpr> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<BinExpr> { TreeArc::cast(self.syntax.to_owned()) }
 }
 
+
 impl BinExpr {}
+
 
 // Block
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -102,17 +98,14 @@ impl AstNode for Block {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for Block {
     type Owned = TreeArc<Block>;
-    fn to_owned(&self) -> TreeArc<Block> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<Block> { TreeArc::cast(self.syntax.to_owned()) }
 }
+
 
 impl Block {
     pub fn statements(&self) -> impl Iterator<Item = &Stmt> {
@@ -123,6 +116,7 @@ impl Block {
         super::child_opt(self)
     }
 }
+
 
 // CallExpr
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -142,23 +136,21 @@ impl AstNode for CallExpr {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for CallExpr {
     type Owned = TreeArc<CallExpr>;
-    fn to_owned(&self) -> TreeArc<CallExpr> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<CallExpr> { TreeArc::cast(self.syntax.to_owned()) }
 }
+
 
 impl CallExpr {
     pub fn expr(&self) -> Option<&Expr> {
         super::child_opt(self)
     }
 }
+
 
 // Expr
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -171,7 +163,7 @@ unsafe impl TransparentNewType for Expr {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ExprKind<'a> {
+pub enum ExprKind<'a>{
     Literal(&'a Literal),
     PrefixExpr(&'a PrefixExpr),
     BinExpr(&'a BinExpr),
@@ -213,22 +205,22 @@ impl<'a> From<&'a CallExpr> for &'a Expr {
 impl AstNode for Expr {
     fn cast(syntax: &SyntaxNode) -> Option<&Self> {
         match syntax.kind() {
-            LITERAL | PREFIX_EXPR | BIN_EXPR | NAME_REF | PAREN_EXPR | CALL_EXPR => {
-                Some(Expr::from_repr(syntax.into_repr()))
-            }
+            
+            | LITERAL
+            | PREFIX_EXPR
+            | BIN_EXPR
+            | NAME_REF
+            | PAREN_EXPR
+            | CALL_EXPR => Some(Expr::from_repr(syntax.into_repr())),
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for Expr {
     type Owned = TreeArc<Expr>;
-    fn to_owned(&self) -> TreeArc<Expr> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<Expr> { TreeArc::cast(self.syntax.to_owned()) }
 }
 
 impl Expr {
@@ -246,6 +238,7 @@ impl Expr {
 }
 
 impl Expr {}
+
 
 // ExprStmt
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -265,23 +258,21 @@ impl AstNode for ExprStmt {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for ExprStmt {
     type Owned = TreeArc<ExprStmt>;
-    fn to_owned(&self) -> TreeArc<ExprStmt> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<ExprStmt> { TreeArc::cast(self.syntax.to_owned()) }
 }
+
 
 impl ExprStmt {
     pub fn expr(&self) -> Option<&Expr> {
         super::child_opt(self)
     }
 }
+
 
 // FunctionDef
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -301,20 +292,18 @@ impl AstNode for FunctionDef {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for FunctionDef {
     type Owned = TreeArc<FunctionDef>;
-    fn to_owned(&self) -> TreeArc<FunctionDef> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<FunctionDef> { TreeArc::cast(self.syntax.to_owned()) }
 }
+
 
 impl ast::NameOwner for FunctionDef {}
 impl ast::VisibilityOwner for FunctionDef {}
+impl ast::TypeAscriptionOwner for FunctionDef {}
 impl FunctionDef {
     pub fn param_list(&self) -> Option<&ParamList> {
         super::child_opt(self)
@@ -324,6 +313,7 @@ impl FunctionDef {
         super::child_opt(self)
     }
 }
+
 
 // LetStmt
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -343,21 +333,19 @@ impl AstNode for LetStmt {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for LetStmt {
     type Owned = TreeArc<LetStmt>;
-    fn to_owned(&self) -> TreeArc<LetStmt> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<LetStmt> { TreeArc::cast(self.syntax.to_owned()) }
 }
+
 
 impl ast::NameOwner for LetStmt {}
 impl ast::TypeAscriptionOwner for LetStmt {}
 impl LetStmt {}
+
 
 // Literal
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -377,19 +365,17 @@ impl AstNode for Literal {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for Literal {
     type Owned = TreeArc<Literal>;
-    fn to_owned(&self) -> TreeArc<Literal> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<Literal> { TreeArc::cast(self.syntax.to_owned()) }
 }
 
+
 impl Literal {}
+
 
 // ModuleItem
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -402,7 +388,7 @@ unsafe impl TransparentNewType for ModuleItem {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ModuleItemKind<'a> {
+pub enum ModuleItemKind<'a>{
     FunctionDef(&'a FunctionDef),
 }
 impl<'a> From<&'a FunctionDef> for &'a ModuleItem {
@@ -414,20 +400,17 @@ impl<'a> From<&'a FunctionDef> for &'a ModuleItem {
 impl AstNode for ModuleItem {
     fn cast(syntax: &SyntaxNode) -> Option<&Self> {
         match syntax.kind() {
-            FUNCTION_DEF => Some(ModuleItem::from_repr(syntax.into_repr())),
+            
+            | FUNCTION_DEF => Some(ModuleItem::from_repr(syntax.into_repr())),
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for ModuleItem {
     type Owned = TreeArc<ModuleItem>;
-    fn to_owned(&self) -> TreeArc<ModuleItem> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<ModuleItem> { TreeArc::cast(self.syntax.to_owned()) }
 }
 
 impl ModuleItem {
@@ -440,6 +423,7 @@ impl ModuleItem {
 }
 
 impl ModuleItem {}
+
 
 // Name
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -459,19 +443,17 @@ impl AstNode for Name {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for Name {
     type Owned = TreeArc<Name>;
-    fn to_owned(&self) -> TreeArc<Name> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<Name> { TreeArc::cast(self.syntax.to_owned()) }
 }
 
+
 impl Name {}
+
 
 // NameRef
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -491,19 +473,17 @@ impl AstNode for NameRef {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for NameRef {
     type Owned = TreeArc<NameRef>;
-    fn to_owned(&self) -> TreeArc<NameRef> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<NameRef> { TreeArc::cast(self.syntax.to_owned()) }
 }
 
+
 impl NameRef {}
+
 
 // Param
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -523,21 +503,19 @@ impl AstNode for Param {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for Param {
     type Owned = TreeArc<Param>;
-    fn to_owned(&self) -> TreeArc<Param> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<Param> { TreeArc::cast(self.syntax.to_owned()) }
 }
+
 
 impl ast::NameOwner for Param {}
 impl ast::TypeAscriptionOwner for Param {}
 impl Param {}
+
 
 // ParamList
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -557,23 +535,21 @@ impl AstNode for ParamList {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for ParamList {
     type Owned = TreeArc<ParamList>;
-    fn to_owned(&self) -> TreeArc<ParamList> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<ParamList> { TreeArc::cast(self.syntax.to_owned()) }
 }
+
 
 impl ParamList {
     pub fn params(&self) -> impl Iterator<Item = &Param> {
         super::children(self)
     }
 }
+
 
 // ParenExpr
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -593,23 +569,21 @@ impl AstNode for ParenExpr {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for ParenExpr {
     type Owned = TreeArc<ParenExpr>;
-    fn to_owned(&self) -> TreeArc<ParenExpr> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<ParenExpr> { TreeArc::cast(self.syntax.to_owned()) }
 }
+
 
 impl ParenExpr {
     pub fn expr(&self) -> Option<&Expr> {
         super::child_opt(self)
     }
 }
+
 
 // PrefixExpr
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -629,23 +603,21 @@ impl AstNode for PrefixExpr {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for PrefixExpr {
     type Owned = TreeArc<PrefixExpr>;
-    fn to_owned(&self) -> TreeArc<PrefixExpr> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<PrefixExpr> { TreeArc::cast(self.syntax.to_owned()) }
 }
+
 
 impl PrefixExpr {
     pub fn expr(&self) -> Option<&Expr> {
         super::child_opt(self)
     }
 }
+
 
 // SourceFile
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -665,21 +637,19 @@ impl AstNode for SourceFile {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for SourceFile {
     type Owned = TreeArc<SourceFile>;
-    fn to_owned(&self) -> TreeArc<SourceFile> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<SourceFile> { TreeArc::cast(self.syntax.to_owned()) }
 }
+
 
 impl ast::ModuleItemOwner for SourceFile {}
 impl ast::FunctionDefOwner for SourceFile {}
 impl SourceFile {}
+
 
 // Stmt
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -692,7 +662,7 @@ unsafe impl TransparentNewType for Stmt {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum StmtKind<'a> {
+pub enum StmtKind<'a>{
     LetStmt(&'a LetStmt),
     ExprStmt(&'a ExprStmt),
 }
@@ -710,20 +680,18 @@ impl<'a> From<&'a ExprStmt> for &'a Stmt {
 impl AstNode for Stmt {
     fn cast(syntax: &SyntaxNode) -> Option<&Self> {
         match syntax.kind() {
-            LET_STMT | EXPR_STMT => Some(Stmt::from_repr(syntax.into_repr())),
+            
+            | LET_STMT
+            | EXPR_STMT => Some(Stmt::from_repr(syntax.into_repr())),
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for Stmt {
     type Owned = TreeArc<Stmt>;
-    fn to_owned(&self) -> TreeArc<Stmt> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<Stmt> { TreeArc::cast(self.syntax.to_owned()) }
 }
 
 impl Stmt {
@@ -738,6 +706,7 @@ impl Stmt {
 
 impl Stmt {}
 
+
 // TypeRef
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[repr(transparent)]
@@ -749,7 +718,7 @@ unsafe impl TransparentNewType for TypeRef {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TypeRefKind<'a> {
+pub enum TypeRefKind<'a>{
     NameRef(&'a NameRef),
 }
 impl<'a> From<&'a NameRef> for &'a TypeRef {
@@ -761,20 +730,17 @@ impl<'a> From<&'a NameRef> for &'a TypeRef {
 impl AstNode for TypeRef {
     fn cast(syntax: &SyntaxNode) -> Option<&Self> {
         match syntax.kind() {
-            NAME_REF => Some(TypeRef::from_repr(syntax.into_repr())),
+            
+            | NAME_REF => Some(TypeRef::from_repr(syntax.into_repr())),
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for TypeRef {
     type Owned = TreeArc<TypeRef>;
-    fn to_owned(&self) -> TreeArc<TypeRef> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<TypeRef> { TreeArc::cast(self.syntax.to_owned()) }
 }
 
 impl TypeRef {
@@ -787,6 +753,7 @@ impl TypeRef {
 }
 
 impl TypeRef {}
+
 
 // Visibility
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -806,16 +773,14 @@ impl AstNode for Visibility {
             _ => None,
         }
     }
-    fn syntax(&self) -> &SyntaxNode {
-        &self.syntax
-    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 impl ToOwned for Visibility {
     type Owned = TreeArc<Visibility>;
-    fn to_owned(&self) -> TreeArc<Visibility> {
-        TreeArc::cast(self.syntax.to_owned())
-    }
+    fn to_owned(&self) -> TreeArc<Visibility> { TreeArc::cast(self.syntax.to_owned()) }
 }
 
+
 impl Visibility {}
+

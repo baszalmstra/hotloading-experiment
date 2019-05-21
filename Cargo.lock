@@ -437,6 +437,7 @@ dependencies = [
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "linefeed 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mun_codegen 0.1.0",
+ "mun_errors 0.1.0",
  "mun_syntax 0.1.0",
  "superslice 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -445,7 +446,17 @@ dependencies = [
 name = "mun_codegen"
 version = "0.1.0"
 dependencies = [
+ "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "inkwell 0.1.0 (git+https://github.com/TheDan64/inkwell?branch=llvm7-0)",
+ "mun_errors 0.1.0",
+ "mun_syntax 0.1.0",
+]
+
+[[package]]
+name = "mun_errors"
+version = "0.1.0"
+dependencies = [
+ "text_unit 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -457,6 +468,7 @@ name = "mun_syntax"
 version = "0.1.0"
 dependencies = [
  "drop_bomb 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mun_errors 0.1.0",
  "rowan 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "smol_str 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "test_utils 0.1.0",
