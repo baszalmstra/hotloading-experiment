@@ -421,6 +421,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mun"
+version = "0.1.0"
+dependencies = [
+ "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mun_compiler 0.1.0",
+]
+
+[[package]]
 name = "mun_cli"
 version = "0.1.0"
 dependencies = [
@@ -438,6 +447,10 @@ version = "0.1.0"
 dependencies = [
  "inkwell 0.1.0 (git+https://github.com/TheDan64/inkwell?branch=llvm7-0)",
 ]
+
+[[package]]
+name = "mun_compiler"
+version = "0.1.0"
 
 [[package]]
 name = "mun_syntax"
