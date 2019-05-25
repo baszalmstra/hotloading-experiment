@@ -16,7 +16,7 @@ fn main() -> Result<(), failure::Error> {
 
     match matches.subcommand() {
         ("build", Some(matches)) => {
-            build(matches)
+            build(matches)?
         }
         _ => unreachable!()
     }
@@ -25,6 +25,9 @@ fn main() -> Result<(), failure::Error> {
 }
 
 /// Build the source file specified
-fn build(matches: &ArgMatches) {
-    let input = matches.value_of("INPUT").unwrap(); // Safe because its a required arg
+fn build(matches: &ArgMatches) -> Result<(), failure::Error> {
+    let options = mun_compiler::CompilerOptions {
+        input: matches.value_of("INPUT").unwrap().into() // Safe because its a required arg
+    };
+    mun_compiler::main(options)
 }

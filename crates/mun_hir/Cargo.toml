@@ -1,0 +1,10 @@
+[package]
+name = "mun_hir"
+version = "0.1.0"
+authors = ["Bas Zalmstra <zalmstra.bas@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+salsa="0.12"
+superslice = "1.0"
+mun_syntax={path="../mun_syntax"}
