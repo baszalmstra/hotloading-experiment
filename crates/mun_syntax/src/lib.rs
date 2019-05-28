@@ -14,6 +14,7 @@ mod syntax_error;
 mod syntax_kind;
 mod syntax_node;
 mod syntax_text;
+mod ptr;
 
 pub use crate::{
     ast::AstNode,
@@ -25,6 +26,7 @@ pub use crate::{
         TreeArc, WalkEvent,
     },
     syntax_text::SyntaxText,
+    ptr::SyntaxNodePtr
 };
 pub use rowan::{SmolStr, TextRange, TextUnit};
 
