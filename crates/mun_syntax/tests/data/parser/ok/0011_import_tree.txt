@@ -1,0 +1,61 @@
+SOURCE_FILE@[0; 56)
+  IMPORT_ITEM@[0; 14)
+    IMPORT_KW@[0; 6) "import"
+    WHITESPACE@[6; 7) " "
+    IMPORT_TREE@[7; 13)
+      PATH@[7; 10)
+        PATH_SEGMENT@[7; 10)
+          NAME_REF@[7; 10)
+            IDENT@[7; 10) "foo"
+      COLONCOLON@[10; 12) "::"
+      STAR@[12; 13) "*"
+    SEMI@[13; 14) ";"
+  WHITESPACE@[14; 15) "\n"
+  IMPORT_ITEM@[15; 30)
+    IMPORT_KW@[15; 21) "import"
+    WHITESPACE@[21; 22) " "
+    IMPORT_TREE@[22; 29)
+      PATH@[22; 25)
+        PATH_SEGMENT@[22; 25)
+          NAME_REF@[22; 25)
+            IDENT@[22; 25) "foo"
+      COLONCOLON@[25; 27) "::"
+      IMPORT_TREE_LIST@[27; 29)
+        L_CURLY@[27; 28) "{"
+        R_CURLY@[28; 29) "}"
+    SEMI@[29; 30) ";"
+  WHITESPACE@[30; 31) "\n"
+  IMPORT_ITEM@[31; 55)
+    IMPORT_KW@[31; 37) "import"
+    WHITESPACE@[37; 38) " "
+    IMPORT_TREE@[38; 54)
+      PATH@[38; 43)
+        PATH_SEGMENT@[38; 43)
+          COLONCOLON@[38; 40) "::"
+          NAME_REF@[40; 43)
+            IDENT@[40; 43) "foo"
+      COLONCOLON@[43; 45) "::"
+      IMPORT_TREE_LIST@[45; 54)
+        L_CURLY@[45; 46) "{"
+        IMPORT_TREE@[46; 47)
+          PATH@[46; 47)
+            PATH_SEGMENT@[46; 47)
+              NAME_REF@[46; 47)
+                IDENT@[46; 47) "a"
+        COMMA@[47; 48) ","
+        WHITESPACE@[48; 49) " "
+        IMPORT_TREE@[49; 50)
+          PATH@[49; 50)
+            PATH_SEGMENT@[49; 50)
+              NAME_REF@[49; 50)
+                IDENT@[49; 50) "b"
+        COMMA@[50; 51) ","
+        WHITESPACE@[51; 52) " "
+        IMPORT_TREE@[52; 53)
+          PATH@[52; 53)
+            PATH_SEGMENT@[52; 53)
+              NAME_REF@[52; 53)
+                IDENT@[52; 53) "c"
+        R_CURLY@[53; 54) "}"
+    SEMI@[54; 55) ";"
+  WHITESPACE@[55; 56) "\n"

@@ -1,0 +1,57 @@
+SOURCE_FILE@[0; 75)
+  IMPORT_ITEM@[0; 17)
+    IMPORT_KW@[0; 6) "import"
+    WHITESPACE@[6; 7) " "
+    IMPORT_TREE@[7; 16)
+      PATH@[7; 16)
+        PATH@[7; 11)
+          PATH_SEGMENT@[7; 11)
+            SELF_KW@[7; 11) "self"
+        COLONCOLON@[11; 13) "::"
+        PATH_SEGMENT@[13; 16)
+          NAME_REF@[13; 16)
+            IDENT@[13; 16) "foo"
+    SEMI@[16; 17) ";"
+  WHITESPACE@[17; 18) "\n"
+  IMPORT_ITEM@[18; 43)
+    IMPORT_KW@[18; 24) "import"
+    WHITESPACE@[24; 25) " "
+    IMPORT_TREE@[25; 42)
+      PATH@[25; 42)
+        PATH@[25; 37)
+          PATH@[25; 30)
+            PATH_SEGMENT@[25; 30)
+              SUPER_KW@[25; 30) "super"
+          COLONCOLON@[30; 32) "::"
+          PATH_SEGMENT@[32; 37)
+            SUPER_KW@[32; 37) "super"
+        COLONCOLON@[37; 39) "::"
+        PATH_SEGMENT@[39; 42)
+          NAME_REF@[39; 42)
+            IDENT@[39; 42) "bar"
+    SEMI@[42; 43) ";"
+  WHITESPACE@[43; 44) "\n"
+  IMPORT_ITEM@[44; 74)
+    IMPORT_KW@[44; 50) "import"
+    WHITESPACE@[50; 51) " "
+    IMPORT_TREE@[51; 73)
+      PATH@[51; 73)
+        PATH@[51; 68)
+          PATH@[51; 61)
+            PATH@[51; 58)
+              PATH_SEGMENT@[51; 58)
+                COLONCOLON@[51; 53) "::"
+                SUPER_KW@[53; 58) "super"
+            COLONCOLON@[58; 60) "::"
+            PATH_SEGMENT@[60; 61)
+              NAME_REF@[60; 61)
+                IDENT@[60; 61) "a"
+          COLONCOLON@[61; 63) "::"
+          PATH_SEGMENT@[63; 68)
+            SUPER_KW@[63; 68) "super"
+        COLONCOLON@[68; 70) "::"
+        PATH_SEGMENT@[70; 73)
+          NAME_REF@[70; 73)
+            IDENT@[70; 73) "bar"
+    SEMI@[73; 74) ";"
+  WHITESPACE@[74; 75) "\n"

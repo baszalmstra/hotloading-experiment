@@ -1,0 +1,2 @@
+import foo as bar;
+import foo::{a as b, ::foo as x};

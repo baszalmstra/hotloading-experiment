@@ -1,0 +1,22 @@
+SOURCE_FILE@[0; 26)
+  IMPORT_ITEM@[0; 11)
+    IMPORT_KW@[0; 6) "import"
+    WHITESPACE@[6; 7) " "
+    IMPORT_TREE@[7; 10)
+      PATH@[7; 10)
+        PATH_SEGMENT@[7; 10)
+          NAME_REF@[7; 10)
+            IDENT@[7; 10) "foo"
+    SEMI@[10; 11) ";"
+  WHITESPACE@[11; 12) "\n"
+  IMPORT_ITEM@[12; 25)
+    IMPORT_KW@[12; 18) "import"
+    WHITESPACE@[18; 19) " "
+    IMPORT_TREE@[19; 24)
+      PATH@[19; 24)
+        PATH_SEGMENT@[19; 24)
+          COLONCOLON@[19; 21) "::"
+          NAME_REF@[21; 24)
+            IDENT@[21; 24) "bar"
+    SEMI@[24; 25) ";"
+  WHITESPACE@[25; 26) "\n"
