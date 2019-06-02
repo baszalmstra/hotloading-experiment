@@ -39,12 +39,22 @@ function internalFunction() {}
 export function exportedFunction() {}
 ```
 
+### `import`
+
+The counterpart to `export` is called `import`. It allows inclusion of exported items from other modules.
+
+```mun
+import path::to::exportedFunction;
+```
+
 ## EBNF
 
 Grammar of the language so far. This is likely outdated and definitely not proper EBNF but it paints a picture.
 
 ```
-SourceFile ::= Declaration*
+SourceFile ::=
+    Declaration*
+  | ImportItem
 Declaration ::= [Visibility] DeclarationElement
 DeclarationElement ::= FunctionDefinition
 Visibility ::= "export"
@@ -88,6 +98,20 @@ Literal =
   | FLOAT_NUMBER
   | "true"
   | "false"
+ImportItem ::= ImportTree ";"
+ImportTree ::=
+    ImportTreeList
+  | Path
+  | Alias
+ImportTreeList ::= "{" ImportTreeListElements "}"
+ImportTreeListElements ::=
+    ImportTree
+  | ImportTree "," ImportTreeListElements
+Path ::=
+    PathSegment
+  | PathSegment "::" Path
+PathSegment ::= NameRef
+Alias ::= ImportTree "as" NameRef
 ```
 
 ## Whats missing?
@@ -97,10 +121,6 @@ A lot, but notably:
 ### `if`/`while`/`for`/`loop`/...
 
 I've not implemented any form of control flow yet.
-
-### `import`/`use`
-
-Using stuff from other modules. I mean we do have `export`, but you can't `import` anything from other modules. 
 
 ### `class`
 
