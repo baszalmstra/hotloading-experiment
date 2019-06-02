@@ -51,6 +51,7 @@ pub enum SyntaxKind {
     DOTDOTEQ,
     COLONCOLON,
     AND_KW,
+    AS_KW,
     BREAK_KW,
     DO_KW,
     ELSE_KW,
@@ -58,10 +59,13 @@ pub enum SyntaxKind {
     FOR_KW,
     FUNCTION_KW,
     IF_KW,
+    IMPORT_KW,
     IN_KW,
     NIL_KW,
     NOT_KW,
     OR_KW,
+    SELF_KW,
+    SUPER_KW,
     RETURN_KW,
     THEN_KW,
     TRUE_KW,
@@ -81,6 +85,7 @@ pub enum SyntaxKind {
     WHITESPACE,
     COMMENT,
     SOURCE_FILE,
+    IMPORT_ITEM,
     FUNCTION_DEF,
     VISIBILITY,
     PARAM_LIST,
@@ -96,6 +101,11 @@ pub enum SyntaxKind {
     NAME,
     NAME_REF,
     BLOCK,
+    IMPORT_TREE,
+    IMPORT_TREE_LIST,
+    PATH,
+    PATH_SEGMENT,
+    ALIAS,
     // Technical kind so that we can cast from u16 safely
     #[doc(hidden)]
     __LAST,
@@ -119,6 +129,7 @@ impl SyntaxKind {
     pub fn is_keyword(self) -> bool {
         match self {
             | AND_KW
+            | AS_KW
             | BREAK_KW
             | DO_KW
             | ELSE_KW
@@ -126,10 +137,13 @@ impl SyntaxKind {
             | FOR_KW
             | FUNCTION_KW
             | IF_KW
+            | IMPORT_KW
             | IN_KW
             | NIL_KW
             | NOT_KW
             | OR_KW
+            | SELF_KW
+            | SUPER_KW
             | RETURN_KW
             | THEN_KW
             | TRUE_KW
@@ -236,6 +250,7 @@ impl SyntaxKind {
                 DOTDOTEQ => &SyntaxInfo { name: "DOTDOTEQ" },
                 COLONCOLON => &SyntaxInfo { name: "COLONCOLON" },
                 AND_KW => &SyntaxInfo { name: "AND_KW" },
+                AS_KW => &SyntaxInfo { name: "AS_KW" },
                 BREAK_KW => &SyntaxInfo { name: "BREAK_KW" },
                 DO_KW => &SyntaxInfo { name: "DO_KW" },
                 ELSE_KW => &SyntaxInfo { name: "ELSE_KW" },
@@ -243,10 +258,13 @@ impl SyntaxKind {
                 FOR_KW => &SyntaxInfo { name: "FOR_KW" },
                 FUNCTION_KW => &SyntaxInfo { name: "FUNCTION_KW" },
                 IF_KW => &SyntaxInfo { name: "IF_KW" },
+                IMPORT_KW => &SyntaxInfo { name: "IMPORT_KW" },
                 IN_KW => &SyntaxInfo { name: "IN_KW" },
                 NIL_KW => &SyntaxInfo { name: "NIL_KW" },
                 NOT_KW => &SyntaxInfo { name: "NOT_KW" },
                 OR_KW => &SyntaxInfo { name: "OR_KW" },
+                SELF_KW => &SyntaxInfo { name: "SELF_KW" },
+                SUPER_KW => &SyntaxInfo { name: "SUPER_KW" },
                 RETURN_KW => &SyntaxInfo { name: "RETURN_KW" },
                 THEN_KW => &SyntaxInfo { name: "THEN_KW" },
                 TRUE_KW => &SyntaxInfo { name: "TRUE_KW" },
@@ -266,6 +284,7 @@ impl SyntaxKind {
                 WHITESPACE => &SyntaxInfo { name: "WHITESPACE" },
                 COMMENT => &SyntaxInfo { name: "COMMENT" },
                 SOURCE_FILE => &SyntaxInfo { name: "SOURCE_FILE" },
+                IMPORT_ITEM => &SyntaxInfo { name: "IMPORT_ITEM" },
                 FUNCTION_DEF => &SyntaxInfo { name: "FUNCTION_DEF" },
                 VISIBILITY => &SyntaxInfo { name: "VISIBILITY" },
                 PARAM_LIST => &SyntaxInfo { name: "PARAM_LIST" },
@@ -281,6 +300,11 @@ impl SyntaxKind {
                 NAME => &SyntaxInfo { name: "NAME" },
                 NAME_REF => &SyntaxInfo { name: "NAME_REF" },
                 BLOCK => &SyntaxInfo { name: "BLOCK" },
+                IMPORT_TREE => &SyntaxInfo { name: "IMPORT_TREE" },
+                IMPORT_TREE_LIST => &SyntaxInfo { name: "IMPORT_TREE_LIST" },
+                PATH => &SyntaxInfo { name: "PATH" },
+                PATH_SEGMENT => &SyntaxInfo { name: "PATH_SEGMENT" },
+                ALIAS => &SyntaxInfo { name: "ALIAS" },
                 TOMBSTONE => &SyntaxInfo { name: "TOMBSTONE" },
                 EOF => &SyntaxInfo { name: "EOF" },
                 __LAST => &SyntaxInfo { name: "__LAST" },
@@ -290,6 +314,7 @@ impl SyntaxKind {
     pub fn from_keyword(ident: &str) -> Option<SyntaxKind> {
             let kw = match ident {
                 "and" => AND_KW,
+                "as" => AS_KW,
                 "break" => BREAK_KW,
                 "do" => DO_KW,
                 "else" => ELSE_KW,
@@ -297,10 +322,13 @@ impl SyntaxKind {
                 "for" => FOR_KW,
                 "function" => FUNCTION_KW,
                 "if" => IF_KW,
+                "import" => IMPORT_KW,
                 "in" => IN_KW,
                 "nil" => NIL_KW,
                 "not" => NOT_KW,
                 "or" => OR_KW,
+                "self" => SELF_KW,
+                "super" => SUPER_KW,
                 "return" => RETURN_KW,
                 "then" => THEN_KW,
                 "true" => TRUE_KW,

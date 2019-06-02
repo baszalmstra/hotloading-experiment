@@ -1,6 +1,7 @@
 mod declarations;
 mod expressions;
 mod params;
+mod paths;
 mod types;
 
 use super::{
@@ -47,6 +48,17 @@ fn opt_visibility(p: &mut Parser) -> bool {
         true
     } else {
         false
+    }
+}
+
+fn opt_alias(p: &mut Parser) {
+    if p.matches(AS_KW) {
+        let m = p.start();
+        p.bump();
+        if !p.eat(UNDERSCORE) {
+            name(p);
+        }
+        m.complete(p, ALIAS);
     }
 }
 

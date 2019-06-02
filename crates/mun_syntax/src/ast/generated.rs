@@ -16,6 +16,37 @@ use crate::{
 };
 
 
+// Alias
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct Alias {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for Alias {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for Alias {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            ALIAS => Some(Alias::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for Alias {
+    type Owned = TreeArc<Alias>;
+    fn to_owned(&self) -> TreeArc<Alias> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl ast::NameOwner for Alias {}
+impl Alias {}
+
+
 // ArgList
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[repr(transparent)]
@@ -315,6 +346,116 @@ impl FunctionDef {
 }
 
 
+// ImportItem
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct ImportItem {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for ImportItem {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for ImportItem {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            IMPORT_ITEM => Some(ImportItem::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for ImportItem {
+    type Owned = TreeArc<ImportItem>;
+    fn to_owned(&self) -> TreeArc<ImportItem> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl ImportItem {
+    pub fn import_tree(&self) -> Option<&ImportTree> {
+        super::child_opt(self)
+    }
+}
+
+
+// ImportTree
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct ImportTree {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for ImportTree {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for ImportTree {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            IMPORT_TREE => Some(ImportTree::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for ImportTree {
+    type Owned = TreeArc<ImportTree>;
+    fn to_owned(&self) -> TreeArc<ImportTree> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl ImportTree {
+    pub fn path(&self) -> Option<&Path> {
+        super::child_opt(self)
+    }
+
+    pub fn import_tree_list(&self) -> Option<&ImportTreeList> {
+        super::child_opt(self)
+    }
+
+    pub fn alias(&self) -> Option<&Alias> {
+        super::child_opt(self)
+    }
+}
+
+
+// ImportTreeList
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct ImportTreeList {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for ImportTreeList {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for ImportTreeList {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            IMPORT_TREE_LIST => Some(ImportTreeList::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for ImportTreeList {
+    type Owned = TreeArc<ImportTreeList>;
+    fn to_owned(&self) -> TreeArc<ImportTreeList> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl ImportTreeList {
+    pub fn import_trees(&self) -> impl Iterator<Item = &ImportTree> {
+        super::children(self)
+    }
+}
+
+
 // LetStmt
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[repr(transparent)]
@@ -390,9 +531,15 @@ unsafe impl TransparentNewType for ModuleItem {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ModuleItemKind<'a>{
     FunctionDef(&'a FunctionDef),
+    ImportItem(&'a ImportItem),
 }
 impl<'a> From<&'a FunctionDef> for &'a ModuleItem {
     fn from(n: &'a FunctionDef) -> &'a ModuleItem {
+        ModuleItem::cast(&n.syntax).unwrap()
+    }
+}
+impl<'a> From<&'a ImportItem> for &'a ModuleItem {
+    fn from(n: &'a ImportItem) -> &'a ModuleItem {
         ModuleItem::cast(&n.syntax).unwrap()
     }
 }
@@ -401,7 +548,8 @@ impl AstNode for ModuleItem {
     fn cast(syntax: &SyntaxNode) -> Option<&Self> {
         match syntax.kind() {
             
-            | FUNCTION_DEF => Some(ModuleItem::from_repr(syntax.into_repr())),
+            | FUNCTION_DEF
+            | IMPORT_ITEM => Some(ModuleItem::from_repr(syntax.into_repr())),
             _ => None,
         }
     }
@@ -417,6 +565,7 @@ impl ModuleItem {
     pub fn kind(&self) -> ModuleItemKind {
         match self.syntax.kind() {
             FUNCTION_DEF => ModuleItemKind::FunctionDef(FunctionDef::cast(&self.syntax).unwrap()),
+            IMPORT_ITEM => ModuleItemKind::ImportItem(ImportItem::cast(&self.syntax).unwrap()),
             _ => unreachable!(),
         }
     }
@@ -580,6 +729,78 @@ impl ToOwned for ParenExpr {
 
 impl ParenExpr {
     pub fn expr(&self) -> Option<&Expr> {
+        super::child_opt(self)
+    }
+}
+
+
+// Path
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct Path {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for Path {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for Path {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            PATH => Some(Path::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for Path {
+    type Owned = TreeArc<Path>;
+    fn to_owned(&self) -> TreeArc<Path> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl Path {
+    pub fn segment(&self) -> Option<&PathSegment> {
+        super::child_opt(self)
+    }
+
+    pub fn qualifier(&self) -> Option<&Path> {
+        super::child_opt(self)
+    }
+}
+
+
+// PathSegment
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct PathSegment {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for PathSegment {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for PathSegment {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            PATH_SEGMENT => Some(PathSegment::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for PathSegment {
+    type Owned = TreeArc<PathSegment>;
+    fn to_owned(&self) -> TreeArc<PathSegment> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl PathSegment {
+    pub fn name_ref(&self) -> Option<&NameRef> {
         super::child_opt(self)
     }
 }

@@ -51,6 +51,7 @@ Grammar(
     keywords: [
         // Original Lua keywords
         "and",
+        "as",
         "break",
         "do",
         "else",
@@ -60,11 +61,14 @@ Grammar(
         "for",
         "function",
         "if",
+        "import",
         "in",
         // "local",     // We use let
         "nil",
         "not",
         "or",
+        "self",
+        "super",
         // "repeat",    // Not supported
         "return",
         "then",
@@ -95,6 +99,8 @@ Grammar(
     nodes: [
         "SOURCE_FILE",
 
+        "IMPORT_ITEM",
+
         "FUNCTION_DEF",
         "VISIBILITY",
 
@@ -116,13 +122,18 @@ Grammar(
         "NAME_REF",
 
         "BLOCK",
+        "IMPORT_TREE",
+        "IMPORT_TREE_LIST",
+        "PATH",
+        "PATH_SEGMENT",
+        "ALIAS",
     ],
     ast: {
         "SourceFile": (
             traits: [ "ModuleItemOwner", "FunctionDefOwner" ],
         ),
         "ModuleItem": (
-            enum: ["FunctionDef"]
+            enum: ["FunctionDef", "ImportItem"]
         ),
         "Visibility": (),
         "FunctionDef": (
@@ -191,6 +202,27 @@ Grammar(
             collections: [
                 ["statements", "Stmt"],
             ],
-        )
+        ),
+        "ImportItem": (
+            options: [ "ImportTree" ],
+        ),
+        "ImportTree": (
+            options: [ "Path", "ImportTreeList", "Alias" ]
+        ),
+        "ImportTreeList": (
+            collections: [["import_trees", "ImportTree"]]
+        ),
+        "Alias": (
+            traits: ["NameOwner"]
+        ),
+        "Path": (
+            options: [
+                ["segment", "PathSegment"],
+                ["qualifier", "Path"],
+            ]
+        ),
+        "PathSegment": (
+            options: [ "NameRef" ]
+        ),
     }
 )
