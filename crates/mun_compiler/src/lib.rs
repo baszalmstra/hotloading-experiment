@@ -13,7 +13,7 @@ pub struct CompilerOptions {
     pub input: PathBuf,
 }
 
-#[salsa::database(mun_hir::SourceDatabaseStorage, mun_hir::DefDatabaseStorage)]
+#[salsa::database(mun_hir::SourceDatabaseStorage, mun_hir::DefDatabaseStorage, mun_hir::HirDatabaseStorage)]
 #[derive(Debug)]
 pub struct CompilerDatabase {
     events: Mutex<Option<Vec<salsa::Event<CompilerDatabase>>>>,

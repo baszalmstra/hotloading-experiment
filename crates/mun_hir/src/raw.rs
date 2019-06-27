@@ -6,6 +6,13 @@ use std::sync::Arc;
 use crate::name::AsName;
 use core::borrow::BorrowMut;
 
+/// `RawItems` are top level file items. `RawItems` do not change on most edits.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct RawItems {
+    definitions: Arena<DefId, DefData>,
+    items: Vec<RawFileItem>,
+}
+
 /// Id for a module definition
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(super) struct DefId(RawId);
@@ -27,14 +34,7 @@ pub(super) enum RawFileItem {
     Definition(DefId),
 }
 
-/// `RawFileItems` are top level file items. `RawFileItems` do not change on most edits.
-#[derive(Debug, Default, PartialEq, Eq)]
-pub struct RawFileItems {
-    definitions: Arena<DefId, DefData>,
-    items: Vec<RawFileItem>,
-}
-
-impl Index<DefId> for RawFileItems {
+impl Index<DefId> for RawItems {
     type Output = DefData;
 
     fn index(&self, index: DefId) -> &Self::Output {
@@ -42,12 +42,16 @@ impl Index<DefId> for RawFileItems {
     }
 }
 
-impl RawFileItems {
-    pub(crate) fn raw_file_items_query(db: &impl DefDatabase, file_id: FileId) -> Arc<RawFileItems> {
-        let mut items = RawFileItems::default();
+impl RawItems {
+    pub(crate) fn raw_file_items_query(db: &impl DefDatabase, file_id: FileId) -> Arc<RawItems> {
+        let mut items = RawItems::default();
+
         let source_file = db.parse(file_id);
         let ast_id_map = db.ast_id_map(file_id);
+
+        // Iterate over all items in the source file
         for item in source_file.items() {
+
             let (kind, name) = match item.kind() {
                 ast::ModuleItemKind::FunctionDef(it) => {
                     (DefKind::Function((*ast_id_map).ast_id(it)), it.name())

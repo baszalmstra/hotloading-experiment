@@ -1,11 +1,8 @@
-use crate::{
-    ast_id::{AstIdMap, ErasedFileAstId},
-    line_index::LineIndex,
-    FileId,
-    RawFileItems
-};
-use mun_syntax::{SourceFile, SyntaxNode, TreeArc};
+use crate::{ast_id::{AstIdMap, ErasedFileAstId}, line_index::LineIndex, FileId, RawItems, ids};
+use mun_syntax::{SourceFile, SyntaxNode, TreeArc, ast};
 use std::sync::Arc;
+use crate::ast_id::AstId;
+use crate::code_model::{FnData, Function};
 
 /// Database which stores all significant input facts: source code and project model. Everything
 /// else in rust-analyzer is derived from these queries.
@@ -26,14 +23,23 @@ pub trait SourceDatabase: std::fmt::Debug {
 
 #[salsa::query_group(DefDatabaseStorage)]
 pub trait DefDatabase: SourceDatabase {
-    #[salsa::invoke(crate::ast_id::AstIdMap::file_item_query)]
-    fn ast_id_to_node(&self, file_id: FileId, ast_id: ErasedFileAstId) -> TreeArc<SyntaxNode>;
-
     #[salsa::invoke(crate::ast_id::AstIdMap::ast_id_map_query)]
     fn ast_id_map(&self, file_id: FileId) -> Arc<AstIdMap>;
 
-    #[salsa::invoke(RawFileItems::raw_file_items_query)]
-    fn raw_items(&self, file_id: FileId) -> Arc<RawFileItems>;
+    #[salsa::invoke(crate::ast_id::AstIdMap::file_item_query)]
+    fn ast_id_to_node(&self, file_id: FileId, ast_id: ErasedFileAstId) -> TreeArc<SyntaxNode>;
+
+    #[salsa::invoke(RawItems::raw_file_items_query)]
+    fn raw_items(&self, file_id: FileId) -> Arc<RawItems>;
+
+    #[salsa::interned]
+    fn intern_function(&self, loc: ids::ItemLoc<ast::FunctionDef>) -> ids::FunctionId;
+}
+
+#[salsa::query_group(HirDatabaseStorage)]
+pub trait HirDatabase: DefDatabase {
+    #[salsa::invoke(crate::FnData::fn_data_query)]
+    fn fn_data(&self, func: Function) -> Arc<FnData>;
 }
 
 fn parse_query(db: &impl SourceDatabase, file_id: FileId) -> TreeArc<SourceFile> {

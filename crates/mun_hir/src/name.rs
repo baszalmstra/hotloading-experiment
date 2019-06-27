@@ -24,6 +24,10 @@ impl Name {
     fn new(text: SmolStr) -> Name {
         Name { text }
     }
+
+    pub(crate) fn missing() -> Name {
+        Name::new("[missing name]".into())
+    }
 }
 
 pub(crate) trait AsName {

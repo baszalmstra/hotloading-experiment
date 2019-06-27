@@ -8,20 +8,28 @@ pub mod line_index;
 mod model;
 mod name;
 mod raw;
+mod code_model;
+mod ids;
 
 use mun_syntax::{TreeArc};
 pub use salsa;
 
 pub use crate::{
-    db::{DefDatabase, DefDatabaseStorage, SourceDatabase, SourceDatabaseStorage},
-    name::Name,
-    raw::RawFileItems
+    db::{HirDatabase, HirDatabaseStorage, DefDatabase, DefDatabaseStorage, SourceDatabase, SourceDatabaseStorage},
+    name::{Name},
+    raw::RawItems,
+    ids::ItemLoc
 };
 
 use crate::{
     arena::{Arena, ArenaId, RawId},
     ast_id::{AstId, AstIdMap, FileAstId},
     line_index::LineIndex,
+    name::{AsName},
+};
+
+pub use self::code_model::{
+    Function, FnData
 };
 
 /// `FileId` is an integer which uniquely identifies a file. File paths are messy and
