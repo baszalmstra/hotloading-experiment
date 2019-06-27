@@ -1,16 +1,27 @@
 //! HIR provides a high-level object oriented access to Mun code.
 
-pub mod line_index;
-mod db;
+#[macro_use]
+mod arena;
 mod ast_id;
+mod db;
+pub mod line_index;
+mod model;
+mod name;
+mod raw;
 
-pub use ::salsa as salsa;
-use std::sync::Arc;
-use mun_syntax::{TreeArc, SourceFile};
-use crate::line_index::LineIndex;
+use mun_syntax::{TreeArc};
+pub use salsa;
 
 pub use crate::{
-    db::{SourceDatabase, SourceDatabaseStorage, DefDatabase, DefDatabaseStorage}
+    db::{DefDatabase, DefDatabaseStorage, SourceDatabase, SourceDatabaseStorage},
+    name::Name,
+    raw::RawFileItems
+};
+
+use crate::{
+    arena::{Arena, ArenaId, RawId},
+    ast_id::{AstId, AstIdMap, FileAstId},
+    line_index::LineIndex,
 };
 
 /// `FileId` is an integer which uniquely identifies a file. File paths are messy and
@@ -19,6 +30,3 @@ pub use crate::{
 /// represented as a pair of deletion/creation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FileId(pub u32);
-
-
-

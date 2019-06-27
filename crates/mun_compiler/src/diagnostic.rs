@@ -1,7 +1,6 @@
-use mun_hir::line_index::{LineCol, LineIndex};
 use colored::*;
 use mun_errors::Diagnostic;
-use std::fmt;
+use mun_hir::line_index::LineIndex;
 
 pub trait Emit {
     fn emit(&self, line_index: &LineIndex);
@@ -10,10 +9,12 @@ pub trait Emit {
 impl Emit for Diagnostic {
     fn emit(&self, line_index: &LineIndex) {
         let line_col = line_index.line_col(self.loc.offset());
-        println!("{} ({}:{}): {}",
-                 "error".red(),
-                 line_col.line + 1,
-                 line_col.col,
-                 self.message);
+        println!(
+            "{} ({}:{}): {}",
+            "error".red(),
+            line_col.line + 1,
+            line_col.col,
+            self.message
+        );
     }
 }

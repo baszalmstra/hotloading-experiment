@@ -1,6 +1,7 @@
 mod generated;
 mod traits;
 mod expr_extensions;
+mod extensions;
 
 use crate::{syntax_node::SyntaxNodeChildren, SmolStr, SyntaxNode, SyntaxToken, TreeArc};
 

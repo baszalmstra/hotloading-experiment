@@ -1,12 +1,11 @@
-use std::sync::Arc;
-use mun_syntax::{
-    TreeArc, SourceFile, SyntaxNode,
-};
 use crate::{
-    FileId,
+    ast_id::{AstIdMap, ErasedFileAstId},
     line_index::LineIndex,
-    ast_id::{AstIdMap, ErasedFileAstId}
+    FileId,
+    RawFileItems
 };
+use mun_syntax::{SourceFile, SyntaxNode, TreeArc};
+use std::sync::Arc;
 
 /// Database which stores all significant input facts: source code and project model. Everything
 /// else in rust-analyzer is derived from these queries.
@@ -32,6 +31,9 @@ pub trait DefDatabase: SourceDatabase {
 
     #[salsa::invoke(crate::ast_id::AstIdMap::ast_id_map_query)]
     fn ast_id_map(&self, file_id: FileId) -> Arc<AstIdMap>;
+
+    #[salsa::invoke(RawFileItems::raw_file_items_query)]
+    fn raw_items(&self, file_id: FileId) -> Arc<RawFileItems>;
 }
 
 fn parse_query(db: &impl SourceDatabase, file_id: FileId) -> TreeArc<SourceFile> {

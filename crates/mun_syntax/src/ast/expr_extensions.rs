@@ -1,5 +1,5 @@
 use super::{children, BinExpr};
-use crate::{ast, SyntaxToken, SyntaxKind, AstNode};
+use crate::{ast, SyntaxToken, SyntaxKind, AstNode, SmolStr};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum BinOp {
