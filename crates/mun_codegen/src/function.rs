@@ -22,7 +22,7 @@ pub(crate) fn emit(fun: &ast::FunctionDef, context: &mut Context) {
         })
         .collect();
 
-    let fn_type = match fun.ascribed_type() {
+    let fn_type = match fun.ret_type().and_then(|r| r.type_ref()) {
         Some(t) => super::types::known_type(t, context)
             .expect("Unknown type")
             .fn_type(arguments.as_slice(), false),
@@ -64,7 +64,7 @@ pub(crate) fn emit(fun: &ast::FunctionDef, context: &mut Context) {
         }
     }
 
-    if fun.ascribed_type().is_some() {
+    if fun.ret_type().is_some() {
         let ret_expr = emit_expr(
             fun.body()
                 .expect("missing body")

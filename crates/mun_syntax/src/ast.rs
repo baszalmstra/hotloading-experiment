@@ -1,11 +1,12 @@
 mod expr_extensions;
+#[macro_use]
 mod extensions;
 mod generated;
 mod traits;
 
 use crate::{syntax_node::SyntaxNodeChildren, SmolStr, SyntaxNode, SyntaxToken, TreeArc};
 
-pub use self::{expr_extensions::*, generated::*, traits::*};
+pub use self::{expr_extensions::*, generated::*, traits::*, extensions::PathSegmentKind};
 
 use std::marker::PhantomData;
 

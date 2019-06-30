@@ -84,6 +84,7 @@ pub enum SyntaxKind {
     COMMENT,
     SOURCE_FILE,
     FUNCTION_DEF,
+    RET_TYPE,
     VISIBILITY,
     PARAM_LIST,
     PARAM,
@@ -107,6 +108,70 @@ pub enum SyntaxKind {
     __LAST,
 }
 use self::SyntaxKind::*;
+
+#[macro_export]
+macro_rules! T {
+    (+) => { $crate::SyntaxKind::PLUS };
+    (-) => { $crate::SyntaxKind::MINUS };
+    (*) => { $crate::SyntaxKind::STAR };
+    (/) => { $crate::SyntaxKind::SLASH };
+    (%) => { $crate::SyntaxKind::PERCENT };
+    (^) => { $crate::SyntaxKind::CARET };
+    (#) => { $crate::SyntaxKind::HASH };
+    (.) => { $crate::SyntaxKind::DOT };
+    (<) => { $crate::SyntaxKind::LT };
+    (>) => { $crate::SyntaxKind::GT };
+    (=) => { $crate::SyntaxKind::EQ };
+    ('(') => { $crate::SyntaxKind::L_PAREN };
+    (')') => { $crate::SyntaxKind::R_PAREN };
+    ('{') => { $crate::SyntaxKind::L_CURLY };
+    ('}') => { $crate::SyntaxKind::R_CURLY };
+    ('[') => { $crate::SyntaxKind::L_BRACKET };
+    (']') => { $crate::SyntaxKind::R_BRACKET };
+    (;) => { $crate::SyntaxKind::SEMI };
+    (:) => { $crate::SyntaxKind::COLON };
+    (,) => { $crate::SyntaxKind::COMMA };
+    (_) => { $crate::SyntaxKind::UNDERSCORE };
+    (==) => { $crate::SyntaxKind::EQEQ };
+    (!=) => { $crate::SyntaxKind::NEQ };
+    (<=) => { $crate::SyntaxKind::LTEQ };
+    (>=) => { $crate::SyntaxKind::GTEQ };
+    (..) => { $crate::SyntaxKind::DOTDOT };
+    (...) => { $crate::SyntaxKind::DOTDOTDOT };
+    (+=) => { $crate::SyntaxKind::PLUSEQ };
+    (-=) => { $crate::SyntaxKind::MINUSEQ };
+    (*=) => { $crate::SyntaxKind::STAREQ };
+    (/=) => { $crate::SyntaxKind::SLASHEQ };
+    (^=) => { $crate::SyntaxKind::CARETEQ };
+    (%=) => { $crate::SyntaxKind::PERCENTEQ };
+    (..=) => { $crate::SyntaxKind::DOTDOTEQ };
+    (::) => { $crate::SyntaxKind::COLONCOLON };
+    (and) => { $crate::SyntaxKind::AND_KW };
+    (break) => { $crate::SyntaxKind::BREAK_KW };
+    (do) => { $crate::SyntaxKind::DO_KW };
+    (else) => { $crate::SyntaxKind::ELSE_KW };
+    (false) => { $crate::SyntaxKind::FALSE_KW };
+    (for) => { $crate::SyntaxKind::FOR_KW };
+    (function) => { $crate::SyntaxKind::FUNCTION_KW };
+    (if) => { $crate::SyntaxKind::IF_KW };
+    (in) => { $crate::SyntaxKind::IN_KW };
+    (nil) => { $crate::SyntaxKind::NIL_KW };
+    (not) => { $crate::SyntaxKind::NOT_KW };
+    (or) => { $crate::SyntaxKind::OR_KW };
+    (self) => { $crate::SyntaxKind::SELF_KW };
+    (super) => { $crate::SyntaxKind::SUPER_KW };
+    (return) => { $crate::SyntaxKind::RETURN_KW };
+    (then) => { $crate::SyntaxKind::THEN_KW };
+    (true) => { $crate::SyntaxKind::TRUE_KW };
+    (while) => { $crate::SyntaxKind::WHILE_KW };
+    (let) => { $crate::SyntaxKind::LET_KW };
+    (mut) => { $crate::SyntaxKind::MUT_KW };
+    (class) => { $crate::SyntaxKind::CLASS_KW };
+    (public) => { $crate::SyntaxKind::PUBLIC_KW };
+    (protected) => { $crate::SyntaxKind::PROTECTED_KW };
+    (private) => { $crate::SyntaxKind::PRIVATE_KW };
+    (export) => { $crate::SyntaxKind::EXPORT_KW };
+}
 
 impl From<u16> for SyntaxKind {
     fn from(d: u16) -> SyntaxKind {
@@ -277,6 +342,7 @@ impl SyntaxKind {
                 COMMENT => &SyntaxInfo { name: "COMMENT" },
                 SOURCE_FILE => &SyntaxInfo { name: "SOURCE_FILE" },
                 FUNCTION_DEF => &SyntaxInfo { name: "FUNCTION_DEF" },
+                RET_TYPE => &SyntaxInfo { name: "RET_TYPE" },
                 VISIBILITY => &SyntaxInfo { name: "VISIBILITY" },
                 PARAM_LIST => &SyntaxInfo { name: "PARAM_LIST" },
                 PARAM => &SyntaxInfo { name: "PARAM" },

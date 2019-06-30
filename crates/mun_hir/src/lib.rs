@@ -11,11 +11,14 @@ pub mod line_index;
 mod model;
 mod name;
 mod raw;
+mod path;
+mod type_ref;
 
 use mun_syntax::TreeArc;
 pub use salsa;
 
 pub use crate::{
+    path::{Path, PathKind},
     db::{
         DefDatabase, DefDatabaseStorage, HirDatabase, HirDatabaseStorage, SourceDatabase,
         SourceDatabaseStorage,

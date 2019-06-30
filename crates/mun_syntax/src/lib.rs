@@ -12,6 +12,7 @@ pub mod ast;
 mod parsing;
 mod ptr;
 mod syntax_error;
+#[macro_use]
 mod syntax_kind;
 mod syntax_node;
 mod syntax_text;

@@ -29,3 +29,7 @@ pub trait VisibilityOwner: AstNode {
         child_opt(self)
     }
 }
+
+pub trait DocCommentsOwner: AstNode {
+
+}

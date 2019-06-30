@@ -303,13 +303,17 @@ impl ToOwned for FunctionDef {
 
 impl ast::NameOwner for FunctionDef {}
 impl ast::VisibilityOwner for FunctionDef {}
-impl ast::TypeAscriptionOwner for FunctionDef {}
+impl ast::DocCommentsOwner for FunctionDef {}
 impl FunctionDef {
     pub fn param_list(&self) -> Option<&ParamList> {
         super::child_opt(self)
     }
 
     pub fn body(&self) -> Option<&Block> {
+        super::child_opt(self)
+    }
+
+    pub fn ret_type(&self) -> Option<&RetType> {
         super::child_opt(self)
     }
 }
@@ -691,6 +695,40 @@ impl PathSegment {
 }
 
 
+// PathType
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct PathType {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for PathType {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for PathType {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            PATH_TYPE => Some(PathType::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for PathType {
+    type Owned = TreeArc<PathType>;
+    fn to_owned(&self) -> TreeArc<PathType> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl PathType {
+    pub fn path(&self) -> Option<&Path> {
+        super::child_opt(self)
+    }
+}
+
+
 // PrefixExpr
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[repr(transparent)]
@@ -720,6 +758,40 @@ impl ToOwned for PrefixExpr {
 
 impl PrefixExpr {
     pub fn expr(&self) -> Option<&Expr> {
+        super::child_opt(self)
+    }
+}
+
+
+// RetType
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct RetType {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for RetType {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for RetType {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            RET_TYPE => Some(RetType::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for RetType {
+    type Owned = TreeArc<RetType>;
+    fn to_owned(&self) -> TreeArc<RetType> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl RetType {
+    pub fn type_ref(&self) -> Option<&TypeRef> {
         super::child_opt(self)
     }
 }
@@ -825,10 +897,10 @@ unsafe impl TransparentNewType for TypeRef {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TypeRefKind<'a>{
-    NameRef(&'a NameRef),
+    PathType(&'a PathType),
 }
-impl<'a> From<&'a NameRef> for &'a TypeRef {
-    fn from(n: &'a NameRef) -> &'a TypeRef {
+impl<'a> From<&'a PathType> for &'a TypeRef {
+    fn from(n: &'a PathType) -> &'a TypeRef {
         TypeRef::cast(&n.syntax).unwrap()
     }
 }
@@ -837,7 +909,7 @@ impl AstNode for TypeRef {
     fn cast(syntax: &SyntaxNode) -> Option<&Self> {
         match syntax.kind() {
             
-            | NAME_REF => Some(TypeRef::from_repr(syntax.into_repr())),
+            | PATH_TYPE => Some(TypeRef::from_repr(syntax.into_repr())),
             _ => None,
         }
     }
@@ -852,7 +924,7 @@ impl ToOwned for TypeRef {
 impl TypeRef {
     pub fn kind(&self) -> TypeRefKind {
         match self.syntax.kind() {
-            NAME_REF => TypeRefKind::NameRef(NameRef::cast(&self.syntax).unwrap()),
+            PATH_TYPE => TypeRefKind::PathType(PathType::cast(&self.syntax).unwrap()),
             _ => unreachable!(),
         }
     }

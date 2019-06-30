@@ -1,4 +1,4 @@
-SOURCE_FILE@[0; 130)
+SOURCE_FILE@[0; 165)
   COMMENT@[0; 22) "// Source file comment"
   WHITESPACE@[22; 24) "\n\n"
   FUNCTION_DEF@[24; 79)
@@ -53,3 +53,32 @@ SOURCE_FILE@[0; 130)
     BLOCK@[128; 130)
       L_CURLY@[128; 129) "{"
       R_CURLY@[129; 130) "}"
+  FUNCTION_DEF@[130; 165)
+    WHITESPACE@[130; 131) "\n"
+    FUNCTION_KW@[131; 139) "function"
+    WHITESPACE@[139; 140) " "
+    NAME@[140; 141)
+      IDENT@[140; 141) "b"
+    PARAM_LIST@[141; 155)
+      L_PAREN@[141; 142) "("
+      PARAM@[142; 154)
+        NAME@[142; 147)
+          IDENT@[142; 147) "value"
+        COLON@[147; 148) ":"
+        PATH_TYPE@[148; 154)
+          PATH@[148; 154)
+            PATH_SEGMENT@[148; 154)
+              NAME_REF@[148; 154)
+                IDENT@[148; 154) "number"
+      R_PAREN@[154; 155) ")"
+    RET_TYPE@[155; 162)
+      COLON@[155; 156) ":"
+      PATH_TYPE@[156; 162)
+        PATH@[156; 162)
+          PATH_SEGMENT@[156; 162)
+            NAME_REF@[156; 162)
+              IDENT@[156; 162) "number"
+    WHITESPACE@[162; 163) " "
+    BLOCK@[163; 165)
+      L_CURLY@[163; 164) "{"
+      R_CURLY@[164; 165) "}"

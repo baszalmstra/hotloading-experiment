@@ -98,6 +98,7 @@ Grammar(
         "SOURCE_FILE",
 
         "FUNCTION_DEF",
+        "RET_TYPE",
         "VISIBILITY",
 
         "PARAM_LIST",
@@ -137,10 +138,11 @@ Grammar(
             traits: [
                 "NameOwner",
                 "VisibilityOwner",
-                "TypeAscriptionOwner"
+                "DocCommentsOwner",
             ],
-            options: [ "ParamList", ["body", "Block"] ],
+            options: [ "ParamList", ["body", "Block"], "RetType" ],
         ),
+        "RetType": (options: ["TypeRef"]),
         "ParamList": (
             collections: [
                 ["params", "Param"]
@@ -192,8 +194,11 @@ Grammar(
 
         "Name": (),
         "NameRef": (),
+        "PathType": (options: ["Path"]),
         "TypeRef": (
-            enum: ["NameRef"]
+            enum: [
+                "PathType"
+            ]
         ),
         "Block": (
             options: [ "Expr" ],

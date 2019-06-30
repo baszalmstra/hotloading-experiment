@@ -86,6 +86,10 @@ pub(crate) trait AstItemDef<N: AstNode>: salsa::InternKey + Clone {
             ast,
         }
     }
+
+    fn file_id(self, db: &impl DefDatabase) -> FileId {
+        self.lookup_intern(db).ast_id.file_id()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

@@ -4,8 +4,9 @@ use self::src::HasSource;
 use crate::ids::AstItemDef;
 use crate::ids::LocationCtx;
 use crate::raw::{DefKind, RawFileItem};
+use crate::type_ref::TypeRef;
 use crate::{ids::FunctionId, AsName, DefDatabase, FileId, HirDatabase, Name};
-use mun_syntax::ast::{self, NameOwner};
+use mun_syntax::ast::{self, NameOwner, TypeAscriptionOwner};
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -65,6 +66,8 @@ pub struct Function {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FnData {
     pub(crate) name: Name,
+    pub(crate) params: Vec<TypeRef>,
+    pub(crate) ret_type: TypeRef,
 }
 
 impl FnData {
@@ -75,11 +78,40 @@ impl FnData {
             .name()
             .map(|n| n.as_name())
             .unwrap_or_else(Name::missing);
-        Arc::new(FnData { name })
+
+        let mut params = Vec::new();
+        if let Some(param_list) = src.ast.param_list() {
+            for param in param_list.params() {
+                let type_ref = TypeRef::from_ast_opt(param.ascribed_type());
+                params.push(type_ref);
+            }
+        }
+
+        let ret_type = if let Some(type_ref) = src.ast.ret_type().and_then(|rt| rt.type_ref()) {
+            TypeRef::from_ast(type_ref)
+        } else {
+            TypeRef::Error
+        };
+
+        Arc::new(FnData {
+            name,
+            params,
+            ret_type,
+        })
     }
+
+    pub fn name(&self) -> &Name { &self.name }
+
+    pub fn params(&self) -> &[TypeRef] { &self.params }
+
+    pub fn ret_type(&self) -> &TypeRef { &self.ret_type }
 }
 
 impl Function {
+    pub fn file_id(self, db: &impl DefDatabase) -> FileId {
+        self.id.file_id(db)
+    }
+
     pub fn name(self, db: &impl HirDatabase) -> Name {
         self.data(db).name.clone()
     }
@@ -87,10 +119,4 @@ impl Function {
     pub fn data(self, db: &impl HirDatabase) -> Arc<FnData> {
         db.fn_data(self)
     }
-}
-
-/// Compare ty::Ty
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub enum TypeRef {
-
 }

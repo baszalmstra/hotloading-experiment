@@ -1,4 +1,5 @@
 use super::*;
+use crate::T;
 
 pub(super) const DECLARATION_RECOVERY_SET: TokenSet = token_set![FUNCTION_KW, EXPORT_KW];
 
@@ -55,9 +56,19 @@ pub(super) fn fn_def(p: &mut Parser) {
         p.error("expected function arguments")
     }
 
-    if p.matches(COLON) {
-        types::ascription(p);
-    }
+    opt_fn_ret_type(p);
 
     expressions::block(p);
+}
+
+fn opt_fn_ret_type(p: &mut Parser) -> bool {
+    if p.matches(T![:]) {
+        let m = p.start();
+        p.bump();
+        types::type_(p);
+        m.complete(p, RET_TYPE);
+        true
+    } else {
+        false
+    }
 }
