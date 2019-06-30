@@ -62,6 +62,8 @@ pub enum SyntaxKind {
     NIL_KW,
     NOT_KW,
     OR_KW,
+    SELF_KW,
+    SUPER_KW,
     RETURN_KW,
     THEN_KW,
     TRUE_KW,
@@ -85,8 +87,10 @@ pub enum SyntaxKind {
     VISIBILITY,
     PARAM_LIST,
     PARAM,
+    PATH_TYPE,
     LET_STMT,
     EXPR_STMT,
+    PATH_EXPR,
     PREFIX_EXPR,
     LITERAL,
     BIN_EXPR,
@@ -96,6 +100,8 @@ pub enum SyntaxKind {
     NAME,
     NAME_REF,
     BLOCK,
+    PATH,
+    PATH_SEGMENT,
     // Technical kind so that we can cast from u16 safely
     #[doc(hidden)]
     __LAST,
@@ -130,6 +136,8 @@ impl SyntaxKind {
             | NIL_KW
             | NOT_KW
             | OR_KW
+            | SELF_KW
+            | SUPER_KW
             | RETURN_KW
             | THEN_KW
             | TRUE_KW
@@ -247,6 +255,8 @@ impl SyntaxKind {
                 NIL_KW => &SyntaxInfo { name: "NIL_KW" },
                 NOT_KW => &SyntaxInfo { name: "NOT_KW" },
                 OR_KW => &SyntaxInfo { name: "OR_KW" },
+                SELF_KW => &SyntaxInfo { name: "SELF_KW" },
+                SUPER_KW => &SyntaxInfo { name: "SUPER_KW" },
                 RETURN_KW => &SyntaxInfo { name: "RETURN_KW" },
                 THEN_KW => &SyntaxInfo { name: "THEN_KW" },
                 TRUE_KW => &SyntaxInfo { name: "TRUE_KW" },
@@ -270,8 +280,10 @@ impl SyntaxKind {
                 VISIBILITY => &SyntaxInfo { name: "VISIBILITY" },
                 PARAM_LIST => &SyntaxInfo { name: "PARAM_LIST" },
                 PARAM => &SyntaxInfo { name: "PARAM" },
+                PATH_TYPE => &SyntaxInfo { name: "PATH_TYPE" },
                 LET_STMT => &SyntaxInfo { name: "LET_STMT" },
                 EXPR_STMT => &SyntaxInfo { name: "EXPR_STMT" },
+                PATH_EXPR => &SyntaxInfo { name: "PATH_EXPR" },
                 PREFIX_EXPR => &SyntaxInfo { name: "PREFIX_EXPR" },
                 LITERAL => &SyntaxInfo { name: "LITERAL" },
                 BIN_EXPR => &SyntaxInfo { name: "BIN_EXPR" },
@@ -281,6 +293,8 @@ impl SyntaxKind {
                 NAME => &SyntaxInfo { name: "NAME" },
                 NAME_REF => &SyntaxInfo { name: "NAME_REF" },
                 BLOCK => &SyntaxInfo { name: "BLOCK" },
+                PATH => &SyntaxInfo { name: "PATH" },
+                PATH_SEGMENT => &SyntaxInfo { name: "PATH_SEGMENT" },
                 TOMBSTONE => &SyntaxInfo { name: "TOMBSTONE" },
                 EOF => &SyntaxInfo { name: "EOF" },
                 __LAST => &SyntaxInfo { name: "__LAST" },
@@ -301,6 +315,8 @@ impl SyntaxKind {
                 "nil" => NIL_KW,
                 "not" => NOT_KW,
                 "or" => OR_KW,
+                "self" => SELF_KW,
+                "super" => SUPER_KW,
                 "return" => RETURN_KW,
                 "then" => THEN_KW,
                 "true" => TRUE_KW,

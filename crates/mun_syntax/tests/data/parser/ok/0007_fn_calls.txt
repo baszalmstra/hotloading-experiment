@@ -10,8 +10,11 @@ SOURCE_FILE@[0; 64)
         NAME@[13; 14)
           IDENT@[13; 14) "i"
         COLON@[14; 15) ":"
-        NAME_REF@[15; 21)
-          IDENT@[15; 21) "number"
+        PATH_TYPE@[15; 21)
+          PATH@[15; 21)
+            PATH_SEGMENT@[15; 21)
+              NAME_REF@[15; 21)
+                IDENT@[15; 21) "number"
       R_PAREN@[21; 22) ")"
     WHITESPACE@[22; 23) " "
     BLOCK@[23; 26)
@@ -30,21 +33,30 @@ SOURCE_FILE@[0; 64)
         NAME@[40; 41)
           IDENT@[40; 41) "i"
         COLON@[41; 42) ":"
-        NAME_REF@[42; 48)
-          IDENT@[42; 48) "number"
+        PATH_TYPE@[42; 48)
+          PATH@[42; 48)
+            PATH_SEGMENT@[42; 48)
+              NAME_REF@[42; 48)
+                IDENT@[42; 48) "number"
       R_PAREN@[48; 49) ")"
     WHITESPACE@[49; 50) " "
     BLOCK@[50; 64)
       L_CURLY@[50; 51) "{"
       WHITESPACE@[51; 54) "\n  "
       CALL_EXPR@[54; 62)
-        NAME_REF@[54; 57)
-          IDENT@[54; 57) "bar"
+        PATH_EXPR@[54; 57)
+          PATH@[54; 57)
+            PATH_SEGMENT@[54; 57)
+              NAME_REF@[54; 57)
+                IDENT@[54; 57) "bar"
         ARG_LIST@[57; 62)
           L_PAREN@[57; 58) "("
           BIN_EXPR@[58; 61)
-            NAME_REF@[58; 59)
-              IDENT@[58; 59) "i"
+            PATH_EXPR@[58; 59)
+              PATH@[58; 59)
+                PATH_SEGMENT@[58; 59)
+                  NAME_REF@[58; 59)
+                    IDENT@[58; 59) "i"
             PLUS@[59; 60) "+"
             LITERAL@[60; 61)
               INT_NUMBER@[60; 61) "1"

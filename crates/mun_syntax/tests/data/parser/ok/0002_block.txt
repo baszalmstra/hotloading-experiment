@@ -24,8 +24,11 @@ SOURCE_FILE@[0; 62)
         NAME@[36; 37)
           IDENT@[36; 37) "b"
         COLON@[37; 38) ":"
-        NAME_REF@[38; 41)
-          IDENT@[38; 41) "i32"
+        PATH_TYPE@[38; 41)
+          PATH@[38; 41)
+            PATH_SEGMENT@[38; 41)
+              NAME_REF@[38; 41)
+                IDENT@[38; 41) "i32"
         SEMI@[41; 42) ";"
       WHITESPACE@[42; 47) "\n    "
       LET_STMT@[47; 60)
@@ -34,8 +37,11 @@ SOURCE_FILE@[0; 62)
         NAME@[51; 52)
           IDENT@[51; 52) "c"
         COLON@[52; 53) ":"
-        NAME_REF@[53; 59)
-          IDENT@[53; 59) "string"
+        PATH_TYPE@[53; 59)
+          PATH@[53; 59)
+            PATH_SEGMENT@[53; 59)
+              NAME_REF@[53; 59)
+                IDENT@[53; 59) "string"
         SEMI@[59; 60) ";"
       WHITESPACE@[60; 61) "\n"
       R_CURLY@[61; 62) "}"

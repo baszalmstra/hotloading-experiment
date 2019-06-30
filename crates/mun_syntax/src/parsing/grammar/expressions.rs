@@ -197,6 +197,10 @@ fn atom_expr(p: &mut Parser) -> Option<CompletedMarker> {
         return Some(m);
     }
 
+    if paths::is_path_start(p) {
+        return Some(path_expr(p))
+    }
+
     if p.matches(IDENT) {
         let m = p.start();
         p.bump();
@@ -211,6 +215,12 @@ fn atom_expr(p: &mut Parser) -> Option<CompletedMarker> {
         }
     };
     Some(marker)
+}
+
+fn path_expr(p: &mut Parser) -> CompletedMarker {
+    let m = p.start();
+    paths::expr_path(p);
+    m.complete(p, PATH_EXPR)
 }
 
 fn literal(p: &mut Parser) -> Option<CompletedMarker> {

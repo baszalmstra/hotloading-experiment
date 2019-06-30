@@ -2,6 +2,7 @@ mod declarations;
 mod expressions;
 mod params;
 mod types;
+mod paths;
 
 use super::{
     parser::{CompletedMarker, Marker, Parser},
@@ -58,4 +59,8 @@ fn error_block(p: &mut Parser, message: &str) {
     expressions::expr_block_contents(p);
     p.eat(R_CURLY);
     m.complete(p, ERROR);
+}
+
+pub(crate) fn path(p: &mut Parser) {
+    paths::type_path(p);
 }

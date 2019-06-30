@@ -9,9 +9,15 @@ pub(super) fn ascription(p: &mut Parser) {
 
 pub(super) fn type_(p: &mut Parser) {
     match p.current() {
-        IDENT => name_ref(p),
+        _ if paths::is_path_start(p) => path_type(p),
         _ => {
             p.error_recover("expected type", TYPE_RECOVERY_SET);
         }
     }
+}
+
+pub(super) fn path_type(p: &mut Parser) {
+    let m = p.start();
+    paths::type_path(p);
+    m.complete(p, PATH_TYPE);
 }

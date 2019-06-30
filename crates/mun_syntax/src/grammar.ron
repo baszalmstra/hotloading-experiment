@@ -65,6 +65,8 @@ Grammar(
         "nil",
         "not",
         "or",
+        "self",
+        "super",
         // "repeat",    // Not supported
         "return",
         "then",
@@ -101,9 +103,12 @@ Grammar(
         "PARAM_LIST",
         "PARAM",
 
+        "PATH_TYPE",
+
         "LET_STMT",
         "EXPR_STMT",
 
+        "PATH_EXPR",
         "PREFIX_EXPR",
         "LITERAL",
         "BIN_EXPR",
@@ -116,6 +121,9 @@ Grammar(
         "NAME_REF",
 
         "BLOCK",
+
+        "PATH",
+        "PATH_SEGMENT",
     ],
     ast: {
         "SourceFile": (
@@ -157,6 +165,7 @@ Grammar(
             enum: ["LetStmt", "ExprStmt"]
         ),
 
+        "PathExpr": (options: ["Path"]),
         "PrefixExpr": (options: ["Expr"]),
         "BinExpr": (),
         "Literal": (),
@@ -191,6 +200,15 @@ Grammar(
             collections: [
                 ["statements", "Stmt"],
             ],
-        )
+        ),
+        "Path": (
+            options: [
+                ["segment", "PathSegment"],
+                ["qualifier", "Path"],
+            ]
+        ),
+        "PathSegment": (
+            options: [ "NameRef" ]
+        ),
     }
 )

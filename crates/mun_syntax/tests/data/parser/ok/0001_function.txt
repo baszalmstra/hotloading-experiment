@@ -27,8 +27,11 @@ SOURCE_FILE@[0; 130)
         NAME@[91; 96)
           IDENT@[91; 96) "value"
         COLON@[96; 97) ":"
-        NAME_REF@[97; 103)
-          IDENT@[97; 103) "number"
+        PATH_TYPE@[97; 103)
+          PATH@[97; 103)
+            PATH_SEGMENT@[97; 103)
+              NAME_REF@[97; 103)
+                IDENT@[97; 103) "number"
       R_PAREN@[103; 104) ")"
     WHITESPACE@[104; 105) " "
     BLOCK@[105; 107)

@@ -41,8 +41,11 @@ SOURCE_FILE@[0; 119)
       WHITESPACE@[66; 71) "\n    "
       EXPR_STMT@[71; 90)
         BIN_EXPR@[71; 90)
-          NAME_REF@[71; 72)
-            IDENT@[71; 72) "b"
+          PATH_EXPR@[71; 72)
+            PATH@[71; 72)
+              PATH_SEGMENT@[71; 72)
+                NAME_REF@[71; 72)
+                  IDENT@[71; 72) "b"
           WHITESPACE@[72; 73) " "
           EQ@[73; 74) "="
           WHITESPACE@[74; 75) " "
@@ -66,11 +69,17 @@ SOURCE_FILE@[0; 119)
             PAREN_EXPR@[104; 109)
               L_PAREN@[104; 105) "("
               BIN_EXPR@[105; 108)
-                NAME_REF@[105; 106)
-                  IDENT@[105; 106) "a"
+                PATH_EXPR@[105; 106)
+                  PATH@[105; 106)
+                    PATH_SEGMENT@[105; 106)
+                      NAME_REF@[105; 106)
+                        IDENT@[105; 106) "a"
                 PLUS@[106; 107) "+"
-                NAME_REF@[107; 108)
-                  IDENT@[107; 108) "b"
+                PATH_EXPR@[107; 108)
+                  PATH@[107; 108)
+                    PATH_SEGMENT@[107; 108)
+                      NAME_REF@[107; 108)
+                        IDENT@[107; 108) "b"
               R_PAREN@[108; 109) ")"
         SEMI@[109; 110) ";"
       WHITESPACE@[110; 115) "\n    "

@@ -6,6 +6,9 @@ use failure::Error;
 use mun_hir::{salsa, FileId, Module, ModuleDef, PackageInput, SourceDatabase};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use mun_syntax::ast::AstNode;
+use mun_errors::Diagnostic;
+use crate::diagnostic::Emit;
 
 #[derive(Debug, Clone)]
 pub struct CompilerOptions {
@@ -75,43 +78,31 @@ impl CompilerDatabase {
 }
 
 pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
-    let (db, _file_id) = CompilerDatabase::from_file(&options.input)?;
+    let (db, file_id) = CompilerDatabase::from_file(&options.input)?;
 
-    //    println!("{}", "Queries:".white());
-    //    for l in db.log_executed(|| {
-    //        db.ast_id_map(file_id);
-    //    }).into_iter() {
-    //        println!("{}", l);
-    //    }
-    //    println!();
+    let source = db.parse(file_id);
+    let line_index = db.line_index(file_id);
 
-    //    // Parse the contents of the file and memoize the results
-    //    let line_index = db.line_index(file_id);
-    //    let source = db.parse(file_id);
-    //    let maps = db.ast_id_map(file_id);
+    // Check if there are parser errors
+    println!("{}", "Syntax Tree:".white());
+    let errors = source.errors();
+    if errors.len() > 0 {
+        // TODO: Improve errors
+        for err in errors {
+            Into::<Diagnostic>::into(err)
+                .emit(&line_index);
+        }
+        return Ok(())
+    }
 
-    //    // Check if there are parser errors
-    //    println!("{}", "Syntax Tree:".white());
-    //    let errors = source.errors();
-    //    if errors.len() > 0 {
-    //        // TODO: Improve errors
-    //        for err in errors {
-    //            Into::<Diagnostic>::into(err)
-    //                .emit(&line_index);
-    //        }
-    //        return Ok(())
-    //    }
-    //
-    //  println!("{}", source.syntax().debug_dump());
+    println!("{}", source.syntax().debug_dump());
 
-    //    for raw_item in .items() {
-    //        println!("{:?}", raw_item);
-    //    }
+    println!("\n{}", "HIR:".white());
     let query_log = db.log_executed(|| {
         for module in Module::package_modules(&db) {
             for decl in module.declarations(&db) {
                 match decl {
-                    ModuleDef::Function(f) => println!("- Found function: {}", f.name(&db)),
+                    ModuleDef::Function(f) => println!("function '{}'", f.name(&db)),
                 }
             }
         }

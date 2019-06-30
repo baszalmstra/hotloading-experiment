@@ -21,6 +21,7 @@ impl Module {
             .collect()
     }
 
+    /// Returns all the definitions declared in this module.
     pub fn declarations(self, db: &impl HirDatabase) -> Vec<ModuleDef> {
         db.module_data(self.file_id).definitions.clone()
     }
@@ -35,13 +36,13 @@ impl ModuleData {
     pub(crate) fn module_data_query(db: &impl DefDatabase, file_id: FileId) -> Arc<ModuleData> {
         let items = db.raw_items(file_id);
         let mut data = ModuleData::default();
-        let locCtx = LocationCtx::new(db, file_id);
+        let loc_ctx = LocationCtx::new(db, file_id);
         for item in items.items().iter() {
             match item {
                 RawFileItem::Definition(def) => match items[*def].kind {
-                    DefKind::Function(astId) => {
+                    DefKind::Function(ast_id) => {
                         data.definitions.push(ModuleDef::Function(Function {
-                            id: FunctionId::from_ast_id(locCtx, astId),
+                            id: FunctionId::from_ast_id(loc_ctx, ast_id),
                         }))
                     }
                 },
@@ -86,4 +87,10 @@ impl Function {
     pub fn data(self, db: &impl HirDatabase) -> Arc<FnData> {
         db.fn_data(self)
     }
+}
+
+/// Compare ty::Ty
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub enum TypeRef {
+
 }
