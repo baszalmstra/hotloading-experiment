@@ -1,9 +1,7 @@
-use crate::{FileId};
+use crate::FileId;
 
 pub struct Module {
-    file_id: FileId
+    file_id: FileId,
 }
 
-impl Module {
-
-}
+impl Module {}

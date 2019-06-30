@@ -278,7 +278,9 @@ impl SyntaxNode {
                         SyntaxElement::Token(token) => {
                             writeln!(buf, "{:?}", token).unwrap();
                             let off = token.range().end();
-                            while err_pos < errors.len() && errors[err_pos].location().offset() <= off {
+                            while err_pos < errors.len()
+                                && errors[err_pos].location().offset() <= off
+                            {
                                 indent!();
                                 writeln!(buf, "err: `{}`", errors[err_pos]).unwrap();
                                 err_pos += 1;

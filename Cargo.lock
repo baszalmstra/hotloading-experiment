@@ -415,6 +415,7 @@ name = "mun_hir"
 version = "0.1.0"
 dependencies = [
  "mun_syntax 0.1.0",
+ "rustc-hash 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "salsa 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "superslice 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

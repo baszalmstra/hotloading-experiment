@@ -80,7 +80,7 @@ fn expr_stmt(p: &mut Parser) -> Option<CompletedMarker> {
     expr_bp(p, 1)
 }
 
-fn expr_bp(p: &mut Parser, mut bp: u8) -> Option<CompletedMarker> {
+fn expr_bp(p: &mut Parser, bp: u8) -> Option<CompletedMarker> {
     // Parse left hand side of the expression
     let mut lhs = match lhs(p) {
         Some(lhs) => lhs,

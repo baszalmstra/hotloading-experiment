@@ -1,10 +1,10 @@
 use mun_syntax::ast::{self, FunctionDef, ModuleItemOwner, NameOwner};
 
-use crate::{Arena, DefDatabase, FileAstId, FileId, RawId, Name};
+use crate::name::AsName;
+use crate::{Arena, DefDatabase, FileAstId, FileId, Name, RawId};
+use core::borrow::BorrowMut;
 use std::ops::Index;
 use std::sync::Arc;
-use crate::name::AsName;
-use core::borrow::BorrowMut;
 
 /// `RawItems` are top level file items. `RawItems` do not change on most edits.
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -51,7 +51,6 @@ impl RawItems {
 
         // Iterate over all items in the source file
         for item in source_file.items() {
-
             let (kind, name) = match item.kind() {
                 ast::ModuleItemKind::FunctionDef(it) => {
                     (DefKind::Function((*ast_id_map).ast_id(it)), it.name())
@@ -60,7 +59,10 @@ impl RawItems {
 
             // If no name is provided an error is already emitted
             if let Some(name) = name {
-                let id = items.definitions.alloc(DefData { name: name.as_name(), kind });
+                let id = items.definitions.alloc(DefData {
+                    name: name.as_name(),
+                    kind,
+                });
                 items.items.push(RawFileItem::Definition(id));
             }
         }

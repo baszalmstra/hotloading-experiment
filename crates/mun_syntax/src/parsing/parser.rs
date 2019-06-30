@@ -137,8 +137,8 @@ impl<'t> Parser<'t> {
 
         use SyntaxKind::*;
 
-        /// This does not match all the multi character symbols because they are still context
-        /// sensitive (for example `+=` and `..=`).
+        // This does not match all the multi character symbols because they are still context
+        // sensitive (for example `+=` and `..=`).
         match kind {
             DOT if joint1 && kind1 == DOT && joint2 && kind2 == DOT => Some((DOTDOTDOT, 3)),
             DOT if joint1 && kind1 == DOT => Some((DOTDOT, 2)),

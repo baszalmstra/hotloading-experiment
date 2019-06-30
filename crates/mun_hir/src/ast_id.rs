@@ -1,4 +1,4 @@
-use crate::{db::DefDatabase, FileId, RawId, Arena};
+use crate::{db::DefDatabase, Arena, FileId, RawId};
 use mun_syntax::{ast, AstNode, SyntaxNode, SyntaxNodePtr, TreeArc};
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -116,7 +116,10 @@ impl AstIdMap {
             ),
         };
 
-        FileAstId { raw, _ty: PhantomData }
+        FileAstId {
+            raw,
+            _ty: PhantomData,
+        }
     }
 
     /// Constructs a new `AstIdMap` from a root SyntaxNode.

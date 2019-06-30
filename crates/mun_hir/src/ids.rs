@@ -1,6 +1,6 @@
-use mun_syntax::{ast, AstNode, TreeArc};
-use crate::{DefDatabase, FileId, code_model::src::Source};
 use crate::ast_id::{AstId, FileAstId};
+use crate::{code_model::src::Source, DefDatabase, FileId};
+use mun_syntax::{ast, AstNode, TreeArc};
 use std::hash::{Hash, Hasher};
 
 macro_rules! impl_intern_key {
@@ -34,7 +34,11 @@ impl<N: AstNode> Hash for ItemLoc<N> {
 }
 
 impl<N: AstNode> Clone for ItemLoc<N> {
-    fn clone(&self) -> ItemLoc<N> { ItemLoc { ast_id: self.ast_id }}
+    fn clone(&self) -> ItemLoc<N> {
+        ItemLoc {
+            ast_id: self.ast_id,
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -43,22 +47,21 @@ pub(crate) struct LocationCtx<DB> {
     file_id: FileId,
 }
 
-impl<'a, DB:DefDatabase> LocationCtx<&'a DB> {
+impl<'a, DB: DefDatabase> LocationCtx<&'a DB> {
     pub(crate) fn new(db: &'a DB, file_id: FileId) -> LocationCtx<&'a DB> {
         LocationCtx { db, file_id }
     }
 
-    pub(crate) fn to_def<N,DEF>(self, ast: &N) -> DEF
+    pub(crate) fn to_def<N, DEF>(self, ast: &N) -> DEF
     where
         N: AstNode,
-        DEF: AstItemDef<N>
+        DEF: AstItemDef<N>,
     {
         DEF::from_ast(self, ast)
     }
 }
 
-
-pub(crate) trait AstItemDef<N:AstNode>: salsa::InternKey + Clone {
+pub(crate) trait AstItemDef<N: AstNode>: salsa::InternKey + Clone {
     fn intern(db: &impl DefDatabase, loc: ItemLoc<N>) -> Self;
     fn lookup_intern(self, db: &impl DefDatabase) -> ItemLoc<N>;
 
@@ -69,14 +72,19 @@ pub(crate) trait AstItemDef<N:AstNode>: salsa::InternKey + Clone {
     }
 
     fn from_ast_id(ctx: LocationCtx<&impl DefDatabase>, ast_id: FileAstId<N>) -> Self {
-        let loc = ItemLoc { ast_id: ast_id.with_file_id(ctx.file_id) };
+        let loc = ItemLoc {
+            ast_id: ast_id.with_file_id(ctx.file_id),
+        };
         Self::intern(ctx.db, loc)
     }
 
     fn source(self, db: &impl DefDatabase) -> Source<TreeArc<N>> {
         let loc = self.lookup_intern(db);
         let ast = loc.ast_id.to_node(db);
-        Source { file_id: loc.ast_id.file_id(), ast }
+        Source {
+            file_id: loc.ast_id.file_id(),
+            ast,
+        }
     }
 }
 
@@ -85,7 +93,9 @@ pub struct FunctionId(salsa::InternId);
 impl_intern_key!(FunctionId);
 
 impl AstItemDef<ast::FunctionDef> for FunctionId {
-    fn intern(db: &impl DefDatabase, loc: ItemLoc<ast::FunctionDef>) -> Self { db.intern_function(loc) }
+    fn intern(db: &impl DefDatabase, loc: ItemLoc<ast::FunctionDef>) -> Self {
+        db.intern_function(loc)
+    }
     fn lookup_intern(self, db: &impl DefDatabase) -> ItemLoc<ast::FunctionDef> {
         db.lookup_intern_function(self)
     }

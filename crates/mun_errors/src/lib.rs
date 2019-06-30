@@ -1,8 +1,6 @@
 mod location;
 
-pub use crate::{
-    location::Location
-};
+pub use crate::location::Location;
 
 /// Defines the severity of a diagnostic.
 /// TODO: Contains only Error, for now, maybe add some more?
@@ -15,5 +13,5 @@ pub enum Level {
 pub struct Diagnostic {
     pub level: Level,
     pub loc: location::Location,
-    pub message: String
+    pub message: String,
 }

@@ -10,15 +10,16 @@
 
 pub mod ast;
 mod parsing;
+mod ptr;
 mod syntax_error;
 mod syntax_kind;
 mod syntax_node;
 mod syntax_text;
-mod ptr;
 
 pub use crate::{
     ast::AstNode,
     parsing::{tokenize, Token},
+    ptr::SyntaxNodePtr,
     syntax_error::{SyntaxError, SyntaxErrorKind},
     syntax_kind::SyntaxKind,
     syntax_node::{
@@ -26,13 +27,11 @@ pub use crate::{
         TreeArc, WalkEvent,
     },
     syntax_text::SyntaxText,
-    ptr::SyntaxNodePtr
 };
 pub use rowan::{SmolStr, TextRange, TextUnit};
 
 /// `SourceFile` represents a parse tree for a single Mun file.
 pub use crate::ast::SourceFile;
-use crate::ast::{FunctionDef, NameOwner};
 use rowan::GreenNode;
 
 impl SourceFile {
@@ -48,8 +47,7 @@ impl SourceFile {
     }
 
     pub fn errors(&self) -> Vec<SyntaxError> {
-        let mut errors = self.syntax.root_data().to_vec();
-        errors
+        self.syntax.root_data().to_vec()
     }
 }
 
@@ -57,6 +55,7 @@ impl SourceFile {
 #[test]
 fn api_walkthrough() {
     use ast::ModuleItemOwner;
+    use ast::{NameOwner};
 
     let source_code = "
         function foo() {

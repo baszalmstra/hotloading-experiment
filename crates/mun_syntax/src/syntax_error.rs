@@ -1,7 +1,6 @@
-use crate::{parsing::ParseError, TextRange, TextUnit};
-use std::cmp::min;
+use crate::{parsing::ParseError};
+use mun_errors::{Diagnostic, Location};
 use std::fmt;
-use mun_errors::{Location, Diagnostic};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SyntaxError {
@@ -51,7 +50,7 @@ impl Into<mun_errors::Diagnostic> for SyntaxError {
         Diagnostic {
             level: mun_errors::Level::Error,
             loc: self.location,
-            message: format!("{}", self.kind)
+            message: format!("{}", self.kind),
         }
     }
 }

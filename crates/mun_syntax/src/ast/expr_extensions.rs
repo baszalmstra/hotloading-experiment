@@ -1,5 +1,5 @@
 use super::{children, BinExpr};
-use crate::{ast, SyntaxToken, SyntaxKind, AstNode, SmolStr};
+use crate::{ast, AstNode, SmolStr, SyntaxKind, SyntaxToken};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum BinOp {
@@ -21,8 +21,10 @@ pub enum BinOp {
 impl BinExpr {
     pub fn op_details(&self) -> Option<(SyntaxToken, BinOp)> {
         use SyntaxKind::*;
-        self.syntax().children_with_tokens().filter_map(|it| it.as_token()).find_map(|c| {
-            match c.kind() {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|it| it.as_token())
+            .find_map(|c| match c.kind() {
                 PLUS => Some((c, BinOp::Add)),
                 MINUS => Some((c, BinOp::Subtract)),
                 SLASH => Some((c, BinOp::Divide)),
@@ -37,8 +39,7 @@ impl BinExpr {
                 PERCENTEQ => Some((c, BinOp::RemainderAssign)),
                 CARETEQ => Some((c, BinOp::PowerAssign)),
                 _ => None,
-            }
-        })
+            })
     }
 
     pub fn op_kind(&self) -> Option<BinOp> {

@@ -1,1 +1,5 @@
+// Function to add two numbers
 function add(a:number, b:number):number { a+b  }
+
+// Function to subtract two numbers
+function subtract(a:number, b:number):number { a-b  }

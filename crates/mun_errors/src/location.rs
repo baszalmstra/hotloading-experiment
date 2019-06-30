@@ -1,4 +1,4 @@
-use text_unit::{TextUnit, TextRange};
+use text_unit::{TextRange, TextUnit};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Location {

@@ -1,19 +1,22 @@
 ///! This library contains the code required to go from source code to binaries.
-
 mod diagnostic;
 
-use std::path::{PathBuf, Path};
-use mun_hir::{salsa, FileId, SourceDatabase, DefDatabase};
-use failure::Error;
-use std::sync::{Arc, Mutex};
 use colored::Colorize;
+use failure::Error;
+use mun_hir::{salsa, FileId, Module, ModuleDef, PackageInput, SourceDatabase};
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone)]
 pub struct CompilerOptions {
     pub input: PathBuf,
 }
 
-#[salsa::database(mun_hir::SourceDatabaseStorage, mun_hir::DefDatabaseStorage, mun_hir::HirDatabaseStorage)]
+#[salsa::database(
+    mun_hir::SourceDatabaseStorage,
+    mun_hir::DefDatabaseStorage,
+    mun_hir::HirDatabaseStorage
+)]
 #[derive(Debug)]
 pub struct CompilerDatabase {
     events: Mutex<Option<Vec<salsa::Event<CompilerDatabase>>>>,
@@ -57,49 +60,61 @@ impl CompilerDatabase {
 }
 
 impl CompilerDatabase {
-    fn from_file(path:&Path) -> Result<(CompilerDatabase, FileId), Error> {
-        let mut db = CompilerDatabase { runtime: salsa::Runtime::default(), events: Mutex::new(Some(Vec::new())) };
+    fn from_file(path: &Path) -> Result<(CompilerDatabase, FileId), Error> {
+        let mut db = CompilerDatabase {
+            runtime: salsa::Runtime::default(),
+            events: Mutex::new(Some(Vec::new())),
+        };
         let file_id = FileId(0);
         db.set_file_text(file_id, Arc::new(std::fs::read_to_string(path)?));
+        let mut package_input = PackageInput::default();
+        package_input.add_module(file_id);
+        db.set_package_input(Arc::new(package_input));
         Ok((db, file_id))
     }
 }
 
 pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
-    let (db, file_id) = CompilerDatabase::from_file(&options.input)?;
+    let (db, _file_id) = CompilerDatabase::from_file(&options.input)?;
 
-//    println!("{}", "Queries:".white());
-//    for l in db.log_executed(|| {
-//        db.ast_id_map(file_id);
-//    }).into_iter() {
-//        println!("{}", l);
-//    }
-//    println!();
+    //    println!("{}", "Queries:".white());
+    //    for l in db.log_executed(|| {
+    //        db.ast_id_map(file_id);
+    //    }).into_iter() {
+    //        println!("{}", l);
+    //    }
+    //    println!();
 
-//    // Parse the contents of the file and memoize the results
-//    let line_index = db.line_index(file_id);
-//    let source = db.parse(file_id);
-//    let maps = db.ast_id_map(file_id);
+    //    // Parse the contents of the file and memoize the results
+    //    let line_index = db.line_index(file_id);
+    //    let source = db.parse(file_id);
+    //    let maps = db.ast_id_map(file_id);
 
-//    // Check if there are parser errors
-//    println!("{}", "Syntax Tree:".white());
-//    let errors = source.errors();
-//    if errors.len() > 0 {
-//        // TODO: Improve errors
-//        for err in errors {
-//            Into::<Diagnostic>::into(err)
-//                .emit(&line_index);
-//        }
-//        return Ok(())
-//    }
-//
-//  println!("{}", source.syntax().debug_dump());
+    //    // Check if there are parser errors
+    //    println!("{}", "Syntax Tree:".white());
+    //    let errors = source.errors();
+    //    if errors.len() > 0 {
+    //        // TODO: Improve errors
+    //        for err in errors {
+    //            Into::<Diagnostic>::into(err)
+    //                .emit(&line_index);
+    //        }
+    //        return Ok(())
+    //    }
+    //
+    //  println!("{}", source.syntax().debug_dump());
 
-//    for raw_item in .items() {
-//        println!("{:?}", raw_item);
-//    }
+    //    for raw_item in .items() {
+    //        println!("{:?}", raw_item);
+    //    }
     let query_log = db.log_executed(|| {
-        println!("{:#?}", db.raw_items(file_id));
+        for module in Module::package_modules(&db) {
+            for decl in module.declarations(&db) {
+                match decl {
+                    ModuleDef::Function(f) => println!("- Found function: {}", f.name(&db)),
+                }
+            }
+        }
     });
 
     println!("\n{}", "Queries:".white());

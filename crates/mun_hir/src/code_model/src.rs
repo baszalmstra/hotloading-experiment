@@ -1,11 +1,11 @@
-use crate::{FileId, DefDatabase};
 use crate::code_model::Function;
-use mun_syntax::{ast, TreeArc};
 use crate::ids::AstItemDef;
+use crate::{DefDatabase, FileId};
+use mun_syntax::{ast, TreeArc};
 
 pub struct Source<T> {
     pub file_id: FileId,
-    pub ast: T
+    pub ast: T,
 }
 
 pub trait HasSource {
