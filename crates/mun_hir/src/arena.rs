@@ -3,6 +3,8 @@ use std::iter::FromIterator;
 use std::marker::PhantomData;
 use std::ops::{Index, IndexMut};
 
+pub mod map;
+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RawId(u32);
 

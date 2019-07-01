@@ -8,6 +8,7 @@ use crate::type_ref::TypeRef;
 use crate::{ids::FunctionId, AsName, DefDatabase, FileId, HirDatabase, Name};
 use mun_syntax::ast::{self, NameOwner, TypeAscriptionOwner};
 use std::sync::Arc;
+use crate::expr::{Body, BodySourceMap};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Module {
@@ -56,6 +57,18 @@ impl ModuleData {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ModuleDef {
     Function(Function),
+}
+
+/// The definitions that have a body.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum DefWithBody {
+    Function(Function),
+}
+
+impl From<Function> for DefWithBody {
+    fn from(f: Function) -> Self {
+        DefWithBody::Function(f)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -108,7 +121,7 @@ impl FnData {
 }
 
 impl Function {
-    pub fn file_id(self, db: &impl DefDatabase) -> FileId {
+    pub fn module(self, db: &impl DefDatabase) -> FileId {
         self.id.file_id(db)
     }
 
@@ -118,5 +131,13 @@ impl Function {
 
     pub fn data(self, db: &impl HirDatabase) -> Arc<FnData> {
         db.fn_data(self)
+    }
+
+    pub fn body(self, db: &impl HirDatabase) -> Arc<Body> {
+        db.body_hir(self.into())
+    }
+
+    pub(crate) fn body_source_map(self, db: &impl HirDatabase) -> Arc<BodySourceMap> {
+        db.body_with_source_map(self.into()).1
     }
 }

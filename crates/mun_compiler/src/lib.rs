@@ -102,7 +102,7 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
         for module in Module::package_modules(&db) {
             for decl in module.declarations(&db) {
                 match decl {
-                    ModuleDef::Function(f) => println!("function:\n{:?}", f.data(&db)),
+                    ModuleDef::Function(f) => println!("function \"{}\":\n{:?}", f.name(&db), f.body(&db)),
                 }
             }
         }

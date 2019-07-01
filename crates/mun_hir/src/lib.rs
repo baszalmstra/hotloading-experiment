@@ -13,6 +13,7 @@ mod name;
 mod raw;
 mod path;
 mod type_ref;
+mod expr;
 
 use mun_syntax::TreeArc;
 pub use salsa;
