@@ -46,7 +46,7 @@ pub(crate) fn emit(fun: &ast::FunctionDef, context: &mut Context) {
         .enumerate()
     {
         let name = arg
-            .name()
+            .pat()
             .expect("missing arg name")
             .syntax()
             .text()
@@ -96,7 +96,7 @@ pub(crate) fn emit_expr(
     symbols: &mut HashMap<String, BasicValueEnum>,
 ) -> Option<BasicValueEnum> {
     match expr.kind() {
-        ast::ExprKind::NameRef(name) => symbols.get(&name.syntax().text().to_string()).map(|v| *v),
+        ast::ExprKind::PathExpr(name) => symbols.get(&name.syntax().text().to_string()).map(|v| *v),
         ast::ExprKind::Literal(lit) => match lit.syntax().first_token().unwrap().kind() {
             SyntaxKind::FLOAT_NUMBER | SyntaxKind::INT_NUMBER => {
                 let value = lit.syntax().text().to_string().parse::<f64>().ok()?;

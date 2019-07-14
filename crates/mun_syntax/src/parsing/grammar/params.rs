@@ -9,7 +9,7 @@ fn list(p: &mut Parser) {
     let m = p.start();
     p.bump();
     while !p.matches(EOF) && !p.matches(R_PAREN) {
-        if !p.matches(IDENT) {
+        if !p.matches_any(VALUE_PARAMETER_FIRST) {
             p.error("expected value parameter");
             break;
         }
@@ -21,6 +21,8 @@ fn list(p: &mut Parser) {
     p.expect(R_PAREN);
     m.complete(p, PARAM_LIST);
 }
+
+const VALUE_PARAMETER_FIRST: TokenSet = patterns::PATTERN_FIRST;
 
 fn param(p: &mut Parser) {
     let m = p.start();

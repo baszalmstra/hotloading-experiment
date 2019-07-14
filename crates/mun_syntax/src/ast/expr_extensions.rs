@@ -1,5 +1,28 @@
 use super::{children, BinExpr};
-use crate::{ast, AstNode, SmolStr, SyntaxKind, SyntaxToken};
+use crate::{ast, AstNode, SmolStr, SyntaxKind::{self, *}, SyntaxToken, SyntaxElement};
+use crate::ast::Literal;
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum PrefixOp {
+    /// The `not` operator for logical inversion
+    Not,
+    /// The `-` operator for negation
+    Neg,
+}
+
+impl ast::PrefixExpr {
+    pub fn op_kind(&self) -> Option<PrefixOp> {
+        match self.op_token()?.kind() {
+            T![not] => Some(PrefixOp::Not),
+            T![-] => Some(PrefixOp::Neg),
+            _ => None,
+        }
+    }
+
+    pub fn op_token(&self) -> Option<SyntaxToken> {
+        self.syntax().first_child_or_token()?.as_token()
+    }
+}
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum BinOp {
@@ -65,3 +88,35 @@ impl BinExpr {
         (first, second)
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum LiteralKind {
+    String,
+    IntNumber,
+    FloatNumber,
+    Bool,
+}
+
+impl Literal {
+    pub fn token(&self) -> SyntaxToken {
+        let elem = self
+            .syntax()
+            .children_with_tokens()
+            .find(|e| !e.kind().is_trivia());
+        match elem {
+            Some(SyntaxElement::Token(token)) => token,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn kind(&self) -> LiteralKind {
+        match self.token().kind() {
+            STRING => LiteralKind::String,
+            FLOAT_NUMBER => LiteralKind::FloatNumber,
+            INT_NUMBER => LiteralKind::IntNumber,
+            T![true] | T![false] => LiteralKind::Bool,
+            _ => unreachable!()
+        }
+    }
+}
+

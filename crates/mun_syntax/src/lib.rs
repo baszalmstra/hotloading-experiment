@@ -8,10 +8,11 @@
 //!     - full-fidelity representation (*any* text can be precisely represented as
 //!       a syntax tree)
 
-pub mod ast;
-mod syntax_error;
 #[macro_use]
 mod syntax_kind;
+
+mod syntax_error;
+pub mod ast;
 mod syntax_node;
 mod syntax_text;
 mod parsing;
@@ -20,7 +21,7 @@ mod ptr;
 pub use crate::{
     ast::AstNode,
     parsing::{tokenize, Token},
-    ptr::SyntaxNodePtr,
+    ptr::{AstPtr, SyntaxNodePtr},
     syntax_error::{SyntaxError, SyntaxErrorKind},
     syntax_kind::SyntaxKind,
     syntax_node::{

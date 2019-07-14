@@ -180,6 +180,7 @@ impl ToOwned for CallExpr {
 }
 
 
+impl ast::ArgListOwner for CallExpr {}
 impl CallExpr {
     pub fn expr(&self) -> Option<&Expr> {
         super::child_opt(self)
@@ -201,8 +202,8 @@ unsafe impl TransparentNewType for Expr {
 pub enum ExprKind<'a>{
     Literal(&'a Literal),
     PrefixExpr(&'a PrefixExpr),
+    PathExpr(&'a PathExpr),
     BinExpr(&'a BinExpr),
-    NameRef(&'a NameRef),
     ParenExpr(&'a ParenExpr),
     CallExpr(&'a CallExpr),
 }
@@ -216,13 +217,13 @@ impl<'a> From<&'a PrefixExpr> for &'a Expr {
         Expr::cast(&n.syntax).unwrap()
     }
 }
-impl<'a> From<&'a BinExpr> for &'a Expr {
-    fn from(n: &'a BinExpr) -> &'a Expr {
+impl<'a> From<&'a PathExpr> for &'a Expr {
+    fn from(n: &'a PathExpr) -> &'a Expr {
         Expr::cast(&n.syntax).unwrap()
     }
 }
-impl<'a> From<&'a NameRef> for &'a Expr {
-    fn from(n: &'a NameRef) -> &'a Expr {
+impl<'a> From<&'a BinExpr> for &'a Expr {
+    fn from(n: &'a BinExpr) -> &'a Expr {
         Expr::cast(&n.syntax).unwrap()
     }
 }
@@ -243,8 +244,8 @@ impl AstNode for Expr {
             
             | LITERAL
             | PREFIX_EXPR
+            | PATH_EXPR
             | BIN_EXPR
-            | NAME_REF
             | PAREN_EXPR
             | CALL_EXPR => Some(Expr::from_repr(syntax.into_repr())),
             _ => None,
@@ -263,8 +264,8 @@ impl Expr {
         match self.syntax.kind() {
             LITERAL => ExprKind::Literal(Literal::cast(&self.syntax).unwrap()),
             PREFIX_EXPR => ExprKind::PrefixExpr(PrefixExpr::cast(&self.syntax).unwrap()),
+            PATH_EXPR => ExprKind::PathExpr(PathExpr::cast(&self.syntax).unwrap()),
             BIN_EXPR => ExprKind::BinExpr(BinExpr::cast(&self.syntax).unwrap()),
-            NAME_REF => ExprKind::NameRef(NameRef::cast(&self.syntax).unwrap()),
             PAREN_EXPR => ExprKind::ParenExpr(ParenExpr::cast(&self.syntax).unwrap()),
             CALL_EXPR => ExprKind::CallExpr(CallExpr::cast(&self.syntax).unwrap()),
             _ => unreachable!(),
@@ -381,9 +382,16 @@ impl ToOwned for LetStmt {
 }
 
 
-impl ast::NameOwner for LetStmt {}
 impl ast::TypeAscriptionOwner for LetStmt {}
-impl LetStmt {}
+impl LetStmt {
+    pub fn pat(&self) -> Option<&Pat> {
+        super::child_opt(self)
+    }
+
+    pub fn initializer(&self) -> Option<&Expr> {
+        super::child_opt(self)
+    }
+}
 
 
 // Literal
@@ -551,9 +559,12 @@ impl ToOwned for Param {
 }
 
 
-impl ast::NameOwner for Param {}
 impl ast::TypeAscriptionOwner for Param {}
-impl Param {}
+impl Param {
+    pub fn pat(&self) -> Option<&Pat> {
+        super::child_opt(self)
+    }
+}
 
 
 // ParamList

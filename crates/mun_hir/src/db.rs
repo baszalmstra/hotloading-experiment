@@ -1,4 +1,3 @@
-use crate::ast_id::AstId;
 use crate::code_model::{FnData, Function, ModuleData, DefWithBody};
 use crate::{
     ast_id::{AstIdMap, ErasedFileAstId},

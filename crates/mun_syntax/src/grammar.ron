@@ -152,8 +152,8 @@ Grammar(
             ]
         ),
         "Param": (
+            options: [ "Pat" ],
             traits: [
-                "NameOwner",
                 "TypeAscriptionOwner"
             ],
         ),
@@ -179,6 +179,7 @@ Grammar(
         "Literal": (),
         "ParenExpr": (options: ["Expr"]),
         "CallExpr": (
+            traits: ["ArgListOwner"],
             options: [ "Expr" ],
         ),
         "ArgList": (
@@ -191,8 +192,8 @@ Grammar(
             enum: [
                 "Literal",
                 "PrefixExpr",
+                "PathExpr",
                 "BinExpr",
-                "NameRef",
                 "ParenExpr",
                 "CallExpr"
             ]

@@ -1,5 +1,6 @@
-use crate::{SyntaxKind, SyntaxNode, TextRange};
+use crate::{SyntaxKind, SyntaxNode, TextRange, AstNode};
 use std::iter::successors;
+use std::marker::PhantomData;
 
 /// A pointer to a syntax node inside a file. It can be used to remember a
 /// specific node across reparses of the same file.
@@ -33,5 +34,40 @@ impl SyntaxNodePtr {
 
     pub fn kind(self) -> SyntaxKind {
         self.kind
+    }
+}
+
+/// Like `SyntaxNodePtr`, but remembers the type of node
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct AstPtr<N: AstNode> {
+    raw: SyntaxNodePtr,
+    _ty: PhantomData<N>,
+}
+
+impl<N: AstNode> Copy for AstPtr<N> {}
+impl<N: AstNode> Clone for AstPtr<N> {
+    fn clone(&self) -> AstPtr<N> {
+        *self
+    }
+}
+
+impl<N: AstNode> AstPtr<N> {
+    pub fn new(node: &N) -> AstPtr<N> {
+        AstPtr { raw: SyntaxNodePtr::new(node.syntax()), _ty: PhantomData }
+    }
+
+    pub fn to_node(self, root: &SyntaxNode) -> &N {
+        let syntax_node = self.raw.to_node(root);
+        N::cast(syntax_node).unwrap()
+    }
+
+    pub fn syntax_node_ptr(self) -> SyntaxNodePtr {
+        self.raw
+    }
+}
+
+impl<N: AstNode> From<AstPtr<N>> for SyntaxNodePtr {
+    fn from(ptr: AstPtr<N>) -> SyntaxNodePtr {
+        ptr.raw
     }
 }
