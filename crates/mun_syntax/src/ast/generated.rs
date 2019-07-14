@@ -80,6 +80,41 @@ impl ToOwned for BinExpr {
 impl BinExpr {}
 
 
+// BindPat
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct BindPat {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for BindPat {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for BindPat {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            BIND_PAT => Some(BindPat::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for BindPat {
+    type Owned = TreeArc<BindPat>;
+    fn to_owned(&self) -> TreeArc<BindPat> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl ast::NameOwner for BindPat {}
+impl BindPat {
+    pub fn pat(&self) -> Option<&Pat> {
+        super::child_opt(self)
+    }
+}
+
+
 // Block
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[repr(transparent)]
@@ -589,6 +624,62 @@ impl ParenExpr {
 }
 
 
+// Pat
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct Pat {
+    pub(crate) syntax: SyntaxNode,
+}
+unsafe impl TransparentNewType for Pat {
+    type Repr = rowan::SyntaxNode;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PatKind<'a>{
+    BindPat(&'a BindPat),
+    PlaceholderPat(&'a PlaceholderPat),
+}
+impl<'a> From<&'a BindPat> for &'a Pat {
+    fn from(n: &'a BindPat) -> &'a Pat {
+        Pat::cast(&n.syntax).unwrap()
+    }
+}
+impl<'a> From<&'a PlaceholderPat> for &'a Pat {
+    fn from(n: &'a PlaceholderPat) -> &'a Pat {
+        Pat::cast(&n.syntax).unwrap()
+    }
+}
+
+impl AstNode for Pat {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            
+            | BIND_PAT
+            | PLACEHOLDER_PAT => Some(Pat::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for Pat {
+    type Owned = TreeArc<Pat>;
+    fn to_owned(&self) -> TreeArc<Pat> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+impl Pat {
+    pub fn kind(&self) -> PatKind {
+        match self.syntax.kind() {
+            BIND_PAT => PatKind::BindPat(BindPat::cast(&self.syntax).unwrap()),
+            PLACEHOLDER_PAT => PatKind::PlaceholderPat(PlaceholderPat::cast(&self.syntax).unwrap()),
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl Pat {}
+
+
 // Path
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[repr(transparent)]
@@ -727,6 +818,36 @@ impl PathType {
         super::child_opt(self)
     }
 }
+
+
+// PlaceholderPat
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct PlaceholderPat {
+    pub(crate) syntax: SyntaxNode,
+}
+
+unsafe impl TransparentNewType for PlaceholderPat {
+    type Repr = rowan::SyntaxNode;
+}
+
+impl AstNode for PlaceholderPat {
+    fn cast(syntax: &SyntaxNode) -> Option<&Self> {
+        match syntax.kind() {
+            PLACEHOLDER_PAT => Some(PlaceholderPat::from_repr(syntax.into_repr())),
+            _ => None,
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+impl ToOwned for PlaceholderPat {
+    type Owned = TreeArc<PlaceholderPat>;
+    fn to_owned(&self) -> TreeArc<PlaceholderPat> { TreeArc::cast(self.syntax.to_owned()) }
+}
+
+
+impl PlaceholderPat {}
 
 
 // PrefixExpr

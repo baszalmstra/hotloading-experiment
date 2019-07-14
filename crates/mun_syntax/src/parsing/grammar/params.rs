@@ -24,7 +24,7 @@ fn list(p: &mut Parser) {
 
 fn param(p: &mut Parser) {
     let m = p.start();
-    name_recovery(p, token_set![COLON, R_PAREN]);
+    patterns::pattern(p);
     types::ascription(p);
     m.complete(p, PARAM);
 }

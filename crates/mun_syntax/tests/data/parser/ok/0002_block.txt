@@ -14,15 +14,17 @@ SOURCE_FILE@[0; 62)
       LET_STMT@[21; 27)
         LET_KW@[21; 24) "let"
         WHITESPACE@[24; 25) " "
-        NAME@[25; 26)
-          IDENT@[25; 26) "a"
+        BIND_PAT@[25; 26)
+          NAME@[25; 26)
+            IDENT@[25; 26) "a"
         SEMI@[26; 27) ";"
       WHITESPACE@[27; 32) "\n    "
       LET_STMT@[32; 42)
         LET_KW@[32; 35) "let"
         WHITESPACE@[35; 36) " "
-        NAME@[36; 37)
-          IDENT@[36; 37) "b"
+        BIND_PAT@[36; 37)
+          NAME@[36; 37)
+            IDENT@[36; 37) "b"
         COLON@[37; 38) ":"
         PATH_TYPE@[38; 41)
           PATH@[38; 41)
@@ -34,8 +36,9 @@ SOURCE_FILE@[0; 62)
       LET_STMT@[47; 60)
         LET_KW@[47; 50) "let"
         WHITESPACE@[50; 51) " "
-        NAME@[51; 52)
-          IDENT@[51; 52) "c"
+        BIND_PAT@[51; 52)
+          NAME@[51; 52)
+            IDENT@[51; 52) "c"
         COLON@[52; 53) ":"
         PATH_TYPE@[53; 59)
           PATH@[53; 59)

@@ -24,8 +24,9 @@ SOURCE_FILE@[0; 165)
     PARAM_LIST@[90; 104)
       L_PAREN@[90; 91) "("
       PARAM@[91; 103)
-        NAME@[91; 96)
-          IDENT@[91; 96) "value"
+        BIND_PAT@[91; 96)
+          NAME@[91; 96)
+            IDENT@[91; 96) "value"
         COLON@[96; 97) ":"
         PATH_TYPE@[97; 103)
           PATH@[97; 103)
@@ -62,8 +63,9 @@ SOURCE_FILE@[0; 165)
     PARAM_LIST@[141; 155)
       L_PAREN@[141; 142) "("
       PARAM@[142; 154)
-        NAME@[142; 147)
-          IDENT@[142; 147) "value"
+        BIND_PAT@[142; 147)
+          NAME@[142; 147)
+            IDENT@[142; 147) "value"
         COLON@[147; 148) ":"
         PATH_TYPE@[148; 154)
           PATH@[148; 154)

@@ -14,8 +14,9 @@ SOURCE_FILE@[0; 57)
       LET_STMT@[21; 34)
         LET_KW@[21; 24) "let"
         WHITESPACE@[24; 25) " "
-        NAME@[25; 26)
-          IDENT@[25; 26) "a"
+        BIND_PAT@[25; 26)
+          NAME@[25; 26)
+            IDENT@[25; 26) "a"
         WHITESPACE@[26; 27) " "
         EQ@[27; 28) "="
         WHITESPACE@[28; 29) " "
@@ -33,8 +34,9 @@ SOURCE_FILE@[0; 57)
       LET_STMT@[39; 55)
         LET_KW@[39; 42) "let"
         WHITESPACE@[42; 43) " "
-        NAME@[43; 44)
-          IDENT@[43; 44) "b"
+        BIND_PAT@[43; 44)
+          NAME@[43; 44)
+            IDENT@[43; 44) "b"
         WHITESPACE@[44; 45) " "
         EQ@[45; 46) "="
         WHITESPACE@[46; 47) " "

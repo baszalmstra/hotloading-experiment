@@ -3,17 +3,30 @@ mod expressions;
 mod params;
 mod types;
 mod paths;
+mod patterns;
 
 use super::{
     parser::{CompletedMarker, Marker, Parser},
-    token_set::TokenSet,
     SyntaxKind::{self, *},
+    token_set::TokenSet,
 };
 
 pub(crate) fn root(p: &mut Parser) {
     let m = p.start();
     declarations::mod_contents(p);
     m.complete(p, SOURCE_FILE);
+}
+
+pub(crate) fn pattern(p: &mut Parser) {
+    patterns::pattern(p)
+}
+
+pub(crate) fn expr(p: &mut Parser) {
+    expressions::expr(p);
+}
+
+pub(crate) fn type_(p: &mut Parser) {
+    types::type_(p)
 }
 
 fn name_recovery(p: &mut Parser, recovery: TokenSet) {

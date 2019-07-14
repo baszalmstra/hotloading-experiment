@@ -7,8 +7,9 @@ SOURCE_FILE@[0; 64)
     PARAM_LIST@[12; 22)
       L_PAREN@[12; 13) "("
       PARAM@[13; 21)
-        NAME@[13; 14)
-          IDENT@[13; 14) "i"
+        BIND_PAT@[13; 14)
+          NAME@[13; 14)
+            IDENT@[13; 14) "i"
         COLON@[14; 15) ":"
         PATH_TYPE@[15; 21)
           PATH@[15; 21)
@@ -30,8 +31,9 @@ SOURCE_FILE@[0; 64)
     PARAM_LIST@[39; 49)
       L_PAREN@[39; 40) "("
       PARAM@[40; 48)
-        NAME@[40; 41)
-          IDENT@[40; 41) "i"
+        BIND_PAT@[40; 41)
+          NAME@[40; 41)
+            IDENT@[40; 41) "i"
         COLON@[41; 42) ":"
         PATH_TYPE@[42; 48)
           PATH@[42; 48)

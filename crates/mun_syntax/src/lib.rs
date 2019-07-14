@@ -9,13 +9,13 @@
 //!       a syntax tree)
 
 pub mod ast;
-mod parsing;
-mod ptr;
 mod syntax_error;
 #[macro_use]
 mod syntax_kind;
 mod syntax_node;
 mod syntax_text;
+mod parsing;
+mod ptr;
 
 pub use crate::{
     ast::AstNode,

@@ -60,7 +60,7 @@ pub(super) fn stmt(p: &mut Parser) {
 fn let_stmt(p: &mut Parser, m: Marker) {
     assert!(p.matches(LET_KW));
     p.bump();
-    name(p);
+    patterns::pattern(p);
     if p.matches(COLON) {
         types::ascription(p);
     }
@@ -72,7 +72,7 @@ fn let_stmt(p: &mut Parser, m: Marker) {
     m.complete(p, LET_STMT);
 }
 
-fn expr(p: &mut Parser) {
+pub(super) fn expr(p: &mut Parser) {
     expr_bp(p, 1);
 }
 

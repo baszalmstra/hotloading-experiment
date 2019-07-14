@@ -116,6 +116,9 @@ Grammar(
         "PAREN_EXPR",
         "CALL_EXPR",
 
+        "BIND_PAT",
+        "PLACEHOLDER_PAT",
+
         "ARG_LIST",
 
         "NAME",
@@ -155,9 +158,12 @@ Grammar(
             ],
         ),
         "LetStmt": (
+            options: [
+                ["pat", "Pat"],
+                ["initializer", "Expr"],
+            ],
             traits: [
-                "NameOwner",
-                "TypeAscriptionOwner"
+                "TypeAscriptionOwner",
             ]
         ),
         "ExprStmt": (
@@ -214,6 +220,18 @@ Grammar(
         ),
         "PathSegment": (
             options: [ "NameRef" ]
+        ),
+
+        "BindPat": (
+            options: [ "Pat" ],
+            traits: ["NameOwner"]
+        ),
+        "PlaceholderPat": (),
+        "Pat": (
+            enum: [
+                "BindPat",
+                "PlaceholderPat"
+            ],
         ),
     }
 )

@@ -14,8 +14,9 @@ SOURCE_FILE@[0; 117)
       LET_STMT@[21; 34)
         LET_KW@[21; 24) "let"
         WHITESPACE@[24; 25) " "
-        NAME@[25; 26)
-          IDENT@[25; 26) "a"
+        BIND_PAT@[25; 26)
+          NAME@[25; 26)
+            IDENT@[25; 26) "a"
         WHITESPACE@[26; 27) " "
         EQ@[27; 28) "="
         WHITESPACE@[28; 29) " "
@@ -26,8 +27,9 @@ SOURCE_FILE@[0; 117)
       LET_STMT@[39; 53)
         LET_KW@[39; 42) "let"
         WHITESPACE@[42; 43) " "
-        NAME@[43; 44)
-          IDENT@[43; 44) "b"
+        BIND_PAT@[43; 44)
+          NAME@[43; 44)
+            IDENT@[43; 44) "b"
         WHITESPACE@[44; 45) " "
         EQ@[45; 46) "="
         WHITESPACE@[46; 47) " "
@@ -38,8 +40,9 @@ SOURCE_FILE@[0; 117)
       LET_STMT@[58; 68)
         LET_KW@[58; 61) "let"
         WHITESPACE@[61; 62) " "
-        NAME@[62; 63)
-          IDENT@[62; 63) "c"
+        BIND_PAT@[62; 63)
+          NAME@[62; 63)
+            IDENT@[62; 63) "c"
         WHITESPACE@[63; 64) " "
         EQ@[64; 65) "="
         WHITESPACE@[65; 66) " "
@@ -50,8 +53,9 @@ SOURCE_FILE@[0; 117)
       LET_STMT@[73; 86)
         LET_KW@[73; 76) "let"
         WHITESPACE@[76; 77) " "
-        NAME@[77; 78)
-          IDENT@[77; 78) "d"
+        BIND_PAT@[77; 78)
+          NAME@[77; 78)
+            IDENT@[77; 78) "d"
         WHITESPACE@[78; 79) " "
         EQ@[79; 80) "="
         WHITESPACE@[80; 81) " "
@@ -62,8 +66,9 @@ SOURCE_FILE@[0; 117)
       LET_STMT@[91; 115)
         LET_KW@[91; 94) "let"
         WHITESPACE@[94; 95) " "
-        NAME@[95; 96)
-          IDENT@[95; 96) "e"
+        BIND_PAT@[95; 96)
+          NAME@[95; 96)
+            IDENT@[95; 96) "e"
         WHITESPACE@[96; 97) " "
         EQ@[97; 98) "="
         WHITESPACE@[98; 99) " "
