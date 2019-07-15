@@ -4,13 +4,13 @@ mod diagnostic;
 use crate::diagnostic::Emit;
 use colored::Colorize;
 use failure::Error;
+use mun_codegen_ir::IrDatabase;
 use mun_errors::Diagnostic;
-use mun_hir::{salsa, FileId, Module, ModuleDef, PackageInput, SourceDatabase, HirDisplay};
+use mun_hir::{salsa, FileId, HirDisplay, Module, ModuleDef, PackageInput, SourceDatabase};
 use mun_syntax::ast::AstNode;
+use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use mun_codegen::{IrDatabase};
-use std::ffi::OsStr;
 
 #[derive(Debug, Clone)]
 pub struct CompilerOptions {
@@ -21,7 +21,7 @@ pub struct CompilerOptions {
     mun_hir::SourceDatabaseStorage,
     mun_hir::DefDatabaseStorage,
     mun_hir::HirDatabaseStorage,
-    mun_codegen::IrDatabaseStorage
+    mun_codegen_ir::IrDatabaseStorage
 )]
 #[derive(Debug)]
 pub struct CompilerDatabase {
@@ -77,7 +77,7 @@ impl CompilerDatabase {
         package_input.add_module(file_id);
         db.set_package_input(Arc::new(package_input));
 
-        let context = mun_codegen::Context::create();
+        let context = mun_codegen_ir::Context::create();
         let module = context.create_module(path.file_name().and_then(OsStr::to_str).unwrap());
         db.set_module(Arc::new(module));
 
@@ -114,9 +114,8 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
                         let body = f.body(&db);
                         let infer = f.infer(&db);
                         let body_expr = &infer[body.body_expr()];
-                        println!("  {:#?}", infer);
-
-                        db.ir_function(f);
+                        println!("  {}", f.ty(&db).display(&db));
+                        db.function_ir(f);
                     }
                     ModuleDef::BuiltinType(..) => {}
                 }
@@ -129,8 +128,11 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
         println!("{}", l);
     }
 
-    println!("\n{}\n{}", "IR".white(), db.module().print_to_string().to_string());
+    println!(
+        "\n{}\n{}",
+        "IR".white(),
+        db.module().print_to_string().to_string()
+    );
 
     Ok(())
 }
-

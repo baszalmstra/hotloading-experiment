@@ -1,14 +1,14 @@
-use crate::{HirDatabase, FnData, expr, Path};
-use crate::code_model::DefWithBody;
-use std::sync::Arc;
-use crate::expr::{Body, PatId, ExprId, Pat, Expr, Statement};
-use crate::resolve::{Resolver, Resolution};
 use crate::arena::map::ArenaMap;
+use crate::code_model::DefWithBody;
+use crate::expr::{Body, Expr, ExprId, Pat, PatId, Statement};
+use crate::name_resolution::Namespace;
+use crate::resolve::{Resolution, Resolver};
 use crate::ty::{Ty, TypableDef};
 use crate::type_ref::TypeRef;
-use crate::name_resolution::Namespace;
+use crate::{expr, FnData, HirDatabase, Path};
 use std::mem;
 use std::ops::Index;
+use std::sync::Arc;
 
 /// The result of type inference: A mapping from expressions and patterns to types.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -113,13 +113,16 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
                 let inner_ty = expected.clone();
                 self.write_pat_ty(pat, expected.clone());
                 inner_ty
-            },
+            }
             _ => Ty::Unknown,
         }
     }
 
     fn infer_body(&mut self) {
-        self.infer_expr(self.body.body_expr(), &Expectation::has_type(self.return_ty.clone()));
+        self.infer_expr(
+            self.body.body_expr(),
+            &Expectation::has_type(self.return_ty.clone()),
+        );
     }
 
     fn infer_expr(&mut self, tgt_expr: ExprId, expected: &Expectation) -> Ty {
@@ -129,36 +132,39 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
             Expr::Path(p) => {
                 // FIXME this could be more efficient...
                 let resolver = expr::resolver_for_expr(self.body.clone(), self.db, tgt_expr);
-                self.infer_path_expr(&resolver, p/*, tgt_expr.into()*/).unwrap_or(Ty::Unknown)
+                self.infer_path_expr(&resolver, p /*, tgt_expr.into()*/)
+                    .unwrap_or(Ty::Unknown)
             }
             Expr::BinaryOp { lhs, rhs, op } => match op {
                 Some(op) => {
                     let lhs_ty = self.infer_expr(*lhs, &Expectation::none());
                     let rhs_ty = self.infer_expr(*rhs, &Expectation::none());
                     lhs_ty
-                },
+                }
                 _ => Ty::Unknown,
-            }
+            },
             Expr::Block { statements, tail } => self.infer_block(statements, *tail, expected),
             _ => Ty::Unknown,
-//            Expr::Call { callee: _, args: _ } => {}
-//            Expr::UnaryOp { expr: _, op: _ } => {}
-//            Expr::Block { statements: _, tail: _ } => {}
-//            Expr::Literal(_) => {}
+            //            Expr::Call { callee: _, args: _ } => {}
+            //            Expr::UnaryOp { expr: _, op: _ } => {}
+            //            Expr::Block { statements: _, tail: _ } => {}
+            //            Expr::Literal(_) => {}
         };
         self.write_expr_ty(tgt_expr, ty.clone());
         ty
     }
 
     fn infer_path_expr(&mut self, resolver: &Resolver, path: &Path) -> Option<Ty> {
-        let resolution = resolver.resolve_path_without_assoc_items(self.db, path).take_values()?;
+        let resolution = resolver
+            .resolve_path_without_assoc_items(self.db, path)
+            .take_values()?;
 
         match resolution {
             Resolution::LocalBinding(pat) => {
                 let ty = self.type_of_pat.get(pat)?.clone();
                 //let ty = self.resolve_ty_as_possible(&mut vec![], ty);
                 Some(ty)
-            },
+            }
             Resolution::Def(def) => {
                 let typable: Option<TypableDef> = def.into();
                 let typable = typable?;
@@ -172,20 +178,20 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
         // FIXME resolve obligations as well (use Guidance if necessary)
         //let mut tv_stack = Vec::new();
         let mut expr_types = mem::replace(&mut self.type_of_expr, ArenaMap::default());
-//        for ty in expr_types.values_mut() {
-//            let resolved = self.resolve_ty_completely(&mut tv_stack, mem::replace(ty, Ty::Unknown));
-//            *ty = resolved;
-//        }
+        //        for ty in expr_types.values_mut() {
+        //            let resolved = self.resolve_ty_completely(&mut tv_stack, mem::replace(ty, Ty::Unknown));
+        //            *ty = resolved;
+        //        }
         let mut pat_types = mem::replace(&mut self.type_of_pat, ArenaMap::default());
-//        for ty in pat_types.values_mut() {
-//            let resolved = self.resolve_ty_completely(&mut tv_stack, mem::replace(ty, Ty::Unknown));
-//            *ty = resolved;
-//        }
+        //        for ty in pat_types.values_mut() {
+        //            let resolved = self.resolve_ty_completely(&mut tv_stack, mem::replace(ty, Ty::Unknown));
+        //            *ty = resolved;
+        //        }
         InferenceResult {
-//            method_resolutions: self.method_resolutions,
-//            field_resolutions: self.field_resolutions,
-//            variant_resolutions: self.variant_resolutions,
-//            assoc_resolutions: self.assoc_resolutions,
+            //            method_resolutions: self.method_resolutions,
+            //            field_resolutions: self.field_resolutions,
+            //            variant_resolutions: self.variant_resolutions,
+            //            assoc_resolutions: self.assoc_resolutions,
             type_of_expr: expr_types,
             type_of_pat: pat_types,
             diagnostics: self.diagnostics,
@@ -200,9 +206,15 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
     ) -> Ty {
         for stmt in statements {
             match stmt {
-                Statement::Let { pat, type_ref, initializer } => {
-                    let decl_ty =
-                        type_ref.as_ref().map(|tr| self.make_ty(tr)).unwrap_or(Ty::Unknown);
+                Statement::Let {
+                    pat,
+                    type_ref,
+                    initializer,
+                } => {
+                    let decl_ty = type_ref
+                        .as_ref()
+                        .map(|tr| self.make_ty(tr))
+                        .unwrap_or(Ty::Unknown);
                     //let decl_ty = self.insert_type_vars(decl_ty);
                     let ty = if let Some(expr) = initializer {
                         let expr_ty = self.infer_expr(*expr, &Expectation::has_type(decl_ty));
@@ -218,7 +230,11 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
                 }
             }
         }
-        let ty = if let Some(expr) = tail { self.infer_expr(expr, expected) } else { Ty::Empty };
+        let ty = if let Some(expr) = tail {
+            self.infer_expr(expr, expected)
+        } else {
+            Ty::Empty
+        };
         ty
     }
 }

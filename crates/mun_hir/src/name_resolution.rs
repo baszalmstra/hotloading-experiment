@@ -1,6 +1,6 @@
 mod per_ns;
 
-pub use self::per_ns::{PerNs, Namespace};
+pub use self::per_ns::{Namespace, PerNs};
 use crate::{code_model::BuiltinType, DefDatabase, FileId, HirDatabase, ModuleDef, Name};
 use once_cell::sync::Lazy;
 use rustc_hash::FxHashMap;

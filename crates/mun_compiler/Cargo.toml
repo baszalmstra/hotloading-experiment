@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 failure = "0.1.5"
 
-mun_codegen = { path="../mun_codegen" }
+mun_codegen_ir = { path="../mun_codegen_ir" }
 mun_syntax = { path="../mun_syntax" }
 mun_errors = { path="../mun_errors" }
 mun_hir = {path="../mun_hir"}

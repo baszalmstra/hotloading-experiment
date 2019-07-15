@@ -1,21 +1,16 @@
+use crate::name_resolution::Namespace;
+use crate::ty::{FnSig, Ty, TypableDef};
 use crate::{
     ast_id::ErasedFileAstId,
     code_model::{DefWithBody, FnData, Function, ModuleData},
     ids,
     line_index::LineIndex,
     name_resolution::ModuleScope,
-    AstIdMap,
-    ExprScopes,
-    FileId,
-    Module,
-    PackageInput,
-    RawItems,
-    ty::InferenceResult
+    ty::InferenceResult,
+    AstIdMap, ExprScopes, FileId, Module, PackageInput, RawItems,
 };
 use mun_syntax::{ast, SourceFile, SyntaxNode, TreeArc};
 use std::sync::Arc;
-use crate::ty::{TypableDef, Ty};
-use crate::name_resolution::Namespace;
 
 /// Database which stores all significant input facts: source code and project model. Everything
 /// else in rust-analyzer is derived from these queries.
@@ -70,6 +65,9 @@ pub trait HirDatabase: DefDatabase {
 
     #[salsa::invoke(crate::FnData::fn_data_query)]
     fn fn_data(&self, func: Function) -> Arc<FnData>;
+
+    #[salsa::invoke(crate::ty::fn_sig_for_fn)]
+    fn fn_signature(&self, func: Function) -> FnSig;
 
     #[salsa::invoke(crate::ty::type_for_def)]
     fn type_for_def(&self, def: TypableDef, ns: Namespace) -> Ty;

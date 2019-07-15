@@ -1,12 +1,12 @@
 mod infer;
 mod lower;
 
-pub(crate) use infer::{infer_query, InferenceResult};
-pub(crate) use lower::{type_for_def, TypableDef};
-use std::sync::Arc;
-use crate::{Function, HirDatabase};
 use crate::display::{HirDisplay, HirFormatter};
+use crate::{Function, HirDatabase};
+pub(crate) use infer::{infer_query, InferenceResult};
+pub(crate) use lower::{type_for_def, fn_sig_for_fn, TypableDef};
 use std::fmt;
+use std::sync::Arc;
 
 /// This should be cheap to clone.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
@@ -56,7 +56,10 @@ pub enum TypeCtor {
 
 impl Ty {
     pub fn simple(ctor: TypeCtor) -> Ty {
-        Ty::Apply(ApplicationTy { ctor, parameters: Substs::empty() })
+        Ty::Apply(ApplicationTy {
+            ctor,
+            parameters: Substs::empty(),
+        })
     }
 }
 
@@ -74,12 +77,36 @@ impl Substs {
     }
 }
 
+/// A function signature as seen by type inference: Several parameter types and
+/// one return type.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct FnSig {
+    params_and_return: Arc<[Ty]>,
+}
+
+impl FnSig {
+    pub fn from_params_and_return(mut params: Vec<Ty>, ret: Ty) -> FnSig {
+        params.push(ret);
+        FnSig {
+            params_and_return: params.into(),
+        }
+    }
+
+    pub fn params(&self) -> &[Ty] {
+        &self.params_and_return[0..self.params_and_return.len() - 1]
+    }
+
+    pub fn ret(&self) -> &Ty {
+        &self.params_and_return[self.params_and_return.len() - 1]
+    }
+}
+
 impl HirDisplay for Ty {
     fn hir_fmt(&self, f: &mut HirFormatter<impl HirDatabase>) -> fmt::Result {
         match self {
             Ty::Apply(a_ty) => a_ty.hir_fmt(f)?,
             Ty::Unknown => write!(f, "{{unknown}}")?,
-            Ty::Empty => write!(f, "empty")?
+            Ty::Empty => write!(f, "empty")?,
         }
         Ok(())
     }
@@ -89,8 +116,22 @@ impl HirDisplay for ApplicationTy {
     fn hir_fmt(&self, f: &mut HirFormatter<impl HirDatabase>) -> fmt::Result {
         match self.ctor {
             TypeCtor::Number => write!(f, "number")?,
-            _ => write!(f, "fn")?
+            TypeCtor::FnDef(def) => {
+                let sig = f.db.fn_signature(def);
+                let name = def.name(f.db);
+                write!(f, "function {}", name)?;
+                write!(f, "(")?;
+                f.write_joined(sig.params(), ", ")?;
+                write!(f, ") -> {}", sig.ret().display(f.db))?;
+            }
+            _ => write!(f, "fn")?,
         }
         Ok(())
+    }
+}
+
+impl HirDisplay for &Ty {
+    fn hir_fmt(&self, f: &mut HirFormatter<impl HirDatabase>) -> fmt::Result {
+        HirDisplay::hir_fmt(*self, f)
     }
 }

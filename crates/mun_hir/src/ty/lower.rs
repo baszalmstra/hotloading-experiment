@@ -1,9 +1,9 @@
-use crate::ty::{Ty, TypeCtor, Substs};
-use crate::{HirDatabase, Path, Function, ModuleDef};
-use crate::resolve::{Resolver, Resolution};
-use crate::type_ref::TypeRef;
 use crate::code_model::BuiltinType;
 use crate::name_resolution::Namespace;
+use crate::resolve::{Resolution, Resolver};
+use crate::ty::{FnSig, Substs, Ty, TypeCtor};
+use crate::type_ref::TypeRef;
+use crate::{Function, HirDatabase, ModuleDef, Path};
 
 impl Ty {
     pub(crate) fn from_hir(db: &impl HirDatabase, resolver: &Resolver, type_ref: &TypeRef) -> Self {
@@ -14,20 +14,22 @@ impl Ty {
     }
 
     pub(crate) fn from_hir_path(db: &impl HirDatabase, resolver: &Resolver, path: &Path) -> Self {
-        let resolution = resolver.resolve_path_without_assoc_items(db, path).take_types();
+        let resolution = resolver
+            .resolve_path_without_assoc_items(db, path)
+            .take_types();
 
         let def = match resolution {
             Some(Resolution::Def(def)) => def,
             Some(Resolution::LocalBinding(..)) => {
                 // this should never happen
                 panic!("path resolved to local binding in type ns");
-            },
+            }
             None => return Ty::Unknown,
         };
 
-        let typable:TypableDef = match def.into() {
+        let typable: TypableDef = match def.into() {
             None => return Ty::Unknown,
-            Some(it) => it
+            Some(it) => it,
         };
 
         let ty = db.type_for_def(typable, Namespace::Types);
@@ -88,4 +90,16 @@ fn type_for_builtin(def: BuiltinType) -> Ty {
 /// function body.
 fn type_for_fn(db: &impl HirDatabase, def: Function) -> Ty {
     Ty::simple(TypeCtor::FnDef(def))
+}
+
+pub fn fn_sig_for_fn(db: &impl HirDatabase, def: Function) -> FnSig {
+    let data = def.data(db);
+    let resolver = def.resolver(db);
+    let params = data
+        .params()
+        .iter()
+        .map(|tr| Ty::from_hir(db, &resolver, tr))
+        .collect::<Vec<_>>();
+    let ret = Ty::from_hir(db, &resolver, data.ret_type());
+    FnSig::from_params_and_return(params, ret)
 }

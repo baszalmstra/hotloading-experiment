@@ -8,12 +8,13 @@ use crate::input::ModuleId;
 use crate::name::NUMBER;
 use crate::raw::{DefKind, RawFileItem};
 use crate::resolve::{Resolution, Resolver};
+use crate::ty::InferenceResult;
 use crate::type_ref::TypeRef;
-use crate::{ids::FunctionId, AsName, DefDatabase, FileId, HirDatabase, Name};
+use crate::{ids::FunctionId, AsName, DefDatabase, FileId, HirDatabase, Name, Ty};
 use mun_syntax::ast::{self, NameOwner, TypeAscriptionOwner};
 use rustc_hash::FxHashMap;
 use std::sync::Arc;
-use crate::ty::InferenceResult;
+use crate::name_resolution::Namespace;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Module {
@@ -195,6 +196,10 @@ impl Function {
 
     pub fn body(self, db: &impl HirDatabase) -> Arc<Body> {
         db.body_hir(self.into())
+    }
+
+    pub fn ty(self, db: &impl HirDatabase) -> Ty {
+        db.type_for_def(self.into(), Namespace::Values)
     }
 
     pub fn infer(self, db: &impl HirDatabase) -> Arc<InferenceResult> {

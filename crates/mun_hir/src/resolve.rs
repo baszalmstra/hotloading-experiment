@@ -1,8 +1,8 @@
 use crate::expr::PatId;
-use crate::{PerNs, Path};
 use crate::{
     expr::scope::ScopeId, input::ModuleId, ExprScopes, FileId, HirDatabase, ModuleDef, Name,
 };
+use crate::{Path, PerNs};
 use rustc_hash::FxHashMap;
 use std::sync::Arc;
 
@@ -46,7 +46,10 @@ impl Resolver {
         expr_scopes: Arc<ExprScopes>,
         scope_id: ScopeId,
     ) -> Resolver {
-        self.push_scope(Scope::ExprScope(ExprScope { expr_scopes, scope_id }))
+        self.push_scope(Scope::ExprScope(ExprScope {
+            expr_scopes,
+            scope_id,
+        }))
     }
 }
 

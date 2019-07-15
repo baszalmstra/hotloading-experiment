@@ -10,16 +10,16 @@ pub struct HirFormatter<'a, 'b, DB> {
 pub trait HirDisplay {
     fn hir_fmt(&self, f: &mut HirFormatter<impl HirDatabase>) -> fmt::Result;
     fn display<'a, DB>(&'a self, db: &'a DB) -> HirDisplayWrapper<'a, DB, Self>
-        where
-            Self: Sized,
+    where
+        Self: Sized,
     {
         HirDisplayWrapper(db, self)
     }
 }
 
 impl<'a, 'b, DB> HirFormatter<'a, 'b, DB>
-    where
-        DB: HirDatabase,
+where
+    DB: HirDatabase,
 {
     pub fn write_joined<T: HirDisplay>(
         &mut self,
@@ -46,9 +46,9 @@ impl<'a, 'b, DB> HirFormatter<'a, 'b, DB>
 pub struct HirDisplayWrapper<'a, DB, T>(&'a DB, &'a T);
 
 impl<'a, DB, T> fmt::Display for HirDisplayWrapper<'a, DB, T>
-    where
-        DB: HirDatabase,
-        T: HirDisplay,
+where
+    DB: HirDatabase,
+    T: HirDisplay,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.1.hir_fmt(&mut HirFormatter { db: self.0, fmt: f })
