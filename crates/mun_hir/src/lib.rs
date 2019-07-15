@@ -5,28 +5,35 @@ mod arena;
 mod ast_id;
 mod code_model;
 mod db;
+mod expr;
 mod ids;
 mod input;
 pub mod line_index;
 mod model;
 mod name;
-mod raw;
+mod name_resolution;
 mod path;
+mod raw;
+mod resolve;
 mod type_ref;
-mod expr;
+mod ty;
+mod display;
 
 use mun_syntax::TreeArc;
 pub use salsa;
 
 pub use crate::{
-    path::{Path, PathKind},
     db::{
         DefDatabase, DefDatabaseStorage, HirDatabase, HirDatabaseStorage, SourceDatabase,
         SourceDatabaseStorage,
     },
+    display::{HirDisplay},
+    expr::ExprScopes,
     ids::ItemLoc,
     input::{FileId, PackageInput},
     name::Name,
+    name_resolution::PerNs,
+    path::{Path, PathKind},
     raw::RawItems,
 };
 

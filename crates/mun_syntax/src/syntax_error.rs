@@ -1,4 +1,4 @@
-use crate::{parsing::ParseError};
+use crate::parsing::ParseError;
 use mun_errors::{Diagnostic, Location};
 use std::fmt;
 

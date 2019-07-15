@@ -42,7 +42,10 @@ impl<ID: ArenaId, T> ArenaMap<ID, T> {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (ID, &T)> {
-        self.v.iter().enumerate().filter_map(|(idx, o)| Some((Self::from_idx(idx), o.as_ref()?)))
+        self.v
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, o)| Some((Self::from_idx(idx), o.as_ref()?)))
     }
 
     fn to_idx(id: ID) -> usize {
@@ -63,6 +66,9 @@ impl<ID: ArenaId, T> std::ops::Index<ID> for ArenaMap<ID, T> {
 
 impl<ID, T> Default for ArenaMap<ID, T> {
     fn default() -> Self {
-        ArenaMap { v: Vec::new(), _ty: PhantomData }
+        ArenaMap {
+            v: Vec::new(),
+            _ty: PhantomData,
+        }
     }
 }

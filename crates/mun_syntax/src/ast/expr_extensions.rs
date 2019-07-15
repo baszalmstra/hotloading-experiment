@@ -1,6 +1,10 @@
 use super::{children, BinExpr};
-use crate::{ast, AstNode, SmolStr, SyntaxKind::{self, *}, SyntaxToken, SyntaxElement};
 use crate::ast::Literal;
+use crate::{
+    ast, AstNode, SmolStr, SyntaxElement,
+    SyntaxKind::{self, *},
+    SyntaxToken,
+};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum PrefixOp {
@@ -115,8 +119,7 @@ impl Literal {
             FLOAT_NUMBER => LiteralKind::FloatNumber,
             INT_NUMBER => LiteralKind::IntNumber,
             T![true] | T![false] => LiteralKind::Bool,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
-

@@ -1,10 +1,10 @@
+use crate::{type_ref::TypeRef, AsName, Name};
 use mun_syntax::ast;
-use crate::{Name, AsName, type_ref::TypeRef};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Path {
     pub kind: PathKind,
-    pub segments: Vec<PathSegment>
+    pub segments: Vec<PathSegment>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -34,7 +34,9 @@ impl Path {
 
             match segment.kind()? {
                 ast::PathSegmentKind::Name(name) => {
-                    let segment = PathSegment { name: name.as_name() };
+                    let segment = PathSegment {
+                        name: name.as_name(),
+                    };
                     segments.push(segment);
                 }
                 ast::PathSegmentKind::SelfKw => {
@@ -49,19 +51,23 @@ impl Path {
             break;
         }
         segments.reverse();
-        return Some(Path { kind, segments })
+        return Some(Path { kind, segments });
     }
 
     /// Converts an `ast::NameRef` into a single-identifier `Path`.
-    pub fn from_name_ref(name_ref: &ast::NameRef) -> Path { name_ref.as_name().into() }
+    pub fn from_name_ref(name_ref: &ast::NameRef) -> Path {
+        name_ref.as_name().into()
+    }
 
     /// `true` if this path is a single identifier, like `bar`
-    pub fn is_ident(&self) -> bool { self.kind == PathKind::Plain && self.segments.len() == 1 }
+    pub fn is_ident(&self) -> bool {
+        self.kind == PathKind::Plain && self.segments.len() == 1
+    }
 
     /// If this path represents a single identifier, like `foo`, return its name.
     pub fn as_ident(&self) -> Option<&Name> {
         if self.is_ident() {
-            return self.segments.first().map( |s| &s.name)
+            return self.segments.first().map(|s| &s.name);
         }
         None
     }

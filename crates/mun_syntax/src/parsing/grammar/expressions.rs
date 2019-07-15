@@ -198,7 +198,7 @@ fn atom_expr(p: &mut Parser) -> Option<CompletedMarker> {
     }
 
     if paths::is_path_start(p) {
-        return Some(path_expr(p))
+        return Some(path_expr(p));
     }
 
     if p.matches(IDENT) {

@@ -19,7 +19,7 @@ pub(super) fn expr_path(p: &mut Parser) {
 #[derive(Clone, Copy, Eq, PartialEq)]
 enum Mode {
     Type,
-    Expr
+    Expr,
 }
 
 fn path(p: &mut Parser, mode: Mode) {
@@ -53,7 +53,10 @@ fn path_segment(p: &mut Parser, mode: Mode, first: bool) {
             name_ref(p);
         }
         SELF_KW | SUPER_KW => p.bump(),
-        _ => p.error_recover("expected identifier", declarations::DECLARATION_RECOVERY_SET),
+        _ => p.error_recover(
+            "expected identifier",
+            declarations::DECLARATION_RECOVERY_SET,
+        ),
     }
     m.complete(p, PATH_SEGMENT);
 }

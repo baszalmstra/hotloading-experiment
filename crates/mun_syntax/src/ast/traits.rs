@@ -30,9 +30,7 @@ pub trait VisibilityOwner: AstNode {
     }
 }
 
-pub trait DocCommentsOwner: AstNode {
-
-}
+pub trait DocCommentsOwner: AstNode {}
 
 pub trait ArgListOwner: AstNode {
     fn arg_list(&self) -> Option<&ast::ArgList> {

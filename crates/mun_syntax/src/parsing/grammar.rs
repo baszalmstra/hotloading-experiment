@@ -1,14 +1,14 @@
 mod declarations;
 mod expressions;
 mod params;
-mod types;
 mod paths;
 mod patterns;
+mod types;
 
 use super::{
     parser::{CompletedMarker, Marker, Parser},
-    SyntaxKind::{self, *},
     token_set::TokenSet,
+    SyntaxKind::{self, *},
 };
 
 pub(crate) fn root(p: &mut Parser) {

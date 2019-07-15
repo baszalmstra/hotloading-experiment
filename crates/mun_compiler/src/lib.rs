@@ -1,14 +1,14 @@
 ///! This library contains the code required to go from source code to binaries.
 mod diagnostic;
 
+use crate::diagnostic::Emit;
 use colored::Colorize;
 use failure::Error;
-use mun_hir::{salsa, FileId, Module, ModuleDef, PackageInput, SourceDatabase};
+use mun_errors::Diagnostic;
+use mun_hir::{salsa, FileId, Module, ModuleDef, PackageInput, SourceDatabase, HirDisplay};
+use mun_syntax::ast::AstNode;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use mun_syntax::ast::AstNode;
-use mun_errors::Diagnostic;
-use crate::diagnostic::Emit;
 
 #[derive(Debug, Clone)]
 pub struct CompilerOptions {
@@ -85,17 +85,15 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
 
     // Check if there are parser errors
     println!("{}", "Syntax Tree:".white());
+    println!("{}", source.syntax().debug_dump());
     let errors = source.errors();
     if errors.len() > 0 {
+        println!("{}", "Syntax Tree errors:".white());
         // TODO: Improve errors
         for err in errors {
-            Into::<Diagnostic>::into(err)
-                .emit(&line_index);
+            Into::<Diagnostic>::into(err).emit(&line_index);
         }
-        return Ok(())
     }
-
-    println!("{}", source.syntax().debug_dump());
 
     println!("\n{}", "HIR:".white());
     let query_log = db.log_executed(|| {
@@ -106,9 +104,13 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
                         println!("function \"{}\":", f.name(&db));
                         let name = f.name(&db);
                         let body = f.body(&db);
-                        let body_expr = &body[body.body_expr()];
-                        println!("  {:?}:", body_expr);
-                    },
+                        let infer = f.infer(&db);
+                        let body_expr = &infer[body.body_expr()];
+                        println!("  {}", body_expr.display(&db));
+                        //println!("  {:?}", infer);
+
+                    }
+                    ModuleDef::BuiltinType(..) => {}
                 }
             }
         }

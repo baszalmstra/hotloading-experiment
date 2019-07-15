@@ -1,11 +1,13 @@
 #[macro_use]
 use super::*;
 
-pub(super) const PATTERN_FIRST:TokenSet = expressions::LITERAL_FIRST
+pub(super) const PATTERN_FIRST: TokenSet = expressions::LITERAL_FIRST
     .union(paths::PATH_FIRST)
     .union(token_set![MINUS, UNDERSCORE]);
 
-pub(super) fn pattern(p: &mut Parser) { pattern_r(p, PATTERN_FIRST); }
+pub(super) fn pattern(p: &mut Parser) {
+    pattern_r(p, PATTERN_FIRST);
+}
 
 pub(super) fn pattern_r(p: &mut Parser, recovery_set: TokenSet) {
     atom_pat(p, recovery_set);

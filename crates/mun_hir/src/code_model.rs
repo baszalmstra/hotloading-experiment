@@ -1,14 +1,19 @@
 pub(crate) mod src;
 
 use self::src::HasSource;
+use crate::expr::{Body, BodySourceMap};
 use crate::ids::AstItemDef;
 use crate::ids::LocationCtx;
+use crate::input::ModuleId;
+use crate::name::NUMBER;
 use crate::raw::{DefKind, RawFileItem};
+use crate::resolve::{Resolution, Resolver};
 use crate::type_ref::TypeRef;
 use crate::{ids::FunctionId, AsName, DefDatabase, FileId, HirDatabase, Name};
 use mun_syntax::ast::{self, NameOwner, TypeAscriptionOwner};
+use rustc_hash::FxHashMap;
 use std::sync::Arc;
-use crate::expr::{Body, BodySourceMap};
+use crate::ty::InferenceResult;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Module {
@@ -27,11 +32,20 @@ impl Module {
     pub fn declarations(self, db: &impl HirDatabase) -> Vec<ModuleDef> {
         db.module_data(self.file_id).definitions.clone()
     }
+
+    fn resolver(self, db: &impl DefDatabase) -> Resolver {
+        Resolver::default().push_module_scope(self.file_id)
+    }
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct ModuleData {
     definitions: Vec<ModuleDef>,
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Clone)]
+pub struct ModuleScope {
+    items: FxHashMap<Name, Resolution>,
 }
 
 impl ModuleData {
@@ -52,17 +66,55 @@ impl ModuleData {
         }
         Arc::new(data)
     }
+
+    pub(crate) fn definitions(&self) -> &[ModuleDef] {
+        &self.definitions
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ModuleDef {
     Function(Function),
+    BuiltinType(BuiltinType),
+}
+
+impl From<Function> for ModuleDef {
+    fn from(t: Function) -> Self {
+        ModuleDef::Function(t)
+    }
+}
+
+impl From<BuiltinType> for ModuleDef {
+    fn from(t: BuiltinType) -> Self {
+        ModuleDef::BuiltinType(t)
+    }
 }
 
 /// The definitions that have a body.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DefWithBody {
     Function(Function),
+}
+
+impl DefWithBody {
+    pub fn infer(self, db: &impl HirDatabase) -> Arc<InferenceResult> {
+        db.infer(self)
+    }
+
+    pub fn body(self, db: &impl HirDatabase) -> Arc<Body> {
+        db.body_hir(self)
+    }
+
+    pub fn body_source_map(self, db: &impl HirDatabase) -> Arc<BodySourceMap> {
+        db.body_with_source_map(self).1
+    }
+
+    /// Builds a resolver for code inside this item.
+    pub(crate) fn resolver(self, db: &impl HirDatabase) -> Resolver {
+        match self {
+            DefWithBody::Function(f) => f.resolver(db),
+        }
+    }
 }
 
 impl From<Function> for DefWithBody {
@@ -113,16 +165,24 @@ impl FnData {
         })
     }
 
-    pub fn name(&self) -> &Name { &self.name }
+    pub fn name(&self) -> &Name {
+        &self.name
+    }
 
-    pub fn params(&self) -> &[TypeRef] { &self.params }
+    pub fn params(&self) -> &[TypeRef] {
+        &self.params
+    }
 
-    pub fn ret_type(&self) -> &TypeRef { &self.ret_type }
+    pub fn ret_type(&self) -> &TypeRef {
+        &self.ret_type
+    }
 }
 
 impl Function {
-    pub fn module(self, db: &impl DefDatabase) -> FileId {
-        self.id.file_id(db)
+    pub fn module(self, db: &impl DefDatabase) -> Module {
+        Module {
+            file_id: self.id.file_id(db),
+        }
     }
 
     pub fn name(self, db: &impl HirDatabase) -> Name {
@@ -137,7 +197,29 @@ impl Function {
         db.body_hir(self.into())
     }
 
+    pub fn infer(self, db: &impl HirDatabase) -> Arc<InferenceResult> {
+        db.infer(self.into())
+    }
+
     pub(crate) fn body_source_map(self, db: &impl HirDatabase) -> Arc<BodySourceMap> {
         db.body_with_source_map(self.into()).1
     }
+
+    pub(crate) fn resolver(self, db: &impl HirDatabase) -> Resolver {
+        // take the outer scope...
+        let r = self.module(db).resolver(db);
+        r
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BuiltinType {
+    Number,
+}
+
+impl BuiltinType {
+    #[rustfmt::skip]
+    pub(crate) const ALL: &'static [(Name, BuiltinType)] = &[
+        (NUMBER, BuiltinType::Number),
+    ];
 }

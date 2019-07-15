@@ -1,17 +1,27 @@
-use crate::{arena::{RawId, Arena}, code_model::DefWithBody, Path, arena::map::ArenaMap, HirDatabase, FileId, Name};
+use crate::{
+    arena::map::ArenaMap,
+    arena::{Arena, RawId},
+    code_model::DefWithBody,
+    FileId, HirDatabase, Name, Path,
+};
 
 //pub use mun_syntax::ast::PrefixOp as UnaryOp;
+use crate::ast_id::AstId;
+use crate::code_model::src::HasSource;
+use crate::name::AsName;
+use crate::type_ref::TypeRef;
 pub use mun_syntax::ast::BinOp as BinaryOp;
 pub use mun_syntax::ast::PrefixOp as UnaryOp;
+use mun_syntax::ast::{ArgListOwner, NameOwner, TypeAscriptionOwner};
+use mun_syntax::{ast, AstNode, AstPtr, SyntaxNodePtr};
 use rustc_hash::FxHashMap;
-use mun_syntax::{SyntaxNodePtr, ast, AstPtr, AstNode};
-use std::sync::Arc;
-use crate::code_model::src::HasSource;
-use mun_syntax::ast::{NameOwner, TypeAscriptionOwner, ArgListOwner};
-use crate::name::AsName;
-use crate::ast_id::AstId;
-use crate::type_ref::TypeRef;
 use std::ops::Index;
+use std::sync::Arc;
+
+pub use self::scope::ExprScopes;
+use crate::resolve::Resolver;
+
+pub(crate) mod scope;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExprId(RawId);
@@ -97,7 +107,9 @@ impl BodySourceMap {
     }
 
     pub(crate) fn node_expr(&self, node: &ast::Expr) -> Option<ExprId> {
-        self.expr_map.get(&SyntaxNodePtr::new(node.syntax())).cloned()
+        self.expr_map
+            .get(&SyntaxNodePtr::new(node.syntax()))
+            .cloned()
     }
 
     pub(crate) fn pat_syntax(&self, pat: PatId) -> Option<AstPtr<ast::Pat>> {
@@ -111,7 +123,11 @@ impl BodySourceMap {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Statement {
-    Let { pat: PatId, type_ref: Option<TypeRef>, initializer: Option<ExprId> },
+    Let {
+        pat: PatId,
+        type_ref: Option<TypeRef>,
+        initializer: Option<ExprId>,
+    },
     Expr(ExprId),
 }
 
@@ -145,7 +161,45 @@ pub enum Expr {
         statements: Vec<Statement>,
         tail: Option<ExprId>,
     },
-    Literal(Literal)
+    Literal(Literal),
+}
+
+impl Expr {
+    pub fn walk_child_exprs(&self, mut f: impl FnMut(ExprId)) {
+        match self {
+            Expr::Missing => {}
+            Expr::Path(_) => {}
+            Expr::Block { statements, tail } => {
+                for stmt in statements {
+                    match stmt {
+                        Statement::Let { initializer, .. } => {
+                            if let Some(expr) = initializer {
+                                f(*expr);
+                            }
+                        }
+                        Statement::Expr(e) => f(*e),
+                    }
+                }
+                if let Some(expr) = tail {
+                    f(*expr);
+                }
+            }
+            Expr::Call { callee, args } => {
+                f(*callee);
+                for arg in args {
+                    f(*arg);
+                }
+            }
+            Expr::BinaryOp { lhs, rhs, .. } => {
+                f(*lhs);
+                f(*rhs);
+            }
+            Expr::UnaryOp { expr, .. } => {
+                f(*expr);
+            }
+            Expr::Literal(_) => {}
+        }
+    }
 }
 
 // Similar to ast::PatKind
@@ -154,9 +208,11 @@ pub enum Pat {
     Missing,
     Wild,
     Path(Path),
-    Bind {
-        name: Name,
-    },
+    Bind { name: Name },
+}
+
+impl Pat {
+    pub fn walk_child_pats(&self, mut f: impl FnMut(PatId)) {}
 }
 
 // Queries
@@ -183,7 +239,7 @@ where
             pats: Arena::default(),
             source_map: BodySourceMap::default(),
             params: Vec::new(),
-            body_expr: None
+            body_expr: None,
         }
     }
 
@@ -234,7 +290,11 @@ where
                     let pat = self.collect_pat_opt(stmt.pat());
                     let type_ref = stmt.ascribed_type().map(TypeRef::from_ast);
                     let initializer = stmt.initializer().map(|e| self.collect_expr(e));
-                    Statement::Let { pat, type_ref, initializer }
+                    Statement::Let {
+                        pat,
+                        type_ref,
+                        initializer,
+                    }
                 }
                 ast::StmtKind::ExprStmt(stmt) => {
                     Statement::Expr(self.collect_expr_opt(stmt.expr()))
@@ -242,7 +302,10 @@ where
             })
             .collect();
         let tail = block.expr().map(|e| self.collect_expr(e));
-        self.alloc_expr(Expr::Block { statements, tail }, SyntaxNodePtr::new(block.syntax()))
+        self.alloc_expr(
+            Expr::Block { statements, tail },
+            SyntaxNodePtr::new(block.syntax()),
+        )
     }
 
     fn collect_pat_opt(&mut self, pat: Option<&ast::Pat>) -> PatId {
@@ -272,7 +335,7 @@ where
                     ast::LiteralKind::String => Literal::String(Default::default()),
                 };
                 self.alloc_expr(Expr::Literal(lit), syntax_ptr)
-            },
+            }
             ast::ExprKind::PrefixExpr(e) => {
                 let expr = self.collect_expr_opt(e.expr());
                 if let Some(op) = e.op_kind() {
@@ -288,8 +351,11 @@ where
                 self.alloc_expr(Expr::BinaryOp { lhs, rhs, op }, syntax_ptr)
             }
             ast::ExprKind::PathExpr(e) => {
-                let path =
-                    e.path().and_then(Path::from_ast).map(Expr::Path).unwrap_or(Expr::Missing);
+                let path = e
+                    .path()
+                    .and_then(Path::from_ast)
+                    .map(Expr::Path)
+                    .unwrap_or(Expr::Missing);
                 self.alloc_expr(path, syntax_ptr)
             }
             ast::ExprKind::ParenExpr(e) => {
@@ -307,16 +373,19 @@ where
                 };
                 self.alloc_expr(Expr::Call { callee, args }, syntax_ptr)
             }
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
     fn collect_pat(&mut self, pat: &ast::Pat) -> PatId {
         let pattern = match pat.kind() {
             ast::PatKind::BindPat(bp) => {
-                let name = bp.name().map(|nr| nr.as_name()).unwrap_or_else(Name::missing);
+                let name = bp
+                    .name()
+                    .map(|nr| nr.as_name())
+                    .unwrap_or_else(Name::missing);
                 Pat::Bind { name }
-            },
+            }
             ast::PatKind::PlaceholderPat(_) => Pat::Wild,
         };
         let ptr = AstPtr::new(pat);
@@ -355,4 +424,28 @@ pub(crate) fn body_with_source_map_query(
 
 pub(crate) fn body_hir_query(db: &impl HirDatabase, def: DefWithBody) -> Arc<Body> {
     db.body_with_source_map(def).0
+}
+
+// needs arbitrary_self_types to be a method... or maybe move to the def?
+pub(crate) fn resolver_for_expr(
+    body: Arc<Body>,
+    db: &impl HirDatabase,
+    expr_id: ExprId,
+) -> Resolver {
+    let scopes = db.expr_scopes(body.owner);
+    resolver_for_scope(body, db, scopes.scope_for(expr_id))
+}
+
+pub(crate) fn resolver_for_scope(
+    body: Arc<Body>,
+    db: &impl HirDatabase,
+    scope_id: Option<scope::ScopeId>,
+) -> Resolver {
+    let mut r = body.owner.resolver(db);
+    let scopes = db.expr_scopes(body.owner);
+    let scope_chain = scopes.scope_chain(scope_id).collect::<Vec<_>>();
+    for scope in scope_chain.into_iter().rev() {
+        r = r.push_expr_scope(Arc::clone(&scopes), scope);
+    }
+    r
 }

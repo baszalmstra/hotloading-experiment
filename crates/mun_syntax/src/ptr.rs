@@ -1,4 +1,4 @@
-use crate::{SyntaxKind, SyntaxNode, TextRange, AstNode};
+use crate::{AstNode, SyntaxKind, SyntaxNode, TextRange};
 use std::iter::successors;
 use std::marker::PhantomData;
 
@@ -53,7 +53,10 @@ impl<N: AstNode> Clone for AstPtr<N> {
 
 impl<N: AstNode> AstPtr<N> {
     pub fn new(node: &N) -> AstPtr<N> {
-        AstPtr { raw: SyntaxNodePtr::new(node.syntax()), _ty: PhantomData }
+        AstPtr {
+            raw: SyntaxNodePtr::new(node.syntax()),
+            _ty: PhantomData,
+        }
     }
 
     pub fn to_node(self, root: &SyntaxNode) -> &N {

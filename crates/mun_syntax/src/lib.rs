@@ -11,12 +11,12 @@
 #[macro_use]
 mod syntax_kind;
 
-mod syntax_error;
 pub mod ast;
-mod syntax_node;
-mod syntax_text;
 mod parsing;
 mod ptr;
+mod syntax_error;
+mod syntax_node;
+mod syntax_text;
 
 pub use crate::{
     ast::AstNode,
@@ -57,7 +57,7 @@ impl SourceFile {
 #[test]
 fn api_walkthrough() {
     use ast::ModuleItemOwner;
-    use ast::{NameOwner};
+    use ast::NameOwner;
 
     let source_code = "
         function foo() {

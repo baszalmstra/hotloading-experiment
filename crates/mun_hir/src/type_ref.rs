@@ -1,6 +1,5 @@
 ///! HIR for references to types. These paths are not yet resolved. They can be directly created
 /// from an `ast::TypeRef`, without further queries.
-
 use crate::Path;
 use mun_syntax::ast::{self, TypeRefKind};
 

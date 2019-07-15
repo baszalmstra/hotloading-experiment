@@ -21,7 +21,7 @@ impl fmt::Debug for Name {
 }
 
 impl Name {
-    fn new(text: SmolStr) -> Name {
+    const fn new(text: SmolStr) -> Name {
         Name { text }
     }
 
@@ -45,3 +45,5 @@ impl AsName for ast::Name {
         Name::new(self.text().clone())
     }
 }
+
+pub(crate) const NUMBER: Name = Name::new(SmolStr::new_inline_from_ascii(6, b"number"));

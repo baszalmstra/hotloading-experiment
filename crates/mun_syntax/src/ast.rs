@@ -6,7 +6,7 @@ mod traits;
 
 use crate::{syntax_node::SyntaxNodeChildren, SmolStr, SyntaxNode, SyntaxToken, TreeArc};
 
-pub use self::{expr_extensions::*, generated::*, traits::*, extensions::PathSegmentKind};
+pub use self::{expr_extensions::*, extensions::PathSegmentKind, generated::*, traits::*};
 
 use std::marker::PhantomData;
 

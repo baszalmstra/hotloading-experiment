@@ -1,6 +1,9 @@
-use crate::{ast::{self, AstNode}, T};
 use crate::SmolStr;
 use crate::SyntaxKind;
+use crate::{
+    ast::{self, AstNode},
+    T,
+};
 
 impl ast::Name {
     pub fn text(&self) -> &SmolStr {
@@ -47,7 +50,7 @@ impl ast::PathSegment {
         } else {
             match self.syntax().first_child_or_token()?.kind() {
                 T![self] => PathSegmentKind::SelfKw,
-                T![super]=> PathSegmentKind::SuperKw,
+                T![super] => PathSegmentKind::SuperKw,
                 _ => return None,
             }
         };

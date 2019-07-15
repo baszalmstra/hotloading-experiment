@@ -1,12 +1,21 @@
-use crate::code_model::{FnData, Function, ModuleData, DefWithBody};
 use crate::{
-    ast_id::{AstIdMap, ErasedFileAstId},
+    ast_id::ErasedFileAstId,
+    code_model::{DefWithBody, FnData, Function, ModuleData},
     ids,
     line_index::LineIndex,
-    FileId, PackageInput, RawItems,
+    name_resolution::ModuleScope,
+    AstIdMap,
+    ExprScopes,
+    FileId,
+    Module,
+    PackageInput,
+    RawItems,
+    ty::InferenceResult
 };
 use mun_syntax::{ast, SourceFile, SyntaxNode, TreeArc};
 use std::sync::Arc;
+use crate::ty::{TypableDef, Ty};
+use crate::name_resolution::Namespace;
 
 /// Database which stores all significant input facts: source code and project model. Everything
 /// else in rust-analyzer is derived from these queries.
@@ -50,8 +59,20 @@ pub trait DefDatabase: SourceDatabase {
 
 #[salsa::query_group(HirDatabaseStorage)]
 pub trait HirDatabase: DefDatabase {
+    #[salsa::invoke(ExprScopes::expr_scopes_query)]
+    fn expr_scopes(&self, def: DefWithBody) -> Arc<ExprScopes>;
+
+    #[salsa::invoke(crate::name_resolution::module_scope_query)]
+    fn module_scope(&self, file_id: FileId) -> Arc<ModuleScope>;
+
+    #[salsa::invoke(crate::ty::infer_query)]
+    fn infer(&self, def: DefWithBody) -> Arc<InferenceResult>;
+
     #[salsa::invoke(crate::FnData::fn_data_query)]
     fn fn_data(&self, func: Function) -> Arc<FnData>;
+
+    #[salsa::invoke(crate::ty::type_for_def)]
+    fn type_for_def(&self, def: TypableDef, ns: Namespace) -> Ty;
 
     /// Returns the module data of the specified file
     #[salsa::invoke(crate::code_model::ModuleData::module_data_query)]
