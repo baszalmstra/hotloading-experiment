@@ -27,6 +27,7 @@ pub use crate::{
         DefDatabase, DefDatabaseStorage, HirDatabase, HirDatabaseStorage, SourceDatabase,
         SourceDatabaseStorage,
     },
+    ty::{Ty, TypeCtor, ApplicationTy},
     display::{HirDisplay},
     expr::ExprScopes,
     ids::ItemLoc,

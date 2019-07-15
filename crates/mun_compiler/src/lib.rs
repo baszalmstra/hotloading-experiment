@@ -9,6 +9,8 @@ use mun_hir::{salsa, FileId, Module, ModuleDef, PackageInput, SourceDatabase, Hi
 use mun_syntax::ast::AstNode;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use mun_codegen::{IrDatabase};
+use std::ffi::OsStr;
 
 #[derive(Debug, Clone)]
 pub struct CompilerOptions {
@@ -18,7 +20,8 @@ pub struct CompilerOptions {
 #[salsa::database(
     mun_hir::SourceDatabaseStorage,
     mun_hir::DefDatabaseStorage,
-    mun_hir::HirDatabaseStorage
+    mun_hir::HirDatabaseStorage,
+    mun_codegen::IrDatabaseStorage
 )]
 #[derive(Debug)]
 pub struct CompilerDatabase {
@@ -73,6 +76,11 @@ impl CompilerDatabase {
         let mut package_input = PackageInput::default();
         package_input.add_module(file_id);
         db.set_package_input(Arc::new(package_input));
+
+        let context = mun_codegen::Context::create();
+        let module = context.create_module(path.file_name().and_then(OsStr::to_str).unwrap());
+        db.set_module(Arc::new(module));
+
         Ok((db, file_id))
     }
 }
@@ -106,9 +114,9 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
                         let body = f.body(&db);
                         let infer = f.infer(&db);
                         let body_expr = &infer[body.body_expr()];
-                        println!("  {}", body_expr.display(&db));
-                        //println!("  {:?}", infer);
+                        println!("  {:#?}", infer);
 
+                        db.ir_function(f);
                     }
                     ModuleDef::BuiltinType(..) => {}
                 }
@@ -121,5 +129,8 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
         println!("{}", l);
     }
 
+    println!("\n{}\n{}", "IR".white(), db.module().print_to_string().to_string());
+
     Ok(())
 }
+

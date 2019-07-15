@@ -6,6 +6,6 @@ edition = "2018"
 
 [dependencies]
 inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm7-0" }
-mun_syntax = { path = "../mun_syntax" }
-mun_errors = { path = "../mun_errors" }
+mun_hir = { path = "../mun_hir" }
 failure = "0.1.5"
+salsa="0.12"
