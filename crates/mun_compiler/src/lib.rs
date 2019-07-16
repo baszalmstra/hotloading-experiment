@@ -78,8 +78,7 @@ impl CompilerDatabase {
         db.set_package_input(Arc::new(package_input));
 
         let context = mun_codegen_ir::Context::create();
-        let module = context.create_module(path.file_name().and_then(OsStr::to_str).unwrap());
-        db.set_module(Arc::new(module));
+        db.set_context(Arc::new(context));
 
         Ok((db, file_id))
     }
@@ -115,7 +114,6 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
                         let infer = f.infer(&db);
                         let body_expr = &infer[body.body_expr()];
                         println!("  {}", f.ty(&db).display(&db));
-                        db.function_ir(f);
                     }
                     ModuleDef::BuiltinType(..) => {}
                 }
@@ -131,7 +129,7 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
     println!(
         "\n{}\n{}",
         "IR".white(),
-        db.module().print_to_string().to_string()
+        db.module_ir(file_id).print_to_string().to_string()
     );
 
     Ok(())

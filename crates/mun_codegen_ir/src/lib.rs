@@ -1,6 +1,5 @@
 mod db;
-mod function;
-mod ty;
+mod ir;
 
 pub use inkwell::{builder, context::Context, module, values};
 

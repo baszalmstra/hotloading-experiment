@@ -7,7 +7,7 @@ use rustc_hash::FxHashMap;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Default)]
-pub(crate) struct Resolver {
+pub struct Resolver {
     scopes: Vec<Scope>,
 }
 
@@ -62,7 +62,7 @@ pub enum Resolution {
 }
 
 impl Resolver {
-    fn resolve_name(&self, db: &impl HirDatabase, name: &Name) -> PerNs<Resolution> {
+    pub fn resolve_name(&self, db: &impl HirDatabase, name: &Name) -> PerNs<Resolution> {
         let mut resolution = PerNs::none();
         for scope in self.scopes.iter().rev() {
             resolution = resolution.or(scope.resolve_name(db, name));
@@ -75,7 +75,7 @@ impl Resolver {
 
     /// Returns the fully resolved path if we were able to resolve it.
     /// otherwise returns `PerNs::none`
-    pub(crate) fn resolve_path_without_assoc_items(
+    pub fn resolve_path_without_assoc_items(
         &self,
         db: &impl HirDatabase,
         path: &Path,

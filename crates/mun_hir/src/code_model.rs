@@ -68,7 +68,7 @@ impl ModuleData {
         Arc::new(data)
     }
 
-    pub(crate) fn definitions(&self) -> &[ModuleDef] {
+    pub fn definitions(&self) -> &[ModuleDef] {
         &self.definitions
     }
 }

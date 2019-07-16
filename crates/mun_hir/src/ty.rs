@@ -3,8 +3,9 @@ mod lower;
 
 use crate::display::{HirDisplay, HirFormatter};
 use crate::{Function, HirDatabase};
-pub(crate) use infer::{infer_query, InferenceResult};
+pub(crate) use infer::{infer_query};
 pub(crate) use lower::{type_for_def, fn_sig_for_fn, TypableDef};
+pub use infer::{InferenceResult};
 use std::fmt;
 use std::sync::Arc;
 

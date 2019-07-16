@@ -427,7 +427,7 @@ pub(crate) fn body_hir_query(db: &impl HirDatabase, def: DefWithBody) -> Arc<Bod
 }
 
 // needs arbitrary_self_types to be a method... or maybe move to the def?
-pub(crate) fn resolver_for_expr(
+pub fn resolver_for_expr(
     body: Arc<Body>,
     db: &impl HirDatabase,
     expr_id: ExprId,
