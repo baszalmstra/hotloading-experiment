@@ -88,7 +88,7 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
                 let rhs_value = self.gen_expr(rhs).expect( "no rhs value");
                 match op.expect("missing op") {
                     BinaryOp::Add => Some(self.gen_add(lhs_value, rhs_value)),
-                    BinaryOp::Subtract => Some(self.gen_add(lhs_value, rhs_value)),
+                    BinaryOp::Subtract => Some(self.gen_sub(lhs_value, rhs_value)),
                     _ => unreachable!()
                 }
             }

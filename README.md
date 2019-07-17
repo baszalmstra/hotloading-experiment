@@ -131,3 +131,22 @@ We'll have to add type inferencing as soon as we can.
 ### Embed API
 
 Write and implement the API
+
+## Installing LLVM on Windows
+
+Installing LLVM on windows is not a very pleasant experience. Especially if you want to try out multiple versions. Here is a short explanation on how I do this:
+
+1. Clone llvmenv from [this repo](https://github.com/baszalmstra/llvmenv)
+2. Run `cargo run init` 
+3. Add the following entry to `%appdata%/llvmenv/entry.toml`
+   ```
+   [7_0_0]
+   url    = "https://github.com/llvm-mirror/llvm#release_70"
+   build_type = "Release"
+   builder = "VisualStudioWin64"
+   ```
+4. Run `cargo run build-entry 7_0_0`. This will build the entire LLVM 7.0 toolchain.
+5. Add an environment variable:
+   ```
+   LLVM_SYS_70_PREFIX=%appdata%\llvmenv\7_0_0
+   ```
