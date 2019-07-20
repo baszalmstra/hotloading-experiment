@@ -1,6 +1,7 @@
 pub(crate) mod src;
 
 use self::src::HasSource;
+use crate::diagnostics::DiagnosticSink;
 use crate::expr::{Body, BodySourceMap};
 use crate::ids::AstItemDef;
 use crate::ids::LocationCtx;
@@ -22,6 +23,10 @@ pub struct Module {
 }
 
 impl Module {
+    pub fn file_id(&self) -> FileId {
+        self.file_id
+    }
+
     pub fn package_modules(db: &impl DefDatabase) -> Vec<Module> {
         db.package_input()
             .modules()
@@ -36,6 +41,15 @@ impl Module {
 
     fn resolver(self, db: &impl DefDatabase) -> Resolver {
         Resolver::default().push_module_scope(self.file_id)
+    }
+
+    pub fn diagnostics(self, db: &impl HirDatabase, sink: &mut DiagnosticSink) {
+        for decl in self.declarations(db) {
+            match decl {
+                ModuleDef::Function(f) => f.diagnostics(db, sink),
+                _ => (),
+            }
+        }
     }
 }
 
@@ -214,6 +228,13 @@ impl Function {
         // take the outer scope...
         let r = self.module(db).resolver(db);
         r
+    }
+
+    pub fn diagnostics(self, db: &impl HirDatabase, sink: &mut DiagnosticSink) {
+        let infer = self.infer(db);
+        infer.add_diagnostics(db, self, sink);
+        //        let mut validator = ExprValidator::new(self, infer, sink);
+        //        validator.validate_body(db);
     }
 }
 

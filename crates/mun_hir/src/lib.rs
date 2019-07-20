@@ -2,9 +2,9 @@
 
 #[macro_use]
 mod arena;
-mod source_id;
 mod code_model;
 mod db;
+pub mod diagnostics;
 mod display;
 mod expr;
 mod ids;
@@ -16,16 +16,16 @@ mod name_resolution;
 mod path;
 mod raw;
 mod resolve;
+mod source_id;
 mod ty;
 mod type_ref;
-mod diagnostics;
 
 pub use salsa;
 
 pub use crate::{
     db::{
         DefDatabase, DefDatabaseStorage, HirDatabase, HirDatabaseStorage, SourceDatabase,
-        SourceDatabaseStorage,
+        SourceDatabaseStorage, RelativePathBuf
     },
     display::HirDisplay,
     expr::{resolver_for_expr, BinaryOp, Body, Expr, ExprId, ExprScopes},
@@ -41,9 +41,9 @@ pub use crate::{
 
 use crate::{
     arena::{Arena, ArenaId, RawId},
-    source_id::{AstId, AstIdMap, FileAstId},
     line_index::LineIndex,
     name::AsName,
+    source_id::{AstId, AstIdMap, FileAstId},
 };
 
 pub use self::code_model::{FnData, Function, Module, ModuleDef};

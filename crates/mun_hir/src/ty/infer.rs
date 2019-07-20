@@ -1,15 +1,18 @@
 use crate::arena::map::ArenaMap;
+use crate::code_model::src::HasSource;
 use crate::code_model::DefWithBody;
+use crate::diagnostics::{DiagnosticSink, UnresolvedValue};
 use crate::expr::{Body, Expr, ExprId, Pat, PatId, Statement};
 use crate::name_resolution::Namespace;
 use crate::resolve::{Resolution, Resolver};
 use crate::ty::{Ty, TypableDef};
 use crate::type_ref::TypeRef;
-use crate::{expr, FnData, HirDatabase, Path};
+use crate::{expr, FnData, Function, HirDatabase, Path};
+use mun_syntax::ast::TypeRefKind;
+use mun_syntax::{ast, AstPtr};
 use std::mem;
 use std::ops::Index;
 use std::sync::Arc;
-use mun_syntax::ast::TypeRefKind;
 
 /// The result of type inference: A mapping from expressions and patterns to types.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -32,6 +35,19 @@ impl Index<PatId> for InferenceResult {
 
     fn index(&self, pat: PatId) -> &Ty {
         self.type_of_pat.get(pat).unwrap_or(&Ty::Unknown)
+    }
+}
+
+impl InferenceResult {
+    pub(crate) fn add_diagnostics(
+        &self,
+        db: &impl HirDatabase,
+        owner: Function,
+        sink: &mut DiagnosticSink,
+    ) {
+        self.diagnostics
+            .iter()
+            .for_each(|it| it.add_to(db, owner, sink))
     }
 }
 
@@ -89,22 +105,21 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
     fn collect_fn(&mut self, data: &FnData) {
         let body = Arc::clone(&self.body); // avoid borrow checker problem
         for (type_ref, pat) in data.params().iter().zip(body.params()) {
-            let ty = self.make_ty(type_ref);
-
+            let ty = self.make_ty(type_ref).unwrap_or(Ty::Unknown);
             self.infer_pat(*pat, &ty);
         }
-        self.return_ty = self.make_ty(data.ret_type());
+        self.return_ty = self.make_ty(data.ret_type()).unwrap_or(Ty::Unknown)
     }
 
-    fn make_ty(&mut self, type_ref: &TypeRef) -> Ty {
+    fn make_ty(&mut self, type_ref: &TypeRef) -> Option<Ty> {
         let ty = Ty::from_hir(
             self.db,
             // FIXME use right resolver for block
             &self.resolver,
             type_ref,
-        );
+        )?;
         //self.insert_type_vars(ty)
-        ty
+        Some(ty)
     }
 
     fn infer_pat(&mut self, pat: PatId, mut expected: &Ty) -> Ty {
@@ -133,7 +148,7 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
             Expr::Path(p) => {
                 // FIXME this could be more efficient...
                 let resolver = expr::resolver_for_expr(self.body.clone(), self.db, tgt_expr);
-                self.infer_path_expr(&resolver, p /*, tgt_expr.into()*/)
+                self.infer_path_expr(&resolver, p, tgt_expr.into())
                     .unwrap_or(Ty::Unknown)
             }
             Expr::BinaryOp { lhs, rhs, op } => match op {
@@ -155,10 +170,18 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
         ty
     }
 
-    fn infer_path_expr(&mut self, resolver: &Resolver, path: &Path) -> Option<Ty> {
-        let resolution = resolver
+    fn infer_path_expr(&mut self, resolver: &Resolver, path: &Path, id: ExprOrPatId) -> Option<Ty> {
+        let resolution = match resolver
             .resolve_path_without_assoc_items(self.db, path)
-            .take_values()?;
+            .take_values()
+        {
+            Some(resolution) => resolution,
+            None => {
+                self.diagnostics
+                    .push(InferenceDiagnostic::UnresolvedValue { id: id });
+                return None;
+            }
+        };
 
         match resolution {
             Resolution::LocalBinding(pat) => {
@@ -220,7 +243,7 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
                 } => {
                     let decl_ty = type_ref
                         .as_ref()
-                        .map(|tr| self.make_ty(tr))
+                        .and_then(|tr| self.make_ty(tr))
                         .unwrap_or(Ty::Unknown);
                     //let decl_ty = self.insert_type_vars(decl_ty);
                     let ty = if let Some(expr) = initializer {
@@ -245,16 +268,16 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
         ty
     }
 
-    pub fn report_pat_inference_failure(&mut self, pat:PatId) {
-        self.diagnostics.push(InferenceDiagnostic::PatInferenceFailed {
-            pat
-        });
+    pub fn report_pat_inference_failure(&mut self, pat: PatId) {
+        //        self.diagnostics.push(InferenceDiagnostic::PatInferenceFailed {
+        //            pat
+        //        });
     }
 
-    pub fn report_expr_inference_failure(&mut self, expr:ExprId) {
-        self.diagnostics.push(InferenceDiagnostic::ExprInferenceFailed {
-            expr
-        });
+    pub fn report_expr_inference_failure(&mut self, expr: ExprId) {
+        //        self.diagnostics.push(InferenceDiagnostic::ExprInferenceFailed {
+        //            expr
+        //        });
     }
 }
 
@@ -281,8 +304,43 @@ impl Expectation {
     }
 }
 
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub(super) enum ExprOrPatId {
+    ExprId(ExprId),
+    PatId(PatId),
+}
+
+impl From<ExprId> for ExprOrPatId {
+    fn from(e: ExprId) -> Self {
+        ExprOrPatId::ExprId(e)
+    }
+}
+
+impl From<PatId> for ExprOrPatId {
+    fn from(p: PatId) -> Self {
+        ExprOrPatId::PatId(p)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub(super) enum InferenceDiagnostic {
-    PatInferenceFailed { pat: PatId },
-    ExprInferenceFailed { expr: ExprId }
+    UnresolvedValue { id: ExprOrPatId },
+}
+
+impl InferenceDiagnostic {
+    pub(super) fn add_to(&self, db: &impl HirDatabase, owner: Function, sink: &mut DiagnosticSink) {
+        match self {
+            InferenceDiagnostic::UnresolvedValue { id } => {
+                let file = owner.source(db).file_id;
+                let body = owner.body_source_map(db);
+                let expr = match id {
+                    ExprOrPatId::ExprId(id) => body.expr_syntax(*id),
+                    ExprOrPatId::PatId(id) => body.pat_syntax(*id).map(|ptr| ptr.syntax_node_ptr()),
+                }
+                .unwrap();
+
+                sink.push(UnresolvedValue { file, expr });
+            }
+        }
+    }
 }

@@ -6,14 +6,22 @@ use crate::type_ref::TypeRef;
 use crate::{Function, HirDatabase, ModuleDef, Path};
 
 impl Ty {
-    pub(crate) fn from_hir(db: &impl HirDatabase, resolver: &Resolver, type_ref: &TypeRef) -> Self {
+    pub(crate) fn from_hir(
+        db: &impl HirDatabase,
+        resolver: &Resolver,
+        type_ref: &TypeRef,
+    ) -> Option<Self> {
         match type_ref {
             TypeRef::Path(path) => Ty::from_hir_path(db, resolver, path),
-            TypeRef::Error => Ty::Unknown,
+            TypeRef::Error => Some(Ty::Unknown),
         }
     }
 
-    pub(crate) fn from_hir_path(db: &impl HirDatabase, resolver: &Resolver, path: &Path) -> Self {
+    pub(crate) fn from_hir_path(
+        db: &impl HirDatabase,
+        resolver: &Resolver,
+        path: &Path,
+    ) -> Option<Self> {
         let resolution = resolver
             .resolve_path_without_assoc_items(db, path)
             .take_types();
@@ -24,16 +32,16 @@ impl Ty {
                 // this should never happen
                 panic!("path resolved to local binding in type ns");
             }
-            None => return Ty::Unknown,
+            None => return None,
         };
 
         let typable: TypableDef = match def.into() {
-            None => return Ty::Unknown,
+            None => return None,
             Some(it) => it,
         };
 
         let ty = db.type_for_def(typable, Namespace::Types);
-        ty
+        Some(ty)
     }
 }
 
@@ -98,8 +106,8 @@ pub fn fn_sig_for_fn(db: &impl HirDatabase, def: Function) -> FnSig {
     let params = data
         .params()
         .iter()
-        .map(|tr| Ty::from_hir(db, &resolver, tr))
+        .map(|tr| Ty::from_hir(db, &resolver, tr).unwrap_or(Ty::Unknown))
         .collect::<Vec<_>>();
-    let ret = Ty::from_hir(db, &resolver, data.ret_type());
+    let ret = Ty::from_hir(db, &resolver, data.ret_type()).unwrap_or(Ty::Unknown);
     FnSig::from_params_and_return(params, ret)
 }

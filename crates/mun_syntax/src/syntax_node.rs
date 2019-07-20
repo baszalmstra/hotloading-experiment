@@ -13,8 +13,13 @@ use std::{
     iter::successors,
 };
 
-use crate::{parsing::ParseError, syntax_error::{SyntaxError, SyntaxErrorKind}, AstNode, SmolStr, SourceFile, SyntaxKind, SyntaxText, SyntaxNodePtr, TextRange, TextUnit, Parse};
-use rowan::{GreenNodeBuilder};
+use crate::{
+    parsing::ParseError,
+    syntax_error::{SyntaxError, SyntaxErrorKind},
+    AstNode, Parse, SmolStr, SourceFile, SyntaxKind, SyntaxNodePtr, SyntaxText, TextRange,
+    TextUnit,
+};
+use rowan::GreenNodeBuilder;
 
 pub use rowan::WalkEvent;
 pub(crate) use rowan::{GreenNode, GreenToken};
@@ -213,14 +218,20 @@ impl SyntaxNode {
         let old_children = self.0.green().children();
 
         let new_children = match &position {
-            InsertPosition::First => {
-                to_insert.chain(old_children.iter().cloned()).collect::<Box<[_]>>()
-            }
-            InsertPosition::Last => {
-                old_children.iter().cloned().chain(to_insert).collect::<Box<[_]>>()
-            }
+            InsertPosition::First => to_insert
+                .chain(old_children.iter().cloned())
+                .collect::<Box<[_]>>(),
+            InsertPosition::Last => old_children
+                .iter()
+                .cloned()
+                .chain(to_insert)
+                .collect::<Box<[_]>>(),
             InsertPosition::Before(anchor) | InsertPosition::After(anchor) => {
-                let take_anchor = if let InsertPosition::After(_) = position { 1 } else { 0 };
+                let take_anchor = if let InsertPosition::After(_) = position {
+                    1
+                } else {
+                    0
+                };
                 let split_at = self.position_of_child(anchor.clone()) + take_anchor;
                 let (before, after) = old_children.split_at(split_at);
                 before
@@ -258,7 +269,10 @@ impl SyntaxNode {
     }
 
     fn with_children(&self, new_children: Box<[rowan::GreenElement]>) -> SyntaxNode {
-        let len = new_children.iter().map(|it| it.text_len()).sum::<TextUnit>();
+        let len = new_children
+            .iter()
+            .map(|it| it.text_len())
+            .sum::<TextUnit>();
         let new_node = GreenNode::new(rowan::SyntaxKind(self.kind() as u16), new_children);
         let new_file_node = self.replace_with(new_node);
         let file = SourceFile::new(new_file_node);
@@ -450,7 +464,7 @@ impl SyntaxElement {
             SyntaxElement::Node(it) => it.clone(),
             SyntaxElement::Token(it) => it.parent(),
         }
-            .ancestors()
+        .ancestors()
     }
 
     pub fn text_range(&self) -> TextRange {
@@ -487,7 +501,6 @@ impl Iterator for SyntaxElementChildren {
         self.0.next().map(SyntaxElement::new)
     }
 }
-
 
 pub struct SyntaxTreeBuilder {
     errors: Vec<SyntaxError>,

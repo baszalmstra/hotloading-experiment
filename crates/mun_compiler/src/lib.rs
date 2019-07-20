@@ -5,9 +5,11 @@ use crate::diagnostic::Emit;
 use colored::Colorize;
 use failure::Error;
 use mun_codegen_ir::IrDatabase;
-use mun_errors::Diagnostic;
-use mun_hir::{salsa, FileId, HirDisplay, Module, ModuleDef, PackageInput, SourceDatabase};
+use mun_errors::{Diagnostic, Level};
+use mun_hir::diagnostics::{Diagnostic as HirDiagnostic, DiagnosticSink};
+use mun_hir::{salsa, FileId, HirDisplay, Module, ModuleDef, PackageInput, SourceDatabase, RelativePathBuf};
 use mun_syntax::ast::AstNode;
+use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
@@ -71,6 +73,7 @@ impl CompilerDatabase {
             events: Mutex::new(Some(Vec::new())),
         };
         let file_id = FileId(0);
+        db.set_file_relative_path(file_id, RelativePathBuf::from_path(path).unwrap());
         db.set_file_text(file_id, Arc::new(std::fs::read_to_string(path)?));
         let mut package_input = PackageInput::default();
         package_input.add_module(file_id);
@@ -83,48 +86,79 @@ impl CompilerDatabase {
     }
 }
 
+fn diagnostics(db: &CompilerDatabase, file_id: FileId) -> Vec<Diagnostic> {
+    let parse = db.parse(file_id);
+    let mut result = Vec::new();
+
+    result.extend(parse.errors().iter().map(|err| Diagnostic {
+        level: Level::Error,
+        loc: err.location(),
+        message: format!("Syntax Error: {}", err),
+    }));
+
+    let result = RefCell::new(result);
+    let mut sink = DiagnosticSink::new(|d| {
+        result.borrow_mut().push(Diagnostic {
+            level: Level::Error,
+            loc: d.highlight_range().into(),
+            message: d.message(),
+        });
+    })
+    .on::<mun_hir::diagnostics::UnresolvedValue, _>(|d| {
+        let text = d.expr.to_node(&parse.tree().syntax()).text().to_string();
+        result.borrow_mut().push(Diagnostic {
+            level: Level::Error,
+            loc: d.highlight_range().into(),
+            message: format!("could not find value `{}` in this scope", text),
+        });
+    });
+
+    if let Some(module) = Module::package_modules(db)
+        .iter()
+        .find(|m| m.file_id() == file_id)
+    {
+        module.diagnostics(db, &mut sink)
+    }
+
+    drop(sink);
+    result.into_inner()
+}
+
 pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
     let (db, file_id) = CompilerDatabase::from_file(&options.input)?;
 
-    let parse = db.parse(file_id);
-    let line_index = db.line_index(file_id);
-
-    // Check if there are parser errors
-//    println!("{}", "Syntax Tree:".white());
-//    println!("{}", source.syntax().debug_dump());
-    let errors = parse.errors();
-    if errors.len() > 0 {
-        println!("{}", "Syntax Tree errors:".white());
-        // TODO: Improve errors
-        for err in errors {
-            Into::<Diagnostic>::into(err.clone()).emit(&line_index);
+    let diagnostics = diagnostics(&db, file_id);
+    if !diagnostics.is_empty() {
+        let line_index = db.line_index(file_id);
+        for diagnostic in diagnostics {
+            diagnostic.emit(&line_index);
         }
-        //return Ok(());
+        return Ok(());
     }
 
-    println!("\n{}", "HIR:".white());
-    let query_log = db.log_executed(|| {
-        for module in Module::package_modules(&db) {
-            for decl in module.declarations(&db) {
-                match decl {
-                    ModuleDef::Function(f) => {
-                        println!("function \"{}\":", f.name(&db));
-                        let name = f.name(&db);
-                        let body = f.body(&db);
-                        let infer = f.infer(&db);
-                        let body_expr = &infer[body.body_expr()];
-                        println!("  {:#?}", infer);
-                    }
-                    ModuleDef::BuiltinType(..) => {}
-                }
-            }
-        }
-    });
-
-    println!("\n{}", "Queries:".white());
-    for l in query_log.into_iter() {
-        println!("{}", l);
-    }
+    //    println!("\n{}", "HIR:".white());
+    //    let query_log = db.log_executed(|| {
+    //        for module in Module::package_modules(&db) {
+    //            for decl in module.declarations(&db) {
+    //                match decl {
+    //                    ModuleDef::Function(f) => {
+    //                        println!("function \"{}\":", f.name(&db));
+    //                        let name = f.name(&db);
+    //                        let body = f.body(&db);
+    //                        let infer = f.infer(&db);
+    //                        let body_expr = &infer[body.body_expr()];
+    //                        println!("  {:#?}", infer);
+    //                    }
+    //                    ModuleDef::BuiltinType(..) => {}
+    //                }
+    //            }
+    //        }
+    //    });
+    //
+    //    println!("\n{}", "Queries:".white());
+    //    for l in query_log.into_iter() {
+    //        println!("{}", l);
+    //    }
 
     println!(
         "\n{}\n{}",

@@ -13,7 +13,7 @@ use mun_hir::{
 use std::sync::Arc;
 
 pub(crate) fn module_ir_query(db: &impl IrDatabase, file_id: FileId) -> Module {
-    let module = db.context().create_module(&format!("module_{}", file_id.0));
+    let module = db.context().create_module(db.file_relative_path(file_id).as_str());
     let mod_data = db.module_data(file_id);
     let definitions = mod_data.definitions();
     for def in definitions {
@@ -175,19 +175,6 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
                 .into(),
             _ => unreachable!(),
         }
-    }
-}
-
-fn as_parameter_type(db: &impl IrDatabase, ty: Ty) -> BasicTypeEnum {
-    let any_type = db.type_ir(ty);
-    match any_type {
-        AnyTypeEnum::ArrayType(t) => BasicTypeEnum::ArrayType(t),
-        AnyTypeEnum::FloatType(t) => BasicTypeEnum::FloatType(t),
-        AnyTypeEnum::IntType(t) => BasicTypeEnum::IntType(t),
-        AnyTypeEnum::PointerType(t) => BasicTypeEnum::PointerType(t),
-        AnyTypeEnum::StructType(t) => BasicTypeEnum::StructType(t),
-        AnyTypeEnum::VectorType(t) => BasicTypeEnum::VectorType(t),
-        _ => unreachable!("not implemented"),
     }
 }
 

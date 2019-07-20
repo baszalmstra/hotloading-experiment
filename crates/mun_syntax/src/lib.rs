@@ -18,11 +18,7 @@ mod syntax_error;
 mod syntax_node;
 mod syntax_text;
 
-use std::{
-    fmt::Write,
-    marker::PhantomData,
-    sync::Arc
-};
+use std::{fmt::Write, marker::PhantomData, sync::Arc};
 
 pub use crate::{
     ast::AstNode,
@@ -52,26 +48,44 @@ pub struct Parse<T> {
 
 impl<T> Clone for Parse<T> {
     fn clone(&self) -> Parse<T> {
-        Parse { green: self.green.clone(), errors: self.errors.clone(), _ty: PhantomData }
+        Parse {
+            green: self.green.clone(),
+            errors: self.errors.clone(),
+            _ty: PhantomData,
+        }
     }
 }
 
 impl<T> Parse<T> {
     fn new(green: GreenNode, errors: Vec<SyntaxError>) -> Parse<T> {
-        Parse { green, errors: Arc::new(errors), _ty: PhantomData}
+        Parse {
+            green,
+            errors: Arc::new(errors),
+            _ty: PhantomData,
+        }
     }
 
-    pub fn syntax_node(&self) -> SyntaxNode { SyntaxNode::new(self.green.clone())}
+    pub fn syntax_node(&self) -> SyntaxNode {
+        SyntaxNode::new(self.green.clone())
+    }
 }
 
-impl<T:AstNode> Parse<T> {
+impl<T: AstNode> Parse<T> {
     pub fn to_syntax(self) -> Parse<SyntaxNode> {
-        Parse { green: self.green, errors: self.errors, _ty: PhantomData }
+        Parse {
+            green: self.green,
+            errors: self.errors,
+            _ty: PhantomData,
+        }
     }
 
-    pub fn tree(&self) -> T { T::cast(self.syntax_node()).unwrap() }
+    pub fn tree(&self) -> T {
+        T::cast(self.syntax_node()).unwrap()
+    }
 
-    pub fn errors(&self) -> &[SyntaxError] { &*self.errors }
+    pub fn errors(&self) -> &[SyntaxError] {
+        &*self.errors
+    }
 
     pub fn ok(self) -> Result<T, Arc<Vec<SyntaxError>>> {
         if self.errors.is_empty() {
@@ -85,7 +99,11 @@ impl<T:AstNode> Parse<T> {
 impl Parse<SyntaxNode> {
     pub fn cast<N: AstNode>(self) -> Option<Parse<N>> {
         if N::cast(self.syntax_node()).is_some() {
-            Some(Parse { green: self.green, errors: self.errors, _ty: PhantomData })
+            Some(Parse {
+                green: self.green,
+                errors: self.errors,
+                _ty: PhantomData,
+            })
         } else {
             None
         }
@@ -108,9 +126,9 @@ pub use crate::ast::SourceFile;
 impl SourceFile {
     fn new(green: GreenNode) -> SourceFile {
         let root = SyntaxNode::new(green);
-//        if cfg!(debug_assertions) {
-//            validation::validate_block_structure(&root);
-//        }
+        //        if cfg!(debug_assertions) {
+        //            validation::validate_block_structure(&root);
+        //        }
         assert_eq!(root.kind(), SyntaxKind::SOURCE_FILE);
         SourceFile::cast(root).unwrap()
     }
@@ -118,7 +136,11 @@ impl SourceFile {
     pub fn parse(text: &str) -> Parse<SourceFile> {
         let (green, mut errors) = parsing::parse_text(text);
         //errors.extend(validation::validate(&SourceFile::new(green.clone())));
-        Parse { green, errors: Arc::new(errors), _ty: PhantomData }
+        Parse {
+            green,
+            errors: Arc::new(errors),
+            _ty: PhantomData,
+        }
     }
 }
 

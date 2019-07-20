@@ -44,13 +44,3 @@ impl fmt::Display for SyntaxErrorKind {
         }
     }
 }
-
-impl Into<mun_errors::Diagnostic> for SyntaxError {
-    fn into(self) -> mun_errors::Diagnostic {
-        Diagnostic {
-            level: mun_errors::Level::Error,
-            loc: self.location,
-            message: format!("{}", self.kind),
-        }
-    }
-}

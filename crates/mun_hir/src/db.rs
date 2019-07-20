@@ -1,16 +1,17 @@
 use crate::name_resolution::Namespace;
 use crate::ty::{FnSig, Ty, TypableDef};
 use crate::{
-    source_id::ErasedFileAstId,
     code_model::{DefWithBody, FnData, Function, ModuleData},
     ids,
     line_index::LineIndex,
     name_resolution::ModuleScope,
+    source_id::ErasedFileAstId,
     ty::InferenceResult,
     AstIdMap, ExprScopes, FileId, Module, PackageInput, RawItems,
 };
-use mun_syntax::{ast, SourceFile, SyntaxNode, Parse};
+use mun_syntax::{ast, Parse, SourceFile, SyntaxNode};
 use std::sync::Arc;
+pub use relative_path::RelativePathBuf;
 
 /// Database which stores all significant input facts: source code and project model. Everything
 /// else in rust-analyzer is derived from these queries.
@@ -19,6 +20,10 @@ pub trait SourceDatabase: std::fmt::Debug {
     /// Text of the file.
     #[salsa::input]
     fn file_text(&self, file_id: FileId) -> Arc<String>;
+
+    /// Path to a file, relative to the root of its source root.
+    #[salsa::input]
+    fn file_relative_path(&self, file_id: FileId) -> RelativePathBuf;
 
     /// Parses the file into the syntax tree.
     #[salsa::invoke(parse_query)]

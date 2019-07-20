@@ -1,7 +1,7 @@
 use crate::code_model::Function;
 use crate::ids::AstItemDef;
 use crate::{DefDatabase, FileId};
-use mun_syntax::{ast};
+use mun_syntax::ast;
 
 pub struct Source<T> {
     pub file_id: FileId,

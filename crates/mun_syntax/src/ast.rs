@@ -4,7 +4,7 @@ mod extensions;
 mod generated;
 mod traits;
 
-use crate::{syntax_node::SyntaxNodeChildren, SmolStr, SyntaxNode, SyntaxToken, SyntaxKind};
+use crate::{syntax_node::SyntaxNodeChildren, SmolStr, SyntaxKind, SyntaxNode, SyntaxToken};
 
 pub use self::{expr_extensions::*, extensions::PathSegmentKind, generated::*, traits::*};
 
@@ -42,7 +42,10 @@ pub struct AstChildren<N> {
 
 impl<N> AstChildren<N> {
     fn new(parent: &SyntaxNode) -> Self {
-        AstChildren { inner: parent.children(), ph: PhantomData }
+        AstChildren {
+            inner: parent.children(),
+            ph: PhantomData,
+        }
     }
 }
 

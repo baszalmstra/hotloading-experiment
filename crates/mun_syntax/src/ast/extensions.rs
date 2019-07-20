@@ -1,9 +1,9 @@
-use crate::{SmolStr, SyntaxNode};
 use crate::SyntaxKind;
 use crate::{
     ast::{self, AstNode},
     T,
 };
+use crate::{SmolStr, SyntaxNode};
 
 impl ast::Name {
     pub fn text(&self) -> &SmolStr {

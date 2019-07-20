@@ -18,28 +18,30 @@ impl SyntaxText {
     }
 
     pub fn try_fold_chunks<T, F, E>(&self, init: T, mut f: F) -> Result<T, E>
-        where
-            F: FnMut(T, &str) -> Result<T, E>,
+    where
+        F: FnMut(T, &str) -> Result<T, E>,
     {
-        self.node.descendants_with_tokens().try_fold(init, move |acc, element| {
-            let res = match element {
-                SyntaxElement::Token(token) => {
-                    let range = match self.range.intersection(&token.text_range()) {
-                        None => return Ok(acc),
-                        Some(it) => it,
-                    };
-                    let slice = if range == token.text_range() {
-                        token.text()
-                    } else {
-                        let range = range - token.text_range().start();
-                        &token.text()[range]
-                    };
-                    f(acc, slice)?
-                }
-                SyntaxElement::Node(_) => acc,
-            };
-            Ok(res)
-        })
+        self.node
+            .descendants_with_tokens()
+            .try_fold(init, move |acc, element| {
+                let res = match element {
+                    SyntaxElement::Token(token) => {
+                        let range = match self.range.intersection(&token.text_range()) {
+                            None => return Ok(acc),
+                            Some(it) => it,
+                        };
+                        let slice = if range == token.text_range() {
+                            token.text()
+                        } else {
+                            let range = range - token.text_range().start();
+                            &token.text()[range]
+                        };
+                        f(acc, slice)?
+                    }
+                    SyntaxElement::Node(_) => acc,
+                };
+                Ok(res)
+            })
     }
 
     pub fn try_for_each_chunk<F: FnMut(&str) -> Result<(), E>, E>(
@@ -62,7 +64,8 @@ impl SyntaxText {
     }
 
     pub fn contains_char(&self, c: char) -> bool {
-        self.try_for_each_chunk(|chunk| if chunk.contains(c) { Err(()) } else { Ok(()) }).is_err()
+        self.try_for_each_chunk(|chunk| if chunk.contains(c) { Err(()) } else { Ok(()) })
+            .is_err()
     }
 
     pub fn find_char(&self, c: char) -> Option<TextUnit> {
@@ -114,7 +117,10 @@ impl SyntaxText {
             self.range,
             range,
         );
-        SyntaxText { node: self.node.clone(), range }
+        SyntaxText {
+            node: self.node.clone(),
+            range,
+        }
     }
 
     pub fn char_at(&self, offset: impl Into<TextUnit>) -> Option<char> {
@@ -167,7 +173,7 @@ impl PartialEq<str> for SyntaxText {
             rhs = &rhs[chunk.len()..];
             Ok(())
         })
-            .is_ok()
+        .is_ok()
     }
 }
 

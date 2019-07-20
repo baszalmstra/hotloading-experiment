@@ -1,9 +1,6 @@
-use std::{
-    fmt,
-    any::Any
-};
 use crate::{FileId, HirDatabase};
-use mun_syntax::{SyntaxNodePtr, TextRange, SyntaxNode, AstNode};
+use mun_syntax::{ast, AstNode, AstPtr, SyntaxNode, SyntaxNodePtr, TextRange};
+use std::{any::Any, fmt};
 
 /// Diagnostic defines hir API for errors and warnings.
 ///
@@ -37,5 +34,66 @@ impl dyn Diagnostic {
 
     pub fn downcast_ref<D: Diagnostic>(&self) -> Option<&D> {
         self.as_any().downcast_ref()
+    }
+}
+
+pub struct DiagnosticSink<'a> {
+    callbacks: Vec<Box<dyn FnMut(&dyn Diagnostic) -> Result<(), ()> + 'a>>,
+    default_callback: Box<dyn FnMut(&dyn Diagnostic) + 'a>,
+}
+
+impl<'a> DiagnosticSink<'a> {
+    pub fn new(cb: impl FnMut(&dyn Diagnostic) + 'a) -> DiagnosticSink<'a> {
+        DiagnosticSink {
+            callbacks: Vec::new(),
+            default_callback: Box::new(cb),
+        }
+    }
+
+    pub fn on<D: Diagnostic, F: FnMut(&D) + 'a>(mut self, mut cb: F) -> DiagnosticSink<'a> {
+        let cb = move |diag: &dyn Diagnostic| match diag.downcast_ref::<D>() {
+            Some(d) => {
+                cb(d);
+                Ok(())
+            }
+            None => Err(()),
+        };
+        self.callbacks.push(Box::new(cb));
+        self
+    }
+
+    pub(crate) fn push(&mut self, d: impl Diagnostic) {
+        let d: &dyn Diagnostic = &d;
+        for cb in self.callbacks.iter_mut() {
+            match cb(d) {
+                Ok(()) => return,
+                Err(()) => (),
+            }
+        }
+        (self.default_callback)(d)
+    }
+}
+
+#[derive(Debug)]
+pub struct UnresolvedValue {
+    pub file: FileId,
+    pub expr: SyntaxNodePtr,
+}
+
+impl Diagnostic for UnresolvedValue {
+    fn message(&self) -> String {
+        "undefined symbol".to_string()
+    }
+
+    fn file(&self) -> FileId {
+        self.file
+    }
+
+    fn syntax_node_ptr(&self) -> SyntaxNodePtr {
+        self.expr
+    }
+
+    fn as_any(&self) -> &(dyn Any + Send + 'static) {
+        self
     }
 }

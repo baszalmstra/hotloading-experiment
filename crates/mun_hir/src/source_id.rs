@@ -100,8 +100,7 @@ impl AstIdMap {
         ast_id: ErasedFileAstId,
     ) -> SyntaxNode {
         let node = db.parse(file_id);
-        db.ast_id_map(file_id).arena[ast_id]
-            .to_node(&node.tree().syntax())
+        db.ast_id_map(file_id).arena[ast_id].to_node(&node.tree().syntax())
     }
 
     pub(crate) fn ast_id<N: AstNode>(&self, item: &N) -> FileAstId<N> {

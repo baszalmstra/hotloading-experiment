@@ -6,9 +6,9 @@ use crate::{
 };
 
 //pub use mun_syntax::ast::PrefixOp as UnaryOp;
-use crate::source_id::AstId;
 use crate::code_model::src::HasSource;
 use crate::name::AsName;
+use crate::source_id::AstId;
 use crate::type_ref::TypeRef;
 pub use mun_syntax::ast::BinOp as BinaryOp;
 pub use mun_syntax::ast::PrefixOp as UnaryOp;
