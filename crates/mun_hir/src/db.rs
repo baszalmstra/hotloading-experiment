@@ -1,7 +1,7 @@
 use crate::name_resolution::Namespace;
 use crate::ty::{FnSig, Ty, TypableDef};
 use crate::{
-    ast_id::ErasedFileAstId,
+    source_id::ErasedFileAstId,
     code_model::{DefWithBody, FnData, Function, ModuleData},
     ids,
     line_index::LineIndex,
@@ -9,7 +9,7 @@ use crate::{
     ty::InferenceResult,
     AstIdMap, ExprScopes, FileId, Module, PackageInput, RawItems,
 };
-use mun_syntax::{ast, SourceFile, SyntaxNode, TreeArc};
+use mun_syntax::{ast, SourceFile, SyntaxNode, Parse};
 use std::sync::Arc;
 
 /// Database which stores all significant input facts: source code and project model. Everything
@@ -22,7 +22,7 @@ pub trait SourceDatabase: std::fmt::Debug {
 
     /// Parses the file into the syntax tree.
     #[salsa::invoke(parse_query)]
-    fn parse(&self, file_id: FileId) -> TreeArc<SourceFile>;
+    fn parse(&self, file_id: FileId) -> Parse<ast::SourceFile>;
 
     /// Returns the line index of a file
     #[salsa::invoke(line_index_query)]
@@ -36,12 +36,12 @@ pub trait SourceDatabase: std::fmt::Debug {
 #[salsa::query_group(DefDatabaseStorage)]
 pub trait DefDatabase: SourceDatabase {
     /// Returns the top level AST items of a file
-    #[salsa::invoke(crate::ast_id::AstIdMap::ast_id_map_query)]
+    #[salsa::invoke(crate::source_id::AstIdMap::ast_id_map_query)]
     fn ast_id_map(&self, file_id: FileId) -> Arc<AstIdMap>;
 
     /// Returns the corresponding AST node of a type erased ast id
-    #[salsa::invoke(crate::ast_id::AstIdMap::file_item_query)]
-    fn ast_id_to_node(&self, file_id: FileId, ast_id: ErasedFileAstId) -> TreeArc<SyntaxNode>;
+    #[salsa::invoke(crate::source_id::AstIdMap::file_item_query)]
+    fn ast_id_to_node(&self, file_id: FileId, ast_id: ErasedFileAstId) -> SyntaxNode;
 
     /// Returns the raw items of a file
     #[salsa::invoke(RawItems::raw_file_items_query)]
@@ -86,7 +86,7 @@ pub trait HirDatabase: DefDatabase {
     ) -> (Arc<crate::expr::Body>, Arc<crate::expr::BodySourceMap>);
 }
 
-fn parse_query(db: &impl SourceDatabase, file_id: FileId) -> TreeArc<SourceFile> {
+fn parse_query(db: &impl SourceDatabase, file_id: FileId) -> Parse<SourceFile> {
     let text = db.file_text(file_id);
     SourceFile::parse(&*text)
 }

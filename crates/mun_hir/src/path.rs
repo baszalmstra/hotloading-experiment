@@ -22,7 +22,7 @@ pub enum PathKind {
 
 impl Path {
     /// Converts an `ast::Path` to `Path`.
-    pub fn from_ast(mut path: &ast::Path) -> Option<Path> {
+    pub fn from_ast(mut path: ast::Path) -> Option<Path> {
         let mut kind = PathKind::Plain;
         let mut segments = Vec::new();
         loop {

@@ -12,20 +12,16 @@ pub struct SyntaxNodePtr {
 
 impl SyntaxNodePtr {
     pub fn new(node: &SyntaxNode) -> SyntaxNodePtr {
-        SyntaxNodePtr {
-            range: node.range(),
-            kind: node.kind(),
-        }
+        SyntaxNodePtr { range: node.text_range(), kind: node.kind() }
     }
 
-    pub fn to_node(self, root: &SyntaxNode) -> &SyntaxNode {
+    pub fn to_node(self, root: &SyntaxNode) -> SyntaxNode {
         assert!(root.parent().is_none());
-        successors(Some(root), |&node| {
-            node.children()
-                .find(|it| self.range.is_subrange(&it.range()))
+        successors(Some(root.clone()), |node| {
+            node.children().find(|it| self.range.is_subrange(&it.text_range()))
         })
-        .find(|it| it.range() == self.range && it.kind() == self.kind)
-        .unwrap_or_else(|| panic!("can't resolve local ptr to SyntaxNode: {:?}", self))
+            .find(|it| it.text_range() == self.range && it.kind() == self.kind)
+            .unwrap_or_else(|| panic!("can't resolve local ptr to SyntaxNode: {:?}", self))
     }
 
     pub fn range(self) -> TextRange {
@@ -41,7 +37,7 @@ impl SyntaxNodePtr {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct AstPtr<N: AstNode> {
     raw: SyntaxNodePtr,
-    _ty: PhantomData<N>,
+    _ty: PhantomData<fn() -> N>,
 }
 
 impl<N: AstNode> Copy for AstPtr<N> {}
@@ -53,19 +49,23 @@ impl<N: AstNode> Clone for AstPtr<N> {
 
 impl<N: AstNode> AstPtr<N> {
     pub fn new(node: &N) -> AstPtr<N> {
-        AstPtr {
-            raw: SyntaxNodePtr::new(node.syntax()),
-            _ty: PhantomData,
-        }
+        AstPtr { raw: SyntaxNodePtr::new(node.syntax()), _ty: PhantomData }
     }
 
-    pub fn to_node(self, root: &SyntaxNode) -> &N {
+    pub fn to_node(self, root: &SyntaxNode) -> N {
         let syntax_node = self.raw.to_node(root);
         N::cast(syntax_node).unwrap()
     }
 
     pub fn syntax_node_ptr(self) -> SyntaxNodePtr {
         self.raw
+    }
+
+    pub fn cast<U: AstNode>(self) -> Option<AstPtr<U>> {
+        if !U::can_cast(self.raw.kind()) {
+            return None;
+        }
+        Some(AstPtr { raw: self.raw, _ty: PhantomData })
     }
 }
 

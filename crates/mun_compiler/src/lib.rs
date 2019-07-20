@@ -8,7 +8,6 @@ use mun_codegen_ir::IrDatabase;
 use mun_errors::Diagnostic;
 use mun_hir::{salsa, FileId, HirDisplay, Module, ModuleDef, PackageInput, SourceDatabase};
 use mun_syntax::ast::AstNode;
-use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
@@ -87,19 +86,20 @@ impl CompilerDatabase {
 pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
     let (db, file_id) = CompilerDatabase::from_file(&options.input)?;
 
-    let source = db.parse(file_id);
+    let parse = db.parse(file_id);
     let line_index = db.line_index(file_id);
 
     // Check if there are parser errors
-    println!("{}", "Syntax Tree:".white());
-    println!("{}", source.syntax().debug_dump());
-    let errors = source.errors();
+//    println!("{}", "Syntax Tree:".white());
+//    println!("{}", source.syntax().debug_dump());
+    let errors = parse.errors();
     if errors.len() > 0 {
         println!("{}", "Syntax Tree errors:".white());
         // TODO: Improve errors
         for err in errors {
-            Into::<Diagnostic>::into(err).emit(&line_index);
+            Into::<Diagnostic>::into(err.clone()).emit(&line_index);
         }
+        //return Ok(());
     }
 
     println!("\n{}", "HIR:".white());
@@ -113,7 +113,7 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
                         let body = f.body(&db);
                         let infer = f.infer(&db);
                         let body_expr = &infer[body.body_expr()];
-                        println!("  {}", f.ty(&db).display(&db));
+                        println!("  {:#?}", infer);
                     }
                     ModuleDef::BuiltinType(..) => {}
                 }

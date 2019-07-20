@@ -48,6 +48,13 @@ impl<ID: ArenaId, T> ArenaMap<ID, T> {
             .filter_map(|(idx, o)| Some((Self::from_idx(idx), o.as_ref()?)))
     }
 
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (ID, &mut T)> {
+        self.v
+            .iter_mut()
+            .enumerate()
+            .filter_map(|(idx, o)| Some((Self::from_idx(idx), o.as_mut()?)))
+    }
+
     fn to_idx(id: ID) -> usize {
         u32::from(id.into_raw()) as usize
     }

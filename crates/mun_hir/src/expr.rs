@@ -6,7 +6,7 @@ use crate::{
 };
 
 //pub use mun_syntax::ast::PrefixOp as UnaryOp;
-use crate::ast_id::AstId;
+use crate::source_id::AstId;
 use crate::code_model::src::HasSource;
 use crate::name::AsName;
 use crate::type_ref::TypeRef;
@@ -274,7 +274,7 @@ where
         self.body_expr = Some(body);
     }
 
-    fn collect_block_opt(&mut self, block: Option<&ast::Block>) -> ExprId {
+    fn collect_block_opt(&mut self, block: Option<ast::Block>) -> ExprId {
         if let Some(block) = block {
             self.collect_block(block)
         } else {
@@ -282,7 +282,7 @@ where
         }
     }
 
-    fn collect_block(&mut self, block: &ast::Block) -> ExprId {
+    fn collect_block(&mut self, block: ast::Block) -> ExprId {
         let statements = block
             .statements()
             .map(|s| match s.kind() {
@@ -308,7 +308,7 @@ where
         )
     }
 
-    fn collect_pat_opt(&mut self, pat: Option<&ast::Pat>) -> PatId {
+    fn collect_pat_opt(&mut self, pat: Option<ast::Pat>) -> PatId {
         if let Some(pat) = pat {
             self.collect_pat(pat)
         } else {
@@ -316,7 +316,7 @@ where
         }
     }
 
-    fn collect_expr_opt(&mut self, expr: Option<&ast::Expr>) -> ExprId {
+    fn collect_expr_opt(&mut self, expr: Option<ast::Expr>) -> ExprId {
         if let Some(expr) = expr {
             self.collect_expr(expr)
         } else {
@@ -324,7 +324,7 @@ where
         }
     }
 
-    fn collect_expr(&mut self, expr: &ast::Expr) -> ExprId {
+    fn collect_expr(&mut self, expr: ast::Expr) -> ExprId {
         let syntax_ptr = SyntaxNodePtr::new(expr.syntax());
         match expr.kind() {
             ast::ExprKind::Literal(e) => {
@@ -377,7 +377,7 @@ where
         }
     }
 
-    fn collect_pat(&mut self, pat: &ast::Pat) -> PatId {
+    fn collect_pat(&mut self, pat: ast::Pat) -> PatId {
         let pattern = match pat.kind() {
             ast::PatKind::BindPat(bp) => {
                 let name = bp
@@ -388,7 +388,7 @@ where
             }
             ast::PatKind::PlaceholderPat(_) => Pat::Wild,
         };
-        let ptr = AstPtr::new(pat);
+        let ptr = AstPtr::new(&pat);
         self.alloc_pat(pattern, ptr)
     }
 

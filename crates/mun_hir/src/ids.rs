@@ -1,6 +1,6 @@
-use crate::ast_id::{AstId, FileAstId};
+use crate::source_id::{AstId, FileAstId};
 use crate::{code_model::src::Source, DefDatabase, FileId};
-use mun_syntax::{ast, AstNode, TreeArc};
+use mun_syntax::{ast, AstNode};
 use std::hash::{Hash, Hasher};
 
 macro_rules! impl_intern_key {
@@ -78,7 +78,7 @@ pub(crate) trait AstItemDef<N: AstNode>: salsa::InternKey + Clone {
         Self::intern(ctx.db, loc)
     }
 
-    fn source(self, db: &impl DefDatabase) -> Source<TreeArc<N>> {
+    fn source(self, db: &impl DefDatabase) -> Source<N> {
         let loc = self.lookup_intern(db);
         let ast = loc.ast_id.to_node(db);
         Source {

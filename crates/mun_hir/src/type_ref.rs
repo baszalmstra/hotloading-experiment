@@ -12,7 +12,7 @@ pub enum TypeRef {
 
 impl TypeRef {
     /// Converts an `ast::TypeRef` to a `hir:TypeRef`.
-    pub(crate) fn from_ast(node: &ast::TypeRef) -> Self {
+    pub(crate) fn from_ast(node: ast::TypeRef) -> Self {
         use mun_syntax::ast::TypeRefKind::*;
         match node.kind() {
             PathType(path) => path
@@ -23,7 +23,7 @@ impl TypeRef {
         }
     }
 
-    pub(crate) fn from_ast_opt(node: Option<&ast::TypeRef>) -> Self {
+    pub(crate) fn from_ast_opt(node: Option<ast::TypeRef>) -> Self {
         if let Some(node) = node {
             TypeRef::from_ast(node)
         } else {

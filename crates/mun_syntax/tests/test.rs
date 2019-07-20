@@ -23,7 +23,7 @@ fn parser_tests() {
             "There should be no errors in the file {:?}",
             path.display()
         );
-        file.syntax().debug_dump()
+        file.debug_dump()
     })
 }
 

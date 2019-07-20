@@ -1,5 +1,5 @@
 // Function to add two numbers
-function add(a:number, b:number, c:number):number {
+function add(a:number, b:number, c,number):number {
   a+b-c
 }
 

@@ -1,4 +1,4 @@
-use crate::SmolStr;
+use crate::{SmolStr, SyntaxNode};
 use crate::SyntaxKind;
 use crate::{
     ast::{self, AstNode},
@@ -7,37 +7,32 @@ use crate::{
 
 impl ast::Name {
     pub fn text(&self) -> &SmolStr {
-        let ident = self
-            .syntax()
-            .first_child_or_token()
-            .unwrap()
-            .as_token()
-            .unwrap();
-        ident.text()
+        text_of_first_token(self.syntax())
     }
 }
 
 impl ast::NameRef {
     pub fn text(&self) -> &SmolStr {
-        let ident = self
-            .syntax()
-            .first_child_or_token()
-            .unwrap()
-            .as_token()
-            .unwrap();
-        ident.text()
+        text_of_first_token(self.syntax())
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PathSegmentKind<'a> {
-    Name(&'a ast::NameRef),
+fn text_of_first_token(node: &SyntaxNode) -> &SmolStr {
+    match node.0.green().children().first() {
+        Some(rowan::GreenElement::Token(it)) => it.text(),
+        _ => panic!(),
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PathSegmentKind {
+    Name(ast::NameRef),
     SelfKw,
     SuperKw,
 }
 
 impl ast::PathSegment {
-    pub fn parent_path(&self) -> &ast::Path {
+    pub fn parent_path(&self) -> ast::Path {
         self.syntax()
             .parent()
             .and_then(ast::Path::cast)

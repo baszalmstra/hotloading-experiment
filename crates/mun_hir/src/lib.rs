@@ -2,7 +2,7 @@
 
 #[macro_use]
 mod arena;
-mod ast_id;
+mod source_id;
 mod code_model;
 mod db;
 mod display;
@@ -18,8 +18,8 @@ mod raw;
 mod resolve;
 mod ty;
 mod type_ref;
+mod diagnostics;
 
-use mun_syntax::TreeArc;
 pub use salsa;
 
 pub use crate::{
@@ -41,7 +41,7 @@ pub use crate::{
 
 use crate::{
     arena::{Arena, ArenaId, RawId},
-    ast_id::{AstId, AstIdMap, FileAstId},
+    source_id::{AstId, AstIdMap, FileAstId},
     line_index::LineIndex,
     name::AsName,
 };

@@ -24,7 +24,7 @@ impl ast::PrefixExpr {
     }
 
     pub fn op_token(&self) -> Option<SyntaxToken> {
-        self.syntax().first_child_or_token()?.as_token()
+        self.syntax().first_child_or_token()?.into_token()
     }
 }
 
@@ -50,7 +50,7 @@ impl BinExpr {
         use SyntaxKind::*;
         self.syntax()
             .children_with_tokens()
-            .filter_map(|it| it.as_token())
+            .filter_map(|it| it.into_token())
             .find_map(|c| match c.kind() {
                 PLUS => Some((c, BinOp::Add)),
                 MINUS => Some((c, BinOp::Subtract)),
@@ -77,15 +77,15 @@ impl BinExpr {
         self.op_details().map(|t| t.0)
     }
 
-    pub fn lhs(&self) -> Option<&ast::Expr> {
+    pub fn lhs(&self) -> Option<ast::Expr> {
         children(self).nth(0)
     }
 
-    pub fn rhs(&self) -> Option<&ast::Expr> {
+    pub fn rhs(&self) -> Option<ast::Expr> {
         children(self).nth(1)
     }
 
-    pub fn sub_exprs(&self) -> (Option<&ast::Expr>, Option<&ast::Expr>) {
+    pub fn sub_exprs(&self) -> (Option<ast::Expr>, Option<ast::Expr>) {
         let mut children = children(self);
         let first = children.next();
         let second = children.next();

@@ -46,14 +46,14 @@ impl RawItems {
     pub(crate) fn raw_file_items_query(db: &impl DefDatabase, file_id: FileId) -> Arc<RawItems> {
         let mut items = RawItems::default();
 
-        let source_file = db.parse(file_id);
+        let source_file = db.parse(file_id).tree();
         let ast_id_map = db.ast_id_map(file_id);
 
         // Iterate over all items in the source file
         for item in source_file.items() {
             let (kind, name) = match item.kind() {
                 ast::ModuleItemKind::FunctionDef(it) => {
-                    (DefKind::Function((*ast_id_map).ast_id(it)), it.name())
+                    (DefKind::Function((*ast_id_map).ast_id(&it)), it.name())
                 }
             };
 

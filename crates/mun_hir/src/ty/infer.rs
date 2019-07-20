@@ -9,6 +9,7 @@ use crate::{expr, FnData, HirDatabase, Path};
 use std::mem;
 use std::ops::Index;
 use std::sync::Arc;
+use mun_syntax::ast::TypeRefKind;
 
 /// The result of type inference: A mapping from expressions and patterns to types.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -178,15 +179,21 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
         // FIXME resolve obligations as well (use Guidance if necessary)
         //let mut tv_stack = Vec::new();
         let mut expr_types = mem::replace(&mut self.type_of_expr, ArenaMap::default());
-        //        for ty in expr_types.values_mut() {
-        //            let resolved = self.resolve_ty_completely(&mut tv_stack, mem::replace(ty, Ty::Unknown));
-        //            *ty = resolved;
-        //        }
+        for (expr, ty) in expr_types.iter_mut() {
+            //let resolved = self.resolve_ty_completely(&mut tv_stack, mem::replace(ty, Ty::Unknown));
+            if *ty == Ty::Unknown {
+                self.report_expr_inference_failure(expr);
+            }
+            //*ty = resolved;
+        }
         let mut pat_types = mem::replace(&mut self.type_of_pat, ArenaMap::default());
-        //        for ty in pat_types.values_mut() {
-        //            let resolved = self.resolve_ty_completely(&mut tv_stack, mem::replace(ty, Ty::Unknown));
-        //            *ty = resolved;
-        //        }
+        for (pat, ty) in pat_types.iter_mut() {
+            //let resolved = self.resolve_ty_completely(&mut tv_stack, mem::replace(ty, Ty::Unknown));
+            if *ty == Ty::Unknown {
+                self.report_pat_inference_failure(pat);
+            }
+            //*ty = resolved;
+        }
         InferenceResult {
             //            method_resolutions: self.method_resolutions,
             //            field_resolutions: self.field_resolutions,
@@ -237,6 +244,18 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
         };
         ty
     }
+
+    pub fn report_pat_inference_failure(&mut self, pat:PatId) {
+        self.diagnostics.push(InferenceDiagnostic::PatInferenceFailed {
+            pat
+        });
+    }
+
+    pub fn report_expr_inference_failure(&mut self, expr:ExprId) {
+        self.diagnostics.push(InferenceDiagnostic::ExprInferenceFailed {
+            expr
+        });
+    }
 }
 
 /// When inferring an expression, we propagate downward whatever type hint we
@@ -264,5 +283,6 @@ impl Expectation {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub(super) enum InferenceDiagnostic {
-    NoSuchField { expr: ExprId, field: usize },
+    PatInferenceFailed { pat: PatId },
+    ExprInferenceFailed { expr: ExprId }
 }

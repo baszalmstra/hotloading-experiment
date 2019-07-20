@@ -18,6 +18,12 @@ mod syntax_error;
 mod syntax_node;
 mod syntax_text;
 
+use std::{
+    fmt::Write,
+    marker::PhantomData,
+    sync::Arc
+};
+
 pub use crate::{
     ast::AstNode,
     parsing::{tokenize, Token},
@@ -26,30 +32,93 @@ pub use crate::{
     syntax_kind::SyntaxKind,
     syntax_node::{
         Direction, InsertPosition, SyntaxElement, SyntaxNode, SyntaxToken, SyntaxTreeBuilder,
-        TreeArc, WalkEvent,
+        WalkEvent,
     },
     syntax_text::SyntaxText,
 };
 pub use rowan::{SmolStr, TextRange, TextUnit};
 
-/// `SourceFile` represents a parse tree for a single Mun file.
-pub use crate::ast::SourceFile;
 use rowan::GreenNode;
 
+/// `Parse` is the result of the parsing: a syntax tree and a collection of errors.
+///
+/// Note that we always produce a syntax tree, event for completely invalid files.
+#[derive(Debug, PartialEq, Eq)]
+pub struct Parse<T> {
+    green: GreenNode,
+    errors: Arc<Vec<SyntaxError>>,
+    _ty: PhantomData<fn() -> T>,
+}
+
+impl<T> Clone for Parse<T> {
+    fn clone(&self) -> Parse<T> {
+        Parse { green: self.green.clone(), errors: self.errors.clone(), _ty: PhantomData }
+    }
+}
+
+impl<T> Parse<T> {
+    fn new(green: GreenNode, errors: Vec<SyntaxError>) -> Parse<T> {
+        Parse { green, errors: Arc::new(errors), _ty: PhantomData}
+    }
+
+    pub fn syntax_node(&self) -> SyntaxNode { SyntaxNode::new(self.green.clone())}
+}
+
+impl<T:AstNode> Parse<T> {
+    pub fn to_syntax(self) -> Parse<SyntaxNode> {
+        Parse { green: self.green, errors: self.errors, _ty: PhantomData }
+    }
+
+    pub fn tree(&self) -> T { T::cast(self.syntax_node()).unwrap() }
+
+    pub fn errors(&self) -> &[SyntaxError] { &*self.errors }
+
+    pub fn ok(self) -> Result<T, Arc<Vec<SyntaxError>>> {
+        if self.errors.is_empty() {
+            Ok(self.tree())
+        } else {
+            Err(self.errors)
+        }
+    }
+}
+
+impl Parse<SyntaxNode> {
+    pub fn cast<N: AstNode>(self) -> Option<Parse<N>> {
+        if N::cast(self.syntax_node()).is_some() {
+            Some(Parse { green: self.green, errors: self.errors, _ty: PhantomData })
+        } else {
+            None
+        }
+    }
+}
+
+impl Parse<SourceFile> {
+    pub fn debug_dump(&self) -> String {
+        let mut buf = format!("{:#?}", self.tree().syntax());
+        for err in self.errors.iter() {
+            writeln!(buf, "error {:?}: {}", err.location(), err.kind()).unwrap();
+        }
+        buf
+    }
+}
+
+/// `SourceFile` represents a parse tree for a single Mun file.
+pub use crate::ast::SourceFile;
+
 impl SourceFile {
-    fn new(green: GreenNode, errors: Vec<SyntaxError>) -> TreeArc<SourceFile> {
-        let root = SyntaxNode::new(green, errors);
+    fn new(green: GreenNode) -> SourceFile {
+        let root = SyntaxNode::new(green);
+//        if cfg!(debug_assertions) {
+//            validation::validate_block_structure(&root);
+//        }
         assert_eq!(root.kind(), SyntaxKind::SOURCE_FILE);
-        TreeArc::cast(root)
+        SourceFile::cast(root).unwrap()
     }
 
-    pub fn parse(text: &str) -> TreeArc<SourceFile> {
-        let (green, errors) = parsing::parse_text(text);
-        SourceFile::new(green, errors)
-    }
-
-    pub fn errors(&self) -> Vec<SyntaxError> {
-        self.syntax.root_data().to_vec()
+    pub fn parse(text: &str) -> Parse<SourceFile> {
+        let (green, mut errors) = parsing::parse_text(text);
+        //errors.extend(validation::validate(&SourceFile::new(green.clone())));
+        Parse { green, errors: Arc::new(errors), _ty: PhantomData }
     }
 }
 
@@ -67,9 +136,14 @@ fn api_walkthrough() {
 
     // `SourceFile` is the main entry point.
     //
-    // Since all source can be parsed even invalid source code (which will result in a lot of
-    // errors) the `parse` method does not return a `Result`.
-    let file = SourceFile::parse(source_code);
+    // The `parse` method returns a `Parse` -- a pair of syntax tree and a list of errors. That is,
+    // syntax tree is constructed even in presence of errors.
+    let parse = SourceFile::parse(source_code);
+    assert!(parse.errors().is_empty());
+
+    // The `tree` method returns an owned syntax node of type `SourceFile`.
+    // Owned nodes are cheap: inside, they are `Rc` handles to the underlying data.
+    let file: SourceFile = parse.tree();
 
     // `SourceFile` is the root of the syntax tree. We can iterate file's items:
     let mut func = None;
@@ -81,11 +155,13 @@ fn api_walkthrough() {
     }
 
     // The returned items are always references.
-    let func: &ast::FunctionDef = func.unwrap();
+    let func: ast::FunctionDef = func.unwrap();
 
-    // All nodes implement the `ToOwned` trait, which `Owned = TreeArc<Self>`. A `TreeArc` is
-    // similar to `Arc` but references the root of the tree.
-    let _owned_func: TreeArc<ast::FunctionDef> = func.to_owned();
-
-    assert_eq!(func.name().unwrap().syntax().text(), "foo")
+    // Each AST node has a bunch of getters for children. All getters return `Option`s though, to
+    // account for incomplete code. Some getters are common for several kinds of node. In this case,
+    // a trait like `ast::NameOwner` usually exists. By convention, all ast types should be used
+    // with `ast::` qualifier.
+    let name: Option<ast::Name> = func.name();
+    let name = name.unwrap();
+    assert_eq!(name.text(), "foo");
 }

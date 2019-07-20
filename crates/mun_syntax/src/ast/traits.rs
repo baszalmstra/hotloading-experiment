@@ -13,19 +13,19 @@ pub trait FunctionDefOwner: AstNode {
 }
 
 pub trait NameOwner: AstNode {
-    fn name(&self) -> Option<&ast::Name> {
+    fn name(&self) -> Option<ast::Name> {
         child_opt(self)
     }
 }
 
 pub trait TypeAscriptionOwner: AstNode {
-    fn ascribed_type(&self) -> Option<&ast::TypeRef> {
+    fn ascribed_type(&self) -> Option<ast::TypeRef> {
         child_opt(self)
     }
 }
 
 pub trait VisibilityOwner: AstNode {
-    fn visibility(&self) -> Option<&ast::Visibility> {
+    fn visibility(&self) -> Option<ast::Visibility> {
         child_opt(self)
     }
 }
@@ -33,7 +33,7 @@ pub trait VisibilityOwner: AstNode {
 pub trait DocCommentsOwner: AstNode {}
 
 pub trait ArgListOwner: AstNode {
-    fn arg_list(&self) -> Option<&ast::ArgList> {
+    fn arg_list(&self) -> Option<ast::ArgList> {
         child_opt(self)
     }
 }
