@@ -4,9 +4,12 @@ use inkwell::values::{AnyValueEnum, BasicValueEnum};
 use inkwell::{
     module::{Linkage, Module},
     types::{AnyTypeEnum, BasicType, BasicTypeEnum, VoidType},
-    values::{BasicValue, FunctionValue, FloatMathValue},
+    values::{BasicValue, FloatMathValue, FunctionValue},
 };
-use mun_hir::{ApplicationTy, Body, Expr, ExprId, FileId, Function, HirDatabase, InferenceResult, ModuleDef, Path, Resolver, Ty, TypeCtor, Resolution, BinaryOp};
+use mun_hir::{
+    ApplicationTy, BinaryOp, Body, Expr, ExprId, FileId, Function, HirDatabase, InferenceResult,
+    ModuleDef, Path, Resolution, Resolver, Ty, TypeCtor,
+};
 use std::sync::Arc;
 
 pub(crate) fn module_ir_query(db: &impl IrDatabase, file_id: FileId) -> Module {
@@ -78,20 +81,19 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
 
     fn gen_expr(&self, expr: ExprId) -> Option<inkwell::values::BasicValueEnum> {
         match &self.body[expr] {
-            &Expr::Block { ref statements, tail } => tail.and_then(|expr| self.gen_expr(expr)),
+            &Expr::Block {
+                ref statements,
+                tail,
+            } => tail.and_then(|expr| self.gen_expr(expr)),
             Expr::Path(ref p) => {
                 let resolver = mun_hir::resolver_for_expr(self.body.clone(), self.db, expr);
                 Some(self.gen_path_expr(p, expr, &resolver))
             }
-            &Expr::BinaryOp {lhs, rhs, op} => {
-                let lhs_value = self.gen_expr(lhs).expect("no lhs value");
-                let rhs_value = self.gen_expr(rhs).expect( "no rhs value");
-                match op.expect("missing op") {
-                    BinaryOp::Add => Some(self.gen_add(lhs_value, rhs_value)),
-                    BinaryOp::Subtract => Some(self.gen_sub(lhs_value, rhs_value)),
-                    _ => unreachable!()
-                }
-            }
+            &Expr::BinaryOp { lhs, rhs, op } => match op.expect("missing op") {
+                BinaryOp::Add => Some(self.gen_add(lhs, rhs)),
+                BinaryOp::Subtract => Some(self.gen_sub(lhs, rhs)),
+                _ => unreachable!(),
+            },
             _ => None,
         }
     }
@@ -119,19 +121,59 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
         }
     }
 
-    fn gen_add(&self, lhs: BasicValueEnum, rhs: BasicValueEnum) -> BasicValueEnum {
-        match lhs.get_type() {
-            BasicTypeEnum::FloatType(_) => self.builder.build_float_add(*lhs.as_float_value(), *rhs.as_float_value(), "add").into(),
-            BasicTypeEnum::IntType(_) => self.builder.build_int_add(*lhs.as_int_value(), *rhs.as_int_value(), "add").into(),
-            _ => unreachable!()
+    fn gen_add(&self, lhs: ExprId, rhs: ExprId) -> BasicValueEnum {
+        let lhs_type = &self.infer[lhs];
+        let rhs_type = &self.infer[rhs];
+        let lhs_value = self.gen_expr(lhs).expect("no lhs value");
+        let rhs_value = self.gen_expr(rhs).expect("no rhs value");
+
+        match (lhs_type, rhs_type) {
+            (
+                Ty::Apply(ApplicationTy {
+                    ctor: TypeCtor::Number,
+                    ..
+                }),
+                Ty::Apply(ApplicationTy {
+                    ctor: TypeCtor::Number,
+                    ..
+                }),
+            ) => self
+                .builder
+                .build_float_add(
+                    *lhs_value.as_float_value(),
+                    *rhs_value.as_float_value(),
+                    "add",
+                )
+                .into(),
+            _ => unreachable!(),
         }
     }
 
-    fn gen_sub(&self, lhs: BasicValueEnum, rhs: BasicValueEnum) -> BasicValueEnum {
-        match lhs.get_type() {
-            BasicTypeEnum::FloatType(_) => self.builder.build_float_sub(*lhs.as_float_value(), *rhs.as_float_value(), "add").into(),
-            BasicTypeEnum::IntType(_) => self.builder.build_int_sub(*lhs.as_int_value(), *rhs.as_int_value(), "add").into(),
-            _ => unreachable!()
+    fn gen_sub(&self, lhs: ExprId, rhs: ExprId) -> BasicValueEnum {
+        let lhs_type = &self.infer[lhs];
+        let rhs_type = &self.infer[rhs];
+        let lhs_value = self.gen_expr(lhs).expect("no lhs value");
+        let rhs_value = self.gen_expr(rhs).expect("no rhs value");
+
+        match (lhs_type, rhs_type) {
+            (
+                Ty::Apply(ApplicationTy {
+                    ctor: TypeCtor::Number,
+                    ..
+                }),
+                Ty::Apply(ApplicationTy {
+                    ctor: TypeCtor::Number,
+                    ..
+                }),
+            ) => self
+                .builder
+                .build_float_sub(
+                    *lhs_value.as_float_value(),
+                    *rhs_value.as_float_value(),
+                    "sub",
+                )
+                .into(),
+            _ => unreachable!(),
         }
     }
 }
@@ -149,6 +191,7 @@ fn as_parameter_type(db: &impl IrDatabase, ty: Ty) -> BasicTypeEnum {
     }
 }
 
+/// Given a mun type, construct an LLVM IR type
 pub(crate) fn ty_ir_query(db: &impl IrDatabase, ty: Ty) -> AnyTypeEnum {
     let context = db.context();
     match ty {

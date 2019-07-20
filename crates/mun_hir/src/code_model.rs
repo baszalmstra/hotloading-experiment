@@ -6,6 +6,7 @@ use crate::ids::AstItemDef;
 use crate::ids::LocationCtx;
 use crate::input::ModuleId;
 use crate::name::NUMBER;
+use crate::name_resolution::Namespace;
 use crate::raw::{DefKind, RawFileItem};
 use crate::resolve::{Resolution, Resolver};
 use crate::ty::InferenceResult;
@@ -14,7 +15,6 @@ use crate::{ids::FunctionId, AsName, DefDatabase, FileId, HirDatabase, Name, Ty}
 use mun_syntax::ast::{self, NameOwner, TypeAscriptionOwner};
 use rustc_hash::FxHashMap;
 use std::sync::Arc;
-use crate::name_resolution::Namespace;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Module {

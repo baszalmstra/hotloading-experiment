@@ -28,15 +28,15 @@ pub use crate::{
         SourceDatabaseStorage,
     },
     display::HirDisplay,
-    expr::{ExprScopes, Expr, Body, ExprId, BinaryOp, resolver_for_expr},
-    resolve::{Resolver, Resolution},
+    expr::{resolver_for_expr, BinaryOp, Body, Expr, ExprId, ExprScopes},
     ids::ItemLoc,
     input::{FileId, PackageInput},
     name::Name,
     name_resolution::PerNs,
     path::{Path, PathKind},
     raw::RawItems,
-    ty::{ApplicationTy, Ty, TypeCtor, InferenceResult},
+    resolve::{Resolution, Resolver},
+    ty::{ApplicationTy, InferenceResult, Ty, TypeCtor},
 };
 
 use crate::{
