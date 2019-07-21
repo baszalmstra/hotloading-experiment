@@ -110,8 +110,7 @@ impl ExprScopes {
 
     fn add_params_bindings<'a>(&mut self, scope: ScopeId, params: impl Iterator<Item = &'a PatId>) {
         let body = Arc::clone(&self.body);
-        params
-            .for_each(|pat| self.add_bindings(&body, scope, *pat));
+        params.for_each(|pat| self.add_bindings(&body, scope, *pat));
     }
 
     fn set_scope(&mut self, node: ExprId, scope: ScopeId) {

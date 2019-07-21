@@ -9,7 +9,7 @@ use crate::{
 use crate::code_model::src::HasSource;
 use crate::name::AsName;
 use crate::source_id::AstId;
-use crate::type_ref::{TypeRef, TypeRefBuilder, TypeRefMap, TypeRefId, TypeRefSourceMap};
+use crate::type_ref::{TypeRef, TypeRefBuilder, TypeRefId, TypeRefMap, TypeRefSourceMap};
 pub use mun_syntax::ast::BinOp as BinaryOp;
 pub use mun_syntax::ast::PrefixOp as UnaryOp;
 use mun_syntax::ast::{ArgListOwner, NameOwner, TypeAscriptionOwner};
@@ -47,7 +47,7 @@ pub struct Body {
     params: Vec<(PatId, TypeRefId)>,
     /// The `ExprId` of the actual body expression.
     body_expr: ExprId,
-    ret_type: TypeRefId
+    ret_type: TypeRefId,
 }
 
 impl Body {
@@ -114,7 +114,7 @@ pub struct BodySourceMap {
     expr_map_back: ArenaMap<ExprId, SyntaxNodePtr>,
     pat_map: FxHashMap<AstPtr<ast::Pat>, PatId>,
     pat_map_back: ArenaMap<PatId, AstPtr<ast::Pat>>,
-    type_refs: TypeRefSourceMap
+    type_refs: TypeRefSourceMap,
 }
 
 impl BodySourceMap {
@@ -254,7 +254,7 @@ pub(crate) struct ExprCollector<DB> {
     params: Vec<(PatId, TypeRefId)>,
     body_expr: Option<ExprId>,
     ret_type: Option<TypeRefId>,
-    type_ref_builder: TypeRefBuilder
+    type_ref_builder: TypeRefBuilder,
 }
 
 impl<'a, DB> ExprCollector<&'a DB>
@@ -271,7 +271,7 @@ where
             params: Vec::new(),
             body_expr: None,
             ret_type: None,
-            type_ref_builder: TypeRefBuilder::default()
+            type_ref_builder: TypeRefBuilder::default(),
         }
     }
 
@@ -298,7 +298,9 @@ where
                     continue;
                 };
                 let param_pat = self.collect_pat(pat);
-                let param_type = self.type_ref_builder.from_node_opt(param.ascribed_type().as_ref());
+                let param_type = self
+                    .type_ref_builder
+                    .from_node_opt(param.ascribed_type().as_ref());
                 self.params.push((param_pat, param_type));
             }
         }
@@ -328,7 +330,9 @@ where
             .map(|s| match s.kind() {
                 ast::StmtKind::LetStmt(stmt) => {
                     let pat = self.collect_pat_opt(stmt.pat());
-                    let type_ref = stmt.ascribed_type().map(|t| self.type_ref_builder.from_node(&t));
+                    let type_ref = stmt
+                        .ascribed_type()
+                        .map(|t| self.type_ref_builder.from_node(&t));
                     let initializer = stmt.initializer().map(|e| self.collect_expr(e));
                     Statement::Let {
                         pat,
@@ -441,7 +445,9 @@ where
             params: self.params,
             body_expr: self.body_expr.expect("A body should have been collected"),
             type_refs,
-            ret_type: self.ret_type.expect("A body should have return type collected")
+            ret_type: self
+                .ret_type
+                .expect("A body should have return type collected"),
         };
         mem::replace(&mut self.source_map.type_refs, type_ref_source_map);
         (body, self.source_map)

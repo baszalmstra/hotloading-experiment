@@ -24,8 +24,8 @@ pub use salsa;
 
 pub use crate::{
     db::{
-        DefDatabase, DefDatabaseStorage, HirDatabase, HirDatabaseStorage, SourceDatabase,
-        SourceDatabaseStorage, RelativePathBuf
+        DefDatabase, DefDatabaseStorage, HirDatabase, HirDatabaseStorage, RelativePathBuf,
+        SourceDatabase, SourceDatabaseStorage,
     },
     display::HirDisplay,
     expr::{resolver_for_expr, BinaryOp, Body, Expr, ExprId, ExprScopes},

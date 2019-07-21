@@ -10,8 +10,8 @@ use crate::{
     AstIdMap, ExprScopes, FileId, Module, PackageInput, RawItems,
 };
 use mun_syntax::{ast, Parse, SourceFile, SyntaxNode};
-use std::sync::Arc;
 pub use relative_path::RelativePathBuf;
+use std::sync::Arc;
 
 /// Database which stores all significant input facts: source code and project model. Everything
 /// else in rust-analyzer is derived from these queries.

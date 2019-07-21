@@ -37,6 +37,16 @@ impl LineIndex {
             col: col.to_usize() as u32,
         }
     }
+
+    pub fn line_str<'a>(&self, line: u32, text: &'a str) -> Option<&'a str> {
+        let start_of_line = self.newlines.get(line as usize)?.to_usize();
+        let end_of_line = self
+            .newlines
+            .get((line + 1) as usize)
+            .map(|u| u.to_usize() - 1)
+            .unwrap_or(text.len() as usize);
+        Some(&text[start_of_line..end_of_line])
+    }
 }
 
 #[cfg(test)]

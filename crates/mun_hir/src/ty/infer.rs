@@ -5,6 +5,8 @@ use crate::diagnostics::{DiagnosticSink, UnresolvedValue};
 use crate::expr::{Body, Expr, ExprId, Pat, PatId, Statement};
 use crate::name_resolution::Namespace;
 use crate::resolve::{Resolution, Resolver};
+use crate::ty::infer::diagnostics::InferenceDiagnostic;
+use crate::ty::lower::LowerDiagnostic;
 use crate::ty::{Ty, TypableDef};
 use crate::type_ref::{TypeRef, TypeRefId};
 use crate::{expr, FnData, Function, HirDatabase, Path};
@@ -13,8 +15,6 @@ use mun_syntax::{ast, AstPtr};
 use std::mem;
 use std::ops::Index;
 use std::sync::Arc;
-use crate::ty::infer::diagnostics::InferenceDiagnostic;
-use crate::ty::lower::LowerDiagnostic;
 
 /// The result of type inference: A mapping from expressions and patterns to types.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -123,7 +123,9 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
         );
         for diag in result.diagnostics {
             let diag = match diag {
-                LowerDiagnostic::UnresolvedType { id } => InferenceDiagnostic::UnresolvedType { id },
+                LowerDiagnostic::UnresolvedType { id } => {
+                    InferenceDiagnostic::UnresolvedType { id }
+                }
             };
             self.diagnostics.push(diag);
         }
@@ -332,12 +334,11 @@ impl From<PatId> for ExprOrPatId {
 
 mod diagnostics {
     use crate::{
+        code_model::src::HasSource,
+        diagnostics::{DiagnosticSink, UnresolvedType, UnresolvedValue},
         ty::infer::ExprOrPatId,
         type_ref::TypeRefId,
-        HirDatabase,
-        Function,
-        diagnostics::{DiagnosticSink, UnresolvedValue, UnresolvedType},
-        code_model::src::HasSource
+        Function, HirDatabase,
     };
 
     #[derive(Debug, PartialEq, Eq, Clone)]
@@ -347,19 +348,26 @@ mod diagnostics {
     }
 
     impl InferenceDiagnostic {
-        pub(super) fn add_to(&self, db: &impl HirDatabase, owner: Function, sink: &mut DiagnosticSink) {
+        pub(super) fn add_to(
+            &self,
+            db: &impl HirDatabase,
+            owner: Function,
+            sink: &mut DiagnosticSink,
+        ) {
             match self {
                 InferenceDiagnostic::UnresolvedValue { id } => {
                     let file = owner.source(db).file_id;
                     let body = owner.body_source_map(db);
                     let expr = match id {
                         ExprOrPatId::ExprId(id) => body.expr_syntax(*id),
-                        ExprOrPatId::PatId(id) => body.pat_syntax(*id).map(|ptr| ptr.syntax_node_ptr()),
+                        ExprOrPatId::PatId(id) => {
+                            body.pat_syntax(*id).map(|ptr| ptr.syntax_node_ptr())
+                        }
                     }
-                        .unwrap();
+                    .unwrap();
 
                     sink.push(UnresolvedValue { file, expr });
-                },
+                }
                 InferenceDiagnostic::UnresolvedType { id } => {
                     let file = owner.source(db).file_id;
                     let body = owner.body_source_map(db);

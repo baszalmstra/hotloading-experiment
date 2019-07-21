@@ -1,11 +1,11 @@
+use crate::arena::map::ArenaMap;
+use crate::arena::{Arena, RawId};
 ///! HIR for references to types. These paths are not yet resolved. They can be directly created
 /// from an `ast::TypeRef`, without further queries.
 use crate::Path;
 use mun_syntax::ast::{self, TypeRefKind};
-use crate::arena::{RawId, Arena};
-use rustc_hash::FxHashMap;
-use crate::arena::map::ArenaMap;
 use mun_syntax::AstPtr;
+use rustc_hash::FxHashMap;
 use std::ops::Index;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -38,7 +38,7 @@ impl TypeRefSourceMap {
 
 #[derive(Default, Debug, Eq, PartialEq)]
 pub struct TypeRefMap {
-    type_refs: Arena<TypeRefId, TypeRef>
+    type_refs: Arena<TypeRefId, TypeRef>,
 }
 
 impl Index<TypeRefId> for TypeRefMap {
@@ -52,7 +52,7 @@ impl Index<TypeRefId> for TypeRefMap {
 #[derive(Default, Debug, Eq, PartialEq)]
 pub(crate) struct TypeRefBuilder {
     map: TypeRefMap,
-    source_map: TypeRefSourceMap
+    source_map: TypeRefSourceMap,
 }
 
 impl TypeRefBuilder {

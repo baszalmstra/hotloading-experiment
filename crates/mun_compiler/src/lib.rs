@@ -2,16 +2,18 @@
 mod diagnostic;
 
 use crate::diagnostic::Emit;
-use colored::Colorize;
 use failure::Error;
 use mun_codegen_ir::IrDatabase;
 use mun_errors::{Diagnostic, Level};
 use mun_hir::diagnostics::{Diagnostic as HirDiagnostic, DiagnosticSink};
-use mun_hir::{salsa, FileId, HirDisplay, Module, ModuleDef, PackageInput, SourceDatabase, RelativePathBuf};
+use mun_hir::{
+    salsa, FileId, HirDisplay, Module, ModuleDef, PackageInput, RelativePathBuf, SourceDatabase,
+};
 use mun_syntax::ast::AstNode;
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use termcolor::{ColorChoice, StandardStream};
 
 #[derive(Debug, Clone)]
 pub struct CompilerOptions {
@@ -113,7 +115,12 @@ fn diagnostics(db: &CompilerDatabase, file_id: FileId) -> Vec<Diagnostic> {
         });
     })
     .on::<mun_hir::diagnostics::UnresolvedType, _>(|d| {
-        let text = d.type_ref.to_node(&parse.tree().syntax()).syntax().text().to_string();
+        let text = d
+            .type_ref
+            .to_node(&parse.tree().syntax())
+            .syntax()
+            .text()
+            .to_string();
         result.borrow_mut().push(Diagnostic {
             level: Level::Error,
             loc: d.highlight_range().into(),
@@ -137,42 +144,14 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
 
     let diagnostics = diagnostics(&db, file_id);
     if !diagnostics.is_empty() {
-        let line_index = db.line_index(file_id);
+        let mut writer = StandardStream::stderr(ColorChoice::Auto);
         for diagnostic in diagnostics {
-            diagnostic.emit(&line_index);
+            diagnostic.emit(&mut writer, &db, file_id);
         }
         return Ok(());
     }
 
-    //    println!("\n{}", "HIR:".white());
-    //    let query_log = db.log_executed(|| {
-    //        for module in Module::package_modules(&db) {
-    //            for decl in module.declarations(&db) {
-    //                match decl {
-    //                    ModuleDef::Function(f) => {
-    //                        println!("function \"{}\":", f.name(&db));
-    //                        let name = f.name(&db);
-    //                        let body = f.body(&db);
-    //                        let infer = f.infer(&db);
-    //                        let body_expr = &infer[body.body_expr()];
-    //                        println!("  {:#?}", infer);
-    //                    }
-    //                    ModuleDef::BuiltinType(..) => {}
-    //                }
-    //            }
-    //        }
-    //    });
-    //
-    //    println!("\n{}", "Queries:".white());
-    //    for l in query_log.into_iter() {
-    //        println!("{}", l);
-    //    }
-
-    println!(
-        "\n{}\n{}",
-        "IR".white(),
-        db.module_ir(file_id).print_to_string().to_string()
-    );
+    println!("{}", db.module_ir(file_id).print_to_string().to_string());
 
     Ok(())
 }

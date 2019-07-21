@@ -11,12 +11,12 @@ use crate::name_resolution::Namespace;
 use crate::raw::{DefKind, RawFileItem};
 use crate::resolve::{Resolution, Resolver};
 use crate::ty::InferenceResult;
-use crate::type_ref::{TypeRef, TypeRefId, TypeRefMap, TypeRefSourceMap, TypeRefBuilder};
+use crate::type_ref::{TypeRef, TypeRefBuilder, TypeRefId, TypeRefMap, TypeRefSourceMap};
 use crate::{ids::FunctionId, AsName, DefDatabase, FileId, HirDatabase, Name, Ty};
 use mun_syntax::ast::{self, NameOwner, TypeAscriptionOwner};
+use mun_syntax::AstPtr;
 use rustc_hash::FxHashMap;
 use std::sync::Arc;
-use mun_syntax::AstPtr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Module {
@@ -184,7 +184,7 @@ impl FnData {
             params,
             ret_type,
             type_ref_map,
-            type_ref_source_map
+            type_ref_source_map,
         })
     }
 

@@ -13,7 +13,9 @@ use mun_hir::{
 use std::sync::Arc;
 
 pub(crate) fn module_ir_query(db: &impl IrDatabase, file_id: FileId) -> Module {
-    let module = db.context().create_module(db.file_relative_path(file_id).as_str());
+    let module = db
+        .context()
+        .create_module(db.file_relative_path(file_id).as_str());
     let mod_data = db.module_data(file_id);
     let definitions = mod_data.definitions();
     for def in definitions {

@@ -1,15 +1,15 @@
+pub(crate) use self::diagnostics::LowerDiagnostic;
 use crate::code_model::BuiltinType;
 use crate::name_resolution::Namespace;
 use crate::resolve::{Resolution, Resolver};
 use crate::ty::{FnSig, Substs, Ty, TypeCtor};
-use crate::type_ref::{TypeRef, TypeRefMap, TypeRefId};
+use crate::type_ref::{TypeRef, TypeRefId, TypeRefMap};
 use crate::{Function, HirDatabase, ModuleDef, Path};
-pub(crate) use self::diagnostics::LowerDiagnostic;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub(crate) struct LowerResult {
     pub(crate) ty: Ty,
-    pub(crate) diagnostics: Vec<LowerDiagnostic>
+    pub(crate) diagnostics: Vec<LowerDiagnostic>,
 }
 
 impl Ty {
@@ -20,11 +20,9 @@ impl Ty {
         type_ref: &TypeRefId,
     ) -> LowerResult {
         let mut diagnostics = Vec::new();
-        let ty = Ty::from_hir_with_diagnostics(db, resolver, type_ref_map, &mut diagnostics, type_ref);
-        LowerResult {
-            ty,
-            diagnostics
-        }
+        let ty =
+            Ty::from_hir_with_diagnostics(db, resolver, type_ref_map, &mut diagnostics, type_ref);
+        LowerResult { ty, diagnostics }
     }
 
     fn from_hir_with_diagnostics(
@@ -37,17 +35,16 @@ impl Ty {
         let res = match &type_ref_map[*type_ref] {
             TypeRef::Path(path) => Ty::from_hir_path(db, resolver, path),
             TypeRef::Error => Some(Ty::Unknown),
-            TypeRef::Empty => Some(Ty::Empty)
+            TypeRef::Empty => Some(Ty::Empty),
         };
         if let Some(ty) = res {
             ty
         } else {
             diagnostics.push(LowerDiagnostic::UnresolvedType {
-                id: type_ref.clone()
+                id: type_ref.clone(),
             });
             Ty::Unknown
         }
-
     }
 
     pub(crate) fn from_hir_path(
@@ -150,6 +147,6 @@ pub mod diagnostics {
 
     #[derive(Debug, PartialEq, Eq, Clone)]
     pub(crate) enum LowerDiagnostic {
-        UnresolvedType { id: TypeRefId }
+        UnresolvedType { id: TypeRefId },
     }
 }

@@ -12,4 +12,4 @@ mun_syntax = { path="../mun_syntax" }
 mun_errors = { path="../mun_errors" }
 mun_hir = {path="../mun_hir"}
 
-colored = "1.8.0"
+termcolor = "1.0.5"

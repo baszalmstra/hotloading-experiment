@@ -26,6 +26,13 @@ impl Location {
         }
     }
 
+    pub fn end_offset(&self) -> TextUnit {
+        match &self {
+            Location::Offset(offset) => *offset,
+            Location::Range(range) => range.end(),
+        }
+    }
+
     pub fn add_offset(&self, plus_offset: TextUnit, minus_offset: TextUnit) -> Location {
         match &self {
             Location::Range(range) => Location::Range(range + plus_offset - minus_offset),
