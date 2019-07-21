@@ -82,7 +82,7 @@ pub struct UnresolvedValue {
 
 impl Diagnostic for UnresolvedValue {
     fn message(&self) -> String {
-        "undefined symbol".to_string()
+        "undefined value".to_string()
     }
 
     fn file(&self) -> FileId {
@@ -91,6 +91,30 @@ impl Diagnostic for UnresolvedValue {
 
     fn syntax_node_ptr(&self) -> SyntaxNodePtr {
         self.expr
+    }
+
+    fn as_any(&self) -> &(dyn Any + Send + 'static) {
+        self
+    }
+}
+
+#[derive(Debug)]
+pub struct UnresolvedType {
+    pub file: FileId,
+    pub type_ref: AstPtr<ast::TypeRef>,
+}
+
+impl Diagnostic for UnresolvedType {
+    fn message(&self) -> String {
+        "undefined type".to_string()
+    }
+
+    fn file(&self) -> FileId {
+        self.file
+    }
+
+    fn syntax_node_ptr(&self) -> SyntaxNodePtr {
+        self.type_ref.syntax_node_ptr()
     }
 
     fn as_any(&self) -> &(dyn Any + Send + 'static) {

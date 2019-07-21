@@ -11,11 +11,12 @@ use crate::name_resolution::Namespace;
 use crate::raw::{DefKind, RawFileItem};
 use crate::resolve::{Resolution, Resolver};
 use crate::ty::InferenceResult;
-use crate::type_ref::TypeRef;
+use crate::type_ref::{TypeRef, TypeRefId, TypeRefMap, TypeRefSourceMap, TypeRefBuilder};
 use crate::{ids::FunctionId, AsName, DefDatabase, FileId, HirDatabase, Name, Ty};
 use mun_syntax::ast::{self, NameOwner, TypeAscriptionOwner};
 use rustc_hash::FxHashMap;
 use std::sync::Arc;
+use mun_syntax::AstPtr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Module {
@@ -143,16 +144,19 @@ pub struct Function {
     pub(crate) id: FunctionId,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct FnData {
-    pub(crate) name: Name,
-    pub(crate) params: Vec<TypeRef>,
-    pub(crate) ret_type: TypeRef,
+    name: Name,
+    params: Vec<TypeRefId>,
+    ret_type: TypeRefId,
+    type_ref_map: TypeRefMap,
+    type_ref_source_map: TypeRefSourceMap,
 }
 
 impl FnData {
     pub(crate) fn fn_data_query(db: &(impl DefDatabase), func: Function) -> Arc<FnData> {
         let src = func.source(db);
+        let mut type_ref_builder = TypeRefBuilder::default();
         let name = src
             .ast
             .name()
@@ -162,21 +166,25 @@ impl FnData {
         let mut params = Vec::new();
         if let Some(param_list) = src.ast.param_list() {
             for param in param_list.params() {
-                let type_ref = TypeRef::from_ast_opt(param.ascribed_type());
+                let type_ref = type_ref_builder.from_node_opt(param.ascribed_type().as_ref());
                 params.push(type_ref);
             }
         }
 
         let ret_type = if let Some(type_ref) = src.ast.ret_type().and_then(|rt| rt.type_ref()) {
-            TypeRef::from_ast(type_ref)
+            type_ref_builder.from_node(&type_ref)
         } else {
-            TypeRef::Error
+            type_ref_builder.unit()
         };
+
+        let (type_ref_map, type_ref_source_map) = type_ref_builder.finish();
 
         Arc::new(FnData {
             name,
             params,
             ret_type,
+            type_ref_map,
+            type_ref_source_map
         })
     }
 
@@ -184,12 +192,20 @@ impl FnData {
         &self.name
     }
 
-    pub fn params(&self) -> &[TypeRef] {
+    pub fn params(&self) -> &[TypeRefId] {
         &self.params
     }
 
-    pub fn ret_type(&self) -> &TypeRef {
+    pub fn ret_type(&self) -> &TypeRefId {
         &self.ret_type
+    }
+
+    pub fn type_ref_source_map(&self) -> &TypeRefSourceMap {
+        &self.type_ref_source_map
+    }
+
+    pub fn type_ref_map(&self) -> &TypeRefMap {
+        &self.type_ref_map
     }
 }
 

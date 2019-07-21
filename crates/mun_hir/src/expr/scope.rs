@@ -55,7 +55,7 @@ impl ExprScopes {
             scope_by_expr: FxHashMap::default(),
         };
         let root = scopes.root_scope();
-        scopes.add_params_bindings(root, body.params());
+        scopes.add_params_bindings(root, body.params().iter().map(|p| &p.0));
         compute_expr_scopes(body.body_expr(), &body, &mut scopes, root);
         scopes
     }
@@ -108,10 +108,9 @@ impl ExprScopes {
         }
     }
 
-    fn add_params_bindings(&mut self, scope: ScopeId, params: &[PatId]) {
+    fn add_params_bindings<'a>(&mut self, scope: ScopeId, params: impl Iterator<Item = &'a PatId>) {
         let body = Arc::clone(&self.body);
         params
-            .iter()
             .for_each(|pat| self.add_bindings(&body, scope, *pat));
     }
 

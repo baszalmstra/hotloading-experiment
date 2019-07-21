@@ -2,19 +2,52 @@ use crate::code_model::BuiltinType;
 use crate::name_resolution::Namespace;
 use crate::resolve::{Resolution, Resolver};
 use crate::ty::{FnSig, Substs, Ty, TypeCtor};
-use crate::type_ref::TypeRef;
+use crate::type_ref::{TypeRef, TypeRefMap, TypeRefId};
 use crate::{Function, HirDatabase, ModuleDef, Path};
+pub(crate) use self::diagnostics::LowerDiagnostic;
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub(crate) struct LowerResult {
+    pub(crate) ty: Ty,
+    pub(crate) diagnostics: Vec<LowerDiagnostic>
+}
 
 impl Ty {
     pub(crate) fn from_hir(
         db: &impl HirDatabase,
         resolver: &Resolver,
-        type_ref: &TypeRef,
-    ) -> Option<Self> {
-        match type_ref {
+        type_ref_map: &TypeRefMap,
+        type_ref: &TypeRefId,
+    ) -> LowerResult {
+        let mut diagnostics = Vec::new();
+        let ty = Ty::from_hir_with_diagnostics(db, resolver, type_ref_map, &mut diagnostics, type_ref);
+        LowerResult {
+            ty,
+            diagnostics
+        }
+    }
+
+    fn from_hir_with_diagnostics(
+        db: &impl HirDatabase,
+        resolver: &Resolver,
+        type_ref_map: &TypeRefMap,
+        diagnostics: &mut Vec<LowerDiagnostic>,
+        type_ref: &TypeRefId,
+    ) -> Ty {
+        let res = match &type_ref_map[*type_ref] {
             TypeRef::Path(path) => Ty::from_hir_path(db, resolver, path),
             TypeRef::Error => Some(Ty::Unknown),
+            TypeRef::Empty => Some(Ty::Empty)
+        };
+        if let Some(ty) = res {
+            ty
+        } else {
+            diagnostics.push(LowerDiagnostic::UnresolvedType {
+                id: type_ref.clone()
+            });
+            Ty::Unknown
         }
+
     }
 
     pub(crate) fn from_hir_path(
@@ -106,8 +139,17 @@ pub fn fn_sig_for_fn(db: &impl HirDatabase, def: Function) -> FnSig {
     let params = data
         .params()
         .iter()
-        .map(|tr| Ty::from_hir(db, &resolver, tr).unwrap_or(Ty::Unknown))
+        .map(|tr| Ty::from_hir(db, &resolver, data.type_ref_map(), tr).ty)
         .collect::<Vec<_>>();
-    let ret = Ty::from_hir(db, &resolver, data.ret_type()).unwrap_or(Ty::Unknown);
+    let ret = Ty::from_hir(db, &resolver, data.type_ref_map(), data.ret_type()).ty;
     FnSig::from_params_and_return(params, ret)
+}
+
+pub mod diagnostics {
+    use crate::type_ref::TypeRefId;
+
+    #[derive(Debug, PartialEq, Eq, Clone)]
+    pub(crate) enum LowerDiagnostic {
+        UnresolvedType { id: TypeRefId }
+    }
 }

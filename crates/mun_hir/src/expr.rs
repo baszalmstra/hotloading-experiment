@@ -9,7 +9,7 @@ use crate::{
 use crate::code_model::src::HasSource;
 use crate::name::AsName;
 use crate::source_id::AstId;
-use crate::type_ref::TypeRef;
+use crate::type_ref::{TypeRef, TypeRefBuilder, TypeRefMap, TypeRefId, TypeRefSourceMap};
 pub use mun_syntax::ast::BinOp as BinaryOp;
 pub use mun_syntax::ast::PrefixOp as UnaryOp;
 use mun_syntax::ast::{ArgListOwner, NameOwner, TypeAscriptionOwner};
@@ -20,6 +20,7 @@ use std::sync::Arc;
 
 pub use self::scope::ExprScopes;
 use crate::resolve::Resolver;
+use std::mem;
 
 pub(crate) mod scope;
 
@@ -37,18 +38,20 @@ pub struct Body {
     owner: DefWithBody,
     exprs: Arena<ExprId, Expr>,
     pats: Arena<PatId, Pat>,
+    type_refs: TypeRefMap,
     /// The patterns for the function's parameters. While the parameter types are part of the
     /// function signature, the patterns are not (they don't change the external type of the
     /// function).
     ///
     /// If this `Body` is for the body of a constant, this will just be empty.
-    params: Vec<PatId>,
+    params: Vec<(PatId, TypeRefId)>,
     /// The `ExprId` of the actual body expression.
     body_expr: ExprId,
+    ret_type: TypeRefId
 }
 
 impl Body {
-    pub fn params(&self) -> &[PatId] {
+    pub fn params(&self) -> &[(PatId, TypeRefId)] {
         &self.params
     }
 
@@ -66,6 +69,14 @@ impl Body {
 
     pub fn pats(&self) -> impl Iterator<Item = (PatId, &Pat)> {
         self.pats.iter()
+    }
+
+    pub fn type_refs(&self) -> &TypeRefMap {
+        &self.type_refs
+    }
+
+    pub fn ret_type(&self) -> TypeRefId {
+        self.ret_type
     }
 }
 
@@ -85,6 +96,14 @@ impl Index<PatId> for Body {
     }
 }
 
+impl Index<TypeRefId> for Body {
+    type Output = TypeRef;
+
+    fn index(&self, type_ref: TypeRefId) -> &TypeRef {
+        &self.type_refs[type_ref]
+    }
+}
+
 /// An item body together with the mapping from syntax nodes to HIR expression Ids. This is needed
 /// to go from e.g. a position in a file to the HIR expression containing it; but for type
 /// inference etc., we want to operate on a structure that is agnostic to the action positions of
@@ -95,11 +114,16 @@ pub struct BodySourceMap {
     expr_map_back: ArenaMap<ExprId, SyntaxNodePtr>,
     pat_map: FxHashMap<AstPtr<ast::Pat>, PatId>,
     pat_map_back: ArenaMap<PatId, AstPtr<ast::Pat>>,
+    type_refs: TypeRefSourceMap
 }
 
 impl BodySourceMap {
     pub(crate) fn expr_syntax(&self, expr: ExprId) -> Option<SyntaxNodePtr> {
         self.expr_map_back.get(expr).cloned()
+    }
+
+    pub fn type_ref_syntax(&self, type_ref: TypeRefId) -> Option<AstPtr<ast::TypeRef>> {
+        self.type_refs.type_ref_syntax(type_ref)
     }
 
     pub(crate) fn syntax_expr(&self, ptr: SyntaxNodePtr) -> Option<ExprId> {
@@ -119,13 +143,17 @@ impl BodySourceMap {
     pub(crate) fn node_pat(&self, node: &ast::Pat) -> Option<PatId> {
         self.pat_map.get(&AstPtr::new(node)).cloned()
     }
+
+    pub fn type_refs(&self) -> &TypeRefSourceMap {
+        &self.type_refs
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Statement {
     Let {
         pat: PatId,
-        type_ref: Option<TypeRef>,
+        type_ref: Option<TypeRefId>,
         initializer: Option<ExprId>,
     },
     Expr(ExprId),
@@ -223,8 +251,10 @@ pub(crate) struct ExprCollector<DB> {
     exprs: Arena<ExprId, Expr>,
     pats: Arena<PatId, Pat>,
     source_map: BodySourceMap,
-    params: Vec<PatId>,
+    params: Vec<(PatId, TypeRefId)>,
     body_expr: Option<ExprId>,
+    ret_type: Option<TypeRefId>,
+    type_ref_builder: TypeRefBuilder
 }
 
 impl<'a, DB> ExprCollector<&'a DB>
@@ -240,6 +270,8 @@ where
             source_map: BodySourceMap::default(),
             params: Vec::new(),
             body_expr: None,
+            ret_type: None,
+            type_ref_builder: TypeRefBuilder::default()
         }
     }
 
@@ -266,12 +298,20 @@ where
                     continue;
                 };
                 let param_pat = self.collect_pat(pat);
-                self.params.push(param_pat);
+                let param_type = self.type_ref_builder.from_node_opt(param.ascribed_type().as_ref());
+                self.params.push((param_pat, param_type));
             }
         }
 
         let body = self.collect_block_opt(node.body());
         self.body_expr = Some(body);
+
+        let ret_type = if let Some(type_ref) = node.ret_type().and_then(|rt| rt.type_ref()) {
+            self.type_ref_builder.from_node(&type_ref)
+        } else {
+            self.type_ref_builder.unit()
+        };
+        self.ret_type = Some(ret_type);
     }
 
     fn collect_block_opt(&mut self, block: Option<ast::Block>) -> ExprId {
@@ -288,7 +328,7 @@ where
             .map(|s| match s.kind() {
                 ast::StmtKind::LetStmt(stmt) => {
                     let pat = self.collect_pat_opt(stmt.pat());
-                    let type_ref = stmt.ascribed_type().map(TypeRef::from_ast);
+                    let type_ref = stmt.ascribed_type().map(|t| self.type_ref_builder.from_node(&t));
                     let initializer = stmt.initializer().map(|e| self.collect_expr(e));
                     Statement::Let {
                         pat,
@@ -392,14 +432,18 @@ where
         self.alloc_pat(pattern, ptr)
     }
 
-    fn finish(self) -> (Body, BodySourceMap) {
+    fn finish(mut self) -> (Body, BodySourceMap) {
+        let (type_refs, mut type_ref_source_map) = self.type_ref_builder.finish();
         let body = Body {
             owner: self.owner,
             exprs: self.exprs,
             pats: self.pats,
             params: self.params,
             body_expr: self.body_expr.expect("A body should have been collected"),
+            type_refs,
+            ret_type: self.ret_type.expect("A body should have return type collected")
         };
+        mem::replace(&mut self.source_map.type_refs, type_ref_source_map);
         (body, self.source_map)
     }
 }

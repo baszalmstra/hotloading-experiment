@@ -114,7 +114,7 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
                 .body
                 .params()
                 .iter()
-                .position(|p| *p == pat)
+                .position(|p| p.0 == pat)
                 .and_then(|i| self.fn_value.get_nth_param(i as u32))
                 .expect("could not find pat"),
             Resolution::Def(_) => panic!("no support for module definitions"),

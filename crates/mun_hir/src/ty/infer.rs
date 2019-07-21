@@ -6,20 +6,22 @@ use crate::expr::{Body, Expr, ExprId, Pat, PatId, Statement};
 use crate::name_resolution::Namespace;
 use crate::resolve::{Resolution, Resolver};
 use crate::ty::{Ty, TypableDef};
-use crate::type_ref::TypeRef;
+use crate::type_ref::{TypeRef, TypeRefId};
 use crate::{expr, FnData, Function, HirDatabase, Path};
 use mun_syntax::ast::TypeRefKind;
 use mun_syntax::{ast, AstPtr};
 use std::mem;
 use std::ops::Index;
 use std::sync::Arc;
+use crate::ty::infer::diagnostics::InferenceDiagnostic;
+use crate::ty::lower::LowerDiagnostic;
 
 /// The result of type inference: A mapping from expressions and patterns to types.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct InferenceResult {
     type_of_expr: ArenaMap<ExprId, Ty>,
     type_of_pat: ArenaMap<PatId, Ty>,
-    diagnostics: Vec<InferenceDiagnostic>,
+    diagnostics: Vec<diagnostics::InferenceDiagnostic>,
 }
 
 impl Index<ExprId> for InferenceResult {
@@ -58,7 +60,7 @@ pub fn infer_query(db: &impl HirDatabase, def: DefWithBody) -> Arc<InferenceResu
     let mut ctx = InferenceContext::new(db, body, resolver);
 
     match def {
-        DefWithBody::Function(ref f) => ctx.collect_fn(&f.data(db)),
+        DefWithBody::Function(ref f) => ctx.collect_fn(),
     }
 
     ctx.infer_body();
@@ -102,24 +104,30 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
         self.type_of_pat.insert(pat, ty);
     }
 
-    fn collect_fn(&mut self, data: &FnData) {
+    fn collect_fn(&mut self) {
         let body = Arc::clone(&self.body); // avoid borrow checker problem
-        for (type_ref, pat) in data.params().iter().zip(body.params()) {
-            let ty = self.make_ty(type_ref).unwrap_or(Ty::Unknown);
+        for (pat, type_ref) in body.params().iter() {
+            let ty = self.make_ty(type_ref);
             self.infer_pat(*pat, &ty);
         }
-        self.return_ty = self.make_ty(data.ret_type()).unwrap_or(Ty::Unknown)
+        self.return_ty = self.make_ty(&body.ret_type())
     }
 
-    fn make_ty(&mut self, type_ref: &TypeRef) -> Option<Ty> {
-        let ty = Ty::from_hir(
+    fn make_ty(&mut self, type_ref: &TypeRefId) -> Ty {
+        let result = Ty::from_hir(
             self.db,
             // FIXME use right resolver for block
             &self.resolver,
+            &self.body.type_refs(),
             type_ref,
-        )?;
-        //self.insert_type_vars(ty)
-        Some(ty)
+        );
+        for diag in result.diagnostics {
+            let diag = match diag {
+                LowerDiagnostic::UnresolvedType { id } => InferenceDiagnostic::UnresolvedType { id },
+            };
+            self.diagnostics.push(diag);
+        }
+        result.ty
     }
 
     fn infer_pat(&mut self, pat: PatId, mut expected: &Ty) -> Ty {
@@ -243,7 +251,7 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
                 } => {
                     let decl_ty = type_ref
                         .as_ref()
-                        .and_then(|tr| self.make_ty(tr))
+                        .map(|tr| self.make_ty(tr))
                         .unwrap_or(Ty::Unknown);
                     //let decl_ty = self.insert_type_vars(decl_ty);
                     let ty = if let Some(expr) = initializer {
@@ -322,24 +330,42 @@ impl From<PatId> for ExprOrPatId {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub(super) enum InferenceDiagnostic {
-    UnresolvedValue { id: ExprOrPatId },
-}
+mod diagnostics {
+    use crate::{
+        ty::infer::ExprOrPatId,
+        type_ref::TypeRefId,
+        HirDatabase,
+        Function,
+        diagnostics::{DiagnosticSink, UnresolvedValue, UnresolvedType},
+        code_model::src::HasSource
+    };
 
-impl InferenceDiagnostic {
-    pub(super) fn add_to(&self, db: &impl HirDatabase, owner: Function, sink: &mut DiagnosticSink) {
-        match self {
-            InferenceDiagnostic::UnresolvedValue { id } => {
-                let file = owner.source(db).file_id;
-                let body = owner.body_source_map(db);
-                let expr = match id {
-                    ExprOrPatId::ExprId(id) => body.expr_syntax(*id),
-                    ExprOrPatId::PatId(id) => body.pat_syntax(*id).map(|ptr| ptr.syntax_node_ptr()),
+    #[derive(Debug, PartialEq, Eq, Clone)]
+    pub(super) enum InferenceDiagnostic {
+        UnresolvedValue { id: ExprOrPatId },
+        UnresolvedType { id: TypeRefId },
+    }
+
+    impl InferenceDiagnostic {
+        pub(super) fn add_to(&self, db: &impl HirDatabase, owner: Function, sink: &mut DiagnosticSink) {
+            match self {
+                InferenceDiagnostic::UnresolvedValue { id } => {
+                    let file = owner.source(db).file_id;
+                    let body = owner.body_source_map(db);
+                    let expr = match id {
+                        ExprOrPatId::ExprId(id) => body.expr_syntax(*id),
+                        ExprOrPatId::PatId(id) => body.pat_syntax(*id).map(|ptr| ptr.syntax_node_ptr()),
+                    }
+                        .unwrap();
+
+                    sink.push(UnresolvedValue { file, expr });
+                },
+                InferenceDiagnostic::UnresolvedType { id } => {
+                    let file = owner.source(db).file_id;
+                    let body = owner.body_source_map(db);
+                    let type_ref = body.type_ref_syntax(*id).expect("If this is not found, it must be a type ref generated by the library which should never be unresolved.");
+                    sink.push(UnresolvedType { file, type_ref });
                 }
-                .unwrap();
-
-                sink.push(UnresolvedValue { file, expr });
             }
         }
     }
