@@ -126,6 +126,13 @@ fn diagnostics(db: &CompilerDatabase, file_id: FileId) -> Vec<Diagnostic> {
             loc: d.highlight_range().into(),
             message: format!("could not find type `{}` in this scope", text),
         });
+    })
+    .on::<mun_hir::diagnostics::MismatchedType, _>(|d| {
+        result.borrow_mut().push(Diagnostic {
+            level: Level::Error,
+            loc: d.highlight_range().into(),
+            message: format!("expected `{}`, found `{}`", d.expected.display(db), d.found.display(db)),
+        });
     });
 
     if let Some(module) = Module::package_modules(db)

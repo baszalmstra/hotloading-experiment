@@ -1,4 +1,4 @@
-use crate::{FileId, HirDatabase};
+use crate::{FileId, HirDatabase, Ty};
 use mun_syntax::{ast, AstNode, AstPtr, SyntaxNode, SyntaxNodePtr, TextRange};
 use std::{any::Any, fmt};
 
@@ -115,6 +115,32 @@ impl Diagnostic for UnresolvedType {
 
     fn syntax_node_ptr(&self) -> SyntaxNodePtr {
         self.type_ref.syntax_node_ptr()
+    }
+
+    fn as_any(&self) -> &(dyn Any + Send + 'static) {
+        self
+    }
+}
+
+#[derive(Debug)]
+pub struct MismatchedType {
+    pub file: FileId,
+    pub expr: SyntaxNodePtr,
+    pub expected: Ty,
+    pub found: Ty,
+}
+
+impl Diagnostic for MismatchedType {
+    fn message(&self) -> String {
+        "mismatched type".to_string()
+    }
+
+    fn file(&self) -> FileId {
+        self.file
+    }
+
+    fn syntax_node_ptr(&self) -> SyntaxNodePtr {
+        self.expr
     }
 
     fn as_any(&self) -> &(dyn Any + Send + 'static) {

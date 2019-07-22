@@ -107,7 +107,7 @@ impl HirDisplay for Ty {
         match self {
             Ty::Apply(a_ty) => a_ty.hir_fmt(f)?,
             Ty::Unknown => write!(f, "{{unknown}}")?,
-            Ty::Empty => write!(f, "empty")?,
+            Ty::Empty => write!(f, "nothing")?,
         }
         Ok(())
     }

@@ -40,11 +40,11 @@ impl Emit for Diagnostic {
         let snippet_text = ColorSpec::new().clone();
 
         // Write severity name
-        writer.set_color(&error);
+        writer.set_color(&error)?;
         write!(writer, "error")?;
 
         // Write diagnostic message
-        writer.set_color(&header);
+        writer.set_color(&header)?;
         writeln!(writer, ": {}", self.message)?;
 
         if let Some(snippet) = line_index.line_str(line_col.line, &text) {
@@ -52,9 +52,9 @@ impl Emit for Diagnostic {
             let line_str = format!("{}", line_col.line + 1);
             let gutter_indent = " ".to_string().repeat(line_str.len());
 
-            writer.set_color(&snippet_gutter);
+            writer.set_color(&snippet_gutter)?;
             write!(writer, "{}-->", gutter_indent)?;
-            writer.set_color(&snippet_text);
+            writer.set_color(&snippet_text)?;
             writeln!(
                 writer,
                 " {}:{}:{}",
@@ -64,15 +64,15 @@ impl Emit for Diagnostic {
             )?;
 
             // Snippet
-            writer.set_color(&snippet_gutter);
+            writer.set_color(&snippet_gutter)?;
             writeln!(writer, "{} |", gutter_indent)?;
             write!(writer, "{} | ", line_str)?;
-            writer.set_color(&snippet_text);
+            writer.set_color(&snippet_text)?;
             writeln!(writer, "{}", snippet)?;
 
-            writer.set_color(&snippet_gutter);
+            writer.set_color(&snippet_gutter)?;
             write!(writer, "{} |", gutter_indent)?;
-            writer.set_color(&error);
+            writer.set_color(&error)?;
             writeln!(
                 writer,
                 " {}{}",
@@ -80,6 +80,8 @@ impl Emit for Diagnostic {
                 "^".to_string()
                     .repeat((line_col_end.col - line_col.col) as usize)
             )?;
+
+
         }
 
         //        // Write the start location
