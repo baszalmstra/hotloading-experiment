@@ -2,14 +2,14 @@ use crate::arena::map::ArenaMap;
 use crate::code_model::src::HasSource;
 use crate::code_model::DefWithBody;
 use crate::diagnostics::{DiagnosticSink, UnresolvedValue};
-use crate::expr::{Body, Expr, ExprId, Pat, PatId, Statement};
+use crate::expr::{Body, Expr, ExprId, Pat, PatId, Statement, Literal};
 use crate::name_resolution::Namespace;
 use crate::resolve::{Resolution, Resolver};
 use crate::ty::infer::diagnostics::InferenceDiagnostic;
 use crate::ty::lower::LowerDiagnostic;
 use crate::ty::{Ty, TypableDef};
 use crate::type_ref::{TypeRef, TypeRefId};
-use crate::{expr, FnData, Function, HirDatabase, Path};
+use crate::{expr, FnData, Function, HirDatabase, Path, TypeCtor};
 use mun_syntax::ast::TypeRefKind;
 use mun_syntax::{ast, AstPtr};
 use std::mem;
@@ -170,11 +170,17 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
                 _ => Ty::Unknown,
             },
             Expr::Block { statements, tail } => self.infer_block(statements, *tail, expected),
+            Expr::Literal(lit) => match lit {
+                Literal::String(_) => Ty::Unknown,
+                Literal::Bool(_) => Ty::Unknown,
+                Literal::Int(_) => Ty::simple(TypeCtor::Number),
+                Literal::Float(_) => Ty::simple(TypeCtor::Number),
+            }
             _ => Ty::Unknown,
             //            Expr::Call { callee: _, args: _ } => {}
             //            Expr::UnaryOp { expr: _, op: _ } => {}
             //            Expr::Block { statements: _, tail: _ } => {}
-            //            Expr::Literal(_) => {}
+
         };
         if expected.ty != Ty::Unknown && ty != Ty::Unknown && ty != expected.ty {
             self.diagnostics.push(InferenceDiagnostic::MismatchedTypes {

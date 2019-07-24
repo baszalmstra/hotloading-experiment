@@ -6,7 +6,7 @@ use inkwell::{
     types::{AnyTypeEnum, BasicType, BasicTypeEnum, VoidType},
     values::{BasicValue, FloatMathValue, FunctionValue},
 };
-use mun_hir::{ApplicationTy, BinaryOp, Body, Expr, Statement, ExprId, PatId, FileId, Function, HirDatabase, InferenceResult, ModuleDef, Path, Resolution, Resolver, Ty, TypeCtor, Pat};
+use mun_hir::{ApplicationTy, BinaryOp, Body, Expr, Statement, ExprId, PatId, FileId, Function, HirDatabase, InferenceResult, ModuleDef, Path, Resolution, Resolver, Ty, TypeCtor, Pat, Literal};
 use std::sync::Arc;
 use std::collections::HashMap;
 use inkwell::passes::PassManager;
@@ -68,7 +68,7 @@ pub(crate) fn function_ir_query(db: &impl IrDatabase, f: Function, module: &Modu
     let body_ir = fun.append_basic_block("body");
     builder.position_at_end(&body_ir);
 
-    let mut code_gen = BodyIrGenerator::new(db, f, fun, builder);
+    let mut code_gen = BodyIrGenerator::new(db, module, f, fun, builder);
 
     code_gen.gen_fn_body();
 
@@ -78,6 +78,7 @@ pub(crate) fn function_ir_query(db: &impl IrDatabase, f: Function, module: &Modu
 #[derive(Debug)]
 struct BodyIrGenerator<'a, D: IrDatabase> {
     db: &'a D,
+    module: &'a Module,
     body: Arc<Body>,
     infer: Arc<InferenceResult>,
     builder: Builder,
@@ -89,12 +90,13 @@ struct BodyIrGenerator<'a, D: IrDatabase> {
 }
 
 impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
-    fn new(db: &'a D, f: Function, fn_value: FunctionValue, builder: Builder) -> Self {
+    fn new(db: &'a D, module: &'a Module, f: Function, fn_value: FunctionValue, builder: Builder) -> Self {
         let body = f.body(db);
         let infer = f.infer(db);
 
         BodyIrGenerator {
             db,
+            module,
             body,
             infer,
             builder,
@@ -152,6 +154,11 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
             Expr::Path(ref p) => {
                 let resolver = mun_hir::resolver_for_expr(self.body.clone(), self.db, expr);
                 Some(self.gen_path_expr(p, expr, &resolver))
+            }
+            Expr::Literal(lit) => match lit {
+                Literal::Int(v) => Some(self.module.get_context().f64_type().const_float(*v as f64).into()),
+                Literal::Float(v) => Some(self.module.get_context().f64_type().const_float(*v as f64).into()),
+                Literal::String(_) | Literal::Bool(_) => unreachable!(),
             }
             &Expr::BinaryOp { lhs, rhs, op } => match op.expect("missing op") {
                 BinaryOp::Add => Some(self.gen_add(lhs, rhs)),

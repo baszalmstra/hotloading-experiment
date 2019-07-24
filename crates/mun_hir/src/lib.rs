@@ -28,7 +28,7 @@ pub use crate::{
         SourceDatabase, SourceDatabaseStorage,
     },
     display::HirDisplay,
-    expr::{resolver_for_expr, BinaryOp, Body, Expr, Statement, ExprId, PatId, Pat, ExprScopes},
+    expr::{resolver_for_expr, BinaryOp, Body, Expr, Statement, ExprId, PatId, Pat, ExprScopes, Literal},
     ids::ItemLoc,
     input::{FileId, PackageInput},
     name::Name,
