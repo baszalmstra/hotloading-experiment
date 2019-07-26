@@ -147,3 +147,29 @@ impl Diagnostic for MismatchedType {
         self
     }
 }
+
+#[derive(Debug)]
+pub struct CannotApplyBinaryOp {
+    pub file: FileId,
+    pub expr: SyntaxNodePtr,
+    pub lhs: Ty,
+    pub rhs: Ty
+}
+
+impl Diagnostic for CannotApplyBinaryOp {
+    fn message(&self) -> String {
+        "cannot apply binary operator".to_string()
+    }
+
+    fn file(&self) -> FileId {
+        self.file
+    }
+
+    fn syntax_node_ptr(&self) -> SyntaxNodePtr {
+        self.expr
+    }
+
+    fn as_any(&self) -> &(dyn Any + Send + 'static) {
+        self
+    }
+}

@@ -120,7 +120,8 @@ pub(crate) fn type_for_def(db: &impl HirDatabase, def: TypableDef, ns: Namespace
 /// Build the declared type of a static.
 fn type_for_builtin(def: BuiltinType) -> Ty {
     Ty::simple(match def {
-        BuiltinType::Number => TypeCtor::Number,
+        BuiltinType::Float => TypeCtor::Float,
+        BuiltinType::Int => TypeCtor::Int,
     })
 }
 

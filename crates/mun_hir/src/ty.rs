@@ -37,8 +37,11 @@ pub struct ApplicationTy {
 /// tuples.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub enum TypeCtor {
-    /// The primitive number type. Written as `number`.
-    Number,
+    /// The primitive floating point type. Written as `float`.
+    Float,
+
+    /// The primitive integral type. Written as `int`.
+    Int,
 
     /// The anonymous type of a function declaration/definition. Each
     /// function has a unique type, which is output (for a function
@@ -61,6 +64,13 @@ impl Ty {
             ctor,
             parameters: Substs::empty(),
         })
+    }
+
+    pub fn as_simple(&self) -> Option<TypeCtor> {
+        match self {
+            Ty::Apply(ApplicationTy { ctor, parameters}) if parameters.0.is_empty() => Some(*ctor),
+            _ => None
+        }
     }
 }
 
@@ -116,7 +126,8 @@ impl HirDisplay for Ty {
 impl HirDisplay for ApplicationTy {
     fn hir_fmt(&self, f: &mut HirFormatter<impl HirDatabase>) -> fmt::Result {
         match self.ctor {
-            TypeCtor::Number => write!(f, "number")?,
+            TypeCtor::Float => write!(f, "float")?,
+            TypeCtor::Int => write!(f, "int")?,
             TypeCtor::FnDef(def) => {
                 let sig = f.db.fn_signature(def);
                 let name = def.name(f.db);

@@ -46,4 +46,5 @@ impl AsName for ast::Name {
     }
 }
 
-pub(crate) const NUMBER: Name = Name::new(SmolStr::new_inline_from_ascii(6, b"number"));
+pub(crate) const FLOAT: Name = Name::new(SmolStr::new_inline_from_ascii(5, b"float"));
+pub(crate) const INT: Name = Name::new(SmolStr::new_inline_from_ascii(3, b"int"));

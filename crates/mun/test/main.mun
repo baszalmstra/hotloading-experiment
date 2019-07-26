@@ -1,15 +1,16 @@
-// Function to add two numbers
-function add(a:number, b:number):number {
-  let result = a+b+3
+// Function to add two floats
+function add(a:float, b:float):float {
+  let lit = 3+b*4+b
+  let result = a+b+lit
   result
 }
 
-// Function to subtract two numbers
-function subtract(a:number, b:number):number {
+// Function to subtract two floats
+function subtract(a:float, b:float):float {
   a-b
 }
 
-// Function to subtract two numbers
-function multiply(a:number, b:number):number {
+// Function to subtract two floats
+function multiply(a:float, b:float):float {
   a*b
 }

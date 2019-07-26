@@ -9,8 +9,8 @@ use crate::ty::infer::diagnostics::InferenceDiagnostic;
 use crate::ty::lower::LowerDiagnostic;
 use crate::ty::{Ty, TypableDef};
 use crate::type_ref::{TypeRef, TypeRefId};
-use crate::{expr, FnData, Function, HirDatabase, Path, TypeCtor};
-use mun_syntax::ast::TypeRefKind;
+use crate::{expr, FnData, Function, HirDatabase, Path, TypeCtor, BinaryOp};
+use mun_syntax::ast::{TypeRefKind, BinOp};
 use mun_syntax::{ast, AstPtr};
 use std::mem;
 use std::ops::Index;
@@ -165,7 +165,14 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
                 Some(op) => {
                     let lhs_ty = self.infer_expr(*lhs, &Expectation::none());
                     let rhs_ty = self.infer_expr(*rhs, &Expectation::none());
-                    lhs_ty
+                    let ty = self.infer_bin_expr(&lhs_ty, &rhs_ty, *op);
+                    match ty {
+                        None => {
+                            self.diagnostics.push(InferenceDiagnostic::CannotApplyBinaryOp { id: tgt_expr, lhs: lhs_ty, rhs: rhs_ty });
+                            Ty::Unknown
+                        },
+                        Some(ty) => ty
+                    }
                 }
                 _ => Ty::Unknown,
             },
@@ -173,8 +180,8 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
             Expr::Literal(lit) => match lit {
                 Literal::String(_) => Ty::Unknown,
                 Literal::Bool(_) => Ty::Unknown,
-                Literal::Int(_) => Ty::simple(TypeCtor::Number),
-                Literal::Float(_) => Ty::simple(TypeCtor::Number),
+                Literal::Int(_) => Ty::simple(TypeCtor::Int),
+                Literal::Float(_) => Ty::simple(TypeCtor::Float),
             }
             _ => Ty::Unknown,
             //            Expr::Call { callee: _, args: _ } => {}
@@ -220,6 +227,26 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
                 let mut ty = self.db.type_for_def(typable, Namespace::Values);
                 Some(ty)
             }
+        }
+    }
+
+    fn infer_bin_expr(&mut self, lhs: &Ty, rhs: &Ty, op: BinaryOp) -> Option<Ty> {
+        match op {
+            BinOp::Add|BinOp::Subtract|BinOp::Multiply => match (lhs.as_simple(), rhs.as_simple()) {
+                (Some(TypeCtor::Float), Some(TypeCtor::Float)) => Some(Ty::simple(TypeCtor::Float)),
+                (Some(TypeCtor::Float), Some(TypeCtor::Int)) => Some(Ty::simple(TypeCtor::Float)),
+                (Some(TypeCtor::Int), Some(TypeCtor::Float)) => Some(Ty::simple(TypeCtor::Float)),
+                (Some(TypeCtor::Int), Some(TypeCtor::Int)) => Some(Ty::simple(TypeCtor::Int)),
+                _ => None
+            },
+            BinOp::Divide => match (lhs.as_simple(), rhs.as_simple()) {
+                (Some(TypeCtor::Float), Some(TypeCtor::Float)) => Some(Ty::simple(TypeCtor::Float)),
+                (Some(TypeCtor::Float), Some(TypeCtor::Int)) => Some(Ty::simple(TypeCtor::Float)),
+                (Some(TypeCtor::Int), Some(TypeCtor::Float)) => Some(Ty::simple(TypeCtor::Float)),
+                (Some(TypeCtor::Int), Some(TypeCtor::Int)) => Some(Ty::simple(TypeCtor::Float)),
+                _ => None
+            },
+            _ => None
         }
     }
 
@@ -348,14 +375,15 @@ impl From<PatId> for ExprOrPatId {
 }
 
 mod diagnostics {
-    use crate::{code_model::src::HasSource, diagnostics::{DiagnosticSink, UnresolvedType, UnresolvedValue}, ty::infer::ExprOrPatId, type_ref::TypeRefId, Function, HirDatabase, Ty, ExprId};
-    use crate::diagnostics::MismatchedType;
+    use crate::{code_model::src::HasSource, diagnostics::{DiagnosticSink, UnresolvedType, UnresolvedValue}, ty::infer::ExprOrPatId, type_ref::TypeRefId, Function, HirDatabase, Ty, ExprId, BinaryOp};
+    use crate::diagnostics::{MismatchedType, CannotApplyBinaryOp};
 
     #[derive(Debug, PartialEq, Eq, Clone)]
     pub(super) enum InferenceDiagnostic {
         UnresolvedValue { id: ExprOrPatId },
         UnresolvedType { id: TypeRefId },
         MismatchedTypes { id: ExprId, expected: Ty, found: Ty },
+        CannotApplyBinaryOp { id:ExprId, lhs: Ty, rhs: Ty }
     }
 
     impl InferenceDiagnostic {
@@ -390,6 +418,12 @@ mod diagnostics {
                     let body = owner.body_source_map(db);
                     let expr = body.expr_syntax(*id).unwrap();
                     sink.push(MismatchedType { file, expr, found: found.clone(), expected: expected.clone() });
+                }
+                InferenceDiagnostic::CannotApplyBinaryOp { id, lhs, rhs } => {
+                    let file = owner.source(db).file_id;
+                    let body = owner.body_source_map(db);
+                    let expr = body.expr_syntax(*id).unwrap();
+                    sink.push( CannotApplyBinaryOp { file, expr, lhs: lhs.clone(), rhs: rhs.clone() });
                 }
             }
         }

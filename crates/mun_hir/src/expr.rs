@@ -13,7 +13,7 @@ use crate::type_ref::{TypeRef, TypeRefBuilder, TypeRefId, TypeRefMap, TypeRefSou
 pub use mun_syntax::ast::BinOp as BinaryOp;
 pub use mun_syntax::ast::PrefixOp as UnaryOp;
 use mun_syntax::ast::{ArgListOwner, NameOwner, TypeAscriptionOwner};
-use mun_syntax::{ast, AstNode, AstPtr, SyntaxNodePtr};
+use mun_syntax::{ast, AstNode, AstPtr, SyntaxNodePtr, T};
 use rustc_hash::FxHashMap;
 use std::ops::Index;
 use std::sync::Arc;
@@ -159,12 +159,16 @@ pub enum Statement {
     Expr(ExprId),
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
     String(String),
     Bool(bool),
-    Int(u64),
-    Float(u64),
+    Int(i64),
+    Float(f64),
+}
+
+impl Eq for Literal {
+
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -373,9 +377,9 @@ where
         match expr.kind() {
             ast::ExprKind::Literal(e) => {
                 let lit = match e.kind() {
-                    ast::LiteralKind::Bool => Literal::Bool(Default::default()),
-                    ast::LiteralKind::IntNumber => Literal::Int(Default::default()),
-                    ast::LiteralKind::FloatNumber => Literal::Float(Default::default()),
+                    ast::LiteralKind::Bool => Literal::Bool(e.syntax().kind() == T![true]),
+                    ast::LiteralKind::IntNumber => Literal::Int(e.syntax().text().to_string().parse().unwrap()),
+                    ast::LiteralKind::FloatNumber => Literal::Float(e.syntax().text().to_string().parse().unwrap()),
                     ast::LiteralKind::String => Literal::String(Default::default()),
                 };
                 self.alloc_expr(Expr::Literal(lit), syntax_ptr)

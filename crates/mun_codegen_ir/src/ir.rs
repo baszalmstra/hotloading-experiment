@@ -1,34 +1,19 @@
 use crate::IrDatabase;
 use inkwell::builder::Builder;
-use inkwell::values::{AnyValueEnum, BasicValueEnum};
-use inkwell::{
-    module::{Linkage, Module},
-    types::{AnyTypeEnum, BasicType, BasicTypeEnum, VoidType},
-    values::{BasicValue, FloatMathValue, FunctionValue},
-};
-use mun_hir::{ApplicationTy, BinaryOp, Body, Expr, Statement, ExprId, PatId, FileId, Function, HirDatabase, InferenceResult, ModuleDef, Path, Resolution, Resolver, Ty, TypeCtor, Pat, Literal};
-use std::sync::Arc;
+use inkwell::passes::{PassManager, PassManagerBuilder};
+use inkwell::values::{AnyValueEnum, BasicValueEnum, InstructionOpcode};
+use inkwell::{module::{Linkage, Module}, types::{AnyTypeEnum, BasicType, BasicTypeEnum, VoidType}, values::{BasicValue, FloatMathValue, FunctionValue}, OptimizationLevel};
+use mun_hir::{ApplicationTy, BinaryOp, Body, Expr, ExprId, FileId, Function, HirDatabase, InferenceResult, Literal, ModuleDef, Pat, PatId, Path, Resolution, Resolver, Statement, Ty, TypeCtor, HirDisplay};
 use std::collections::HashMap;
-use inkwell::passes::PassManager;
+use std::mem;
+use std::sync::Arc;
 
 fn create_function_pass_manager(module: &Module) -> PassManager {
+    let pass_builder = PassManagerBuilder::create();
+    pass_builder.set_optimization_level(OptimizationLevel::None);
+
     let function_pass_manager = PassManager::create_for_function(module);
-
-    // Promote allocas to registers.
-    function_pass_manager.add_promote_memory_to_register_pass();
-
-    // Do simple "peephole" optimizations and bit-twiddling optzns.
-    function_pass_manager.add_instruction_combining_pass();
-
-    // Reassociate expressions.
-    function_pass_manager.add_reassociate_pass();
-
-    // Eliminate Common SubExpressions.
-    function_pass_manager.add_gvn_pass();
-
-    // Simplify the control flow graph (deleting unreachable blocks, etc).
-    function_pass_manager.add_cfg_simplification_pass();
-
+    pass_builder.populate_function_pass_manager(&function_pass_manager);
     function_pass_manager.initialize();
 
     function_pass_manager
@@ -48,7 +33,7 @@ pub(crate) fn module_ir_query(db: &impl IrDatabase, file_id: FileId) -> Module {
             ModuleDef::Function(f) => {
                 let fun = function_ir_query(db, *f, &module);
                 fn_pass_manager.run_on_function(&fun);
-            },
+            }
             _ => {}
         }
     }
@@ -56,7 +41,11 @@ pub(crate) fn module_ir_query(db: &impl IrDatabase, file_id: FileId) -> Module {
     module
 }
 
-pub(crate) fn function_ir_query(db: &impl IrDatabase, f: Function, module: &Module) -> FunctionValue {
+pub(crate) fn function_ir_query(
+    db: &impl IrDatabase,
+    f: Function,
+    module: &Module,
+) -> FunctionValue {
     let name = f.name(db).to_string();
     let fun = if let AnyTypeEnum::FunctionType(ty) = db.type_ir(f.ty(db)) {
         module.add_function(&name, ty, None)
@@ -90,7 +79,13 @@ struct BodyIrGenerator<'a, D: IrDatabase> {
 }
 
 impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
-    fn new(db: &'a D, module: &'a Module, f: Function, fn_value: FunctionValue, builder: Builder) -> Self {
+    fn new(
+        db: &'a D,
+        module: &'a Module,
+        f: Function,
+        fn_value: FunctionValue,
+        builder: Builder,
+    ) -> Self {
         let body = f.body(db);
         let infer = f.infer(db);
 
@@ -104,7 +99,7 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
             hir: f,
             pat_to_param: HashMap::default(),
             pat_to_local: HashMap::default(),
-            pat_to_name: HashMap::default()
+            pat_to_name: HashMap::default(),
         }
     }
 
@@ -116,13 +111,13 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
             match &body[*pat] {
                 Pat::Bind { name } => {
                     let name = name.to_string();
-                    let param =  self.fn_value.get_nth_param(i as u32).unwrap();
-                    try_set_name(param.into(), &name);
+                    let param = self.fn_value.get_nth_param(i as u32).unwrap();
+                    param.set_name(&name);
                     self.pat_to_param.insert(*pat, param);
                     self.pat_to_name.insert(*pat, name);
                 }
-                Pat::Wild => {},
-                Pat::Missing | Pat::Path(_) => unreachable!()
+                Pat::Wild => {}
+                Pat::Missing | Pat::Path(_) => unreachable!(),
             }
         }
 
@@ -143,37 +138,53 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
             } => {
                 for statement in statements.iter() {
                     match statement {
-                        Statement::Let { pat, initializer, .. } => {
+                        Statement::Let {
+                            pat, initializer, ..
+                        } => {
                             self.gen_let_statement(pat, initializer);
-                        },
-                        Statement::Expr(expr) => { self.gen_expr(*expr); },
+                        }
+                        Statement::Expr(expr) => {
+                            self.gen_expr(*expr);
+                        }
                     };
-                };
+                }
                 tail.and_then(|expr| self.gen_expr(expr))
-            },
+            }
             Expr::Path(ref p) => {
                 let resolver = mun_hir::resolver_for_expr(self.body.clone(), self.db, expr);
                 Some(self.gen_path_expr(p, expr, &resolver))
             }
             Expr::Literal(lit) => match lit {
-                Literal::Int(v) => Some(self.module.get_context().f64_type().const_float(*v as f64).into()),
-                Literal::Float(v) => Some(self.module.get_context().f64_type().const_float(*v as f64).into()),
+                Literal::Int(v) => Some(
+                    self.module
+                        .get_context()
+                        .i64_type()
+                        .const_int(unsafe { mem::transmute::<i64, u64>(*v) }, true)
+                        .into(),
+                ),
+                Literal::Float(v) => Some(
+                    self.module
+                        .get_context()
+                        .f64_type()
+                        .const_float(*v as f64)
+                        .into(),
+                ),
                 Literal::String(_) | Literal::Bool(_) => unreachable!(),
-            }
+            },
             &Expr::BinaryOp { lhs, rhs, op } => match op.expect("missing op") {
                 BinaryOp::Add => Some(self.gen_add(lhs, rhs)),
                 BinaryOp::Subtract => Some(self.gen_sub(lhs, rhs)),
                 BinaryOp::Divide => Some(self.gen_divide(lhs, rhs)),
                 BinaryOp::Multiply => Some(self.gen_multiply(lhs, rhs)),
-//                BinaryOp::Remainder => Some(self.gen_remainder(lhs, rhs)),
-//                BinaryOp::Power =>,
-//                BinaryOp::Assign,
-//                BinaryOp::AddAssign,
-//                BinaryOp::SubtractAssign,
-//                BinaryOp::DivideAssign,
-//                BinaryOp::MultiplyAssign,
-//                BinaryOp::RemainderAssign,
-//                BinaryOp::PowerAssign,
+                //                BinaryOp::Remainder => Some(self.gen_remainder(lhs, rhs)),
+                //                BinaryOp::Power =>,
+                //                BinaryOp::Assign,
+                //                BinaryOp::AddAssign,
+                //                BinaryOp::SubtractAssign,
+                //                BinaryOp::DivideAssign,
+                //                BinaryOp::MultiplyAssign,
+                //                BinaryOp::RemainderAssign,
+                //                BinaryOp::PowerAssign,
                 _ => unreachable!(),
             },
             _ => None,
@@ -182,7 +193,10 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
 
     fn new_alloca_builder(&self) -> Builder {
         let temp_builder = Builder::create();
-        let block = self.builder.get_insert_block().expect("at this stage there must be a block");
+        let block = self
+            .builder
+            .get_insert_block()
+            .expect("at this stage there must be a block");
         if let Some(first_instruction) = block.get_first_instruction() {
             temp_builder.position_before(&first_instruction);
         } else {
@@ -197,7 +211,8 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
         match &self.body[*pat] {
             Pat::Bind { name } => {
                 let builder = self.new_alloca_builder();
-                let ty = try_convert_any_to_basic(self.db.type_ir(self.infer[*pat].clone())).expect("expected basic type");
+                let ty = try_convert_any_to_basic(self.db.type_ir(self.infer[*pat].clone()))
+                    .expect("expected basic type");
                 let ptr = builder.build_alloca(ty, &name.to_string());
                 self.pat_to_local.insert(*pat, ptr);
                 self.pat_to_name.insert(*pat, name.to_string());
@@ -205,8 +220,8 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
                     self.builder.build_store(ptr, value);
                 };
             }
-            Pat::Wild => {},
-            Pat::Missing | Pat::Path(_) => unreachable!()
+            Pat::Wild => {}
+            Pat::Missing | Pat::Path(_) => unreachable!(),
         }
     }
 
@@ -231,7 +246,7 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
                 } else {
                     unreachable!("could not find the pattern..");
                 }
-            },
+            }
             Resolution::Def(_) => panic!("no support for module definitions"),
         }
     }
@@ -239,112 +254,145 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
     fn gen_add(&mut self, lhs: ExprId, rhs: ExprId) -> BasicValueEnum {
         let lhs_value = self.gen_expr(lhs).expect("no lhs value");
         let rhs_value = self.gen_expr(rhs).expect("no rhs value");
-        let lhs_type = &self.infer[lhs];
-        let rhs_type = &self.infer[rhs];
+        let lhs_type = self.infer[lhs].clone();
+        let rhs_type = self.infer[rhs].clone();
 
-        match (lhs_type, rhs_type) {
-            (
-                Ty::Apply(ApplicationTy {
-                    ctor: TypeCtor::Number,
-                    ..
-                }),
-                Ty::Apply(ApplicationTy {
-                    ctor: TypeCtor::Number,
-                    ..
-                }),
-            ) => self
-                .builder
-                .build_float_add(
-                    *lhs_value.as_float_value(),
-                    *rhs_value.as_float_value(),
-                    "add",
-                )
-                .into(),
-            _ => unreachable!(),
+        match (lhs_type.as_simple(), rhs_type.as_simple()) {
+            (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
+                let rhs_value = self.cast_to_float(rhs_value);
+                self.builder
+                    .build_float_add(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"add")
+                    .into()
+            }
+            (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
+                let lhs_value = self.cast_to_float(lhs_value);
+                self.builder
+                    .build_float_add(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"add")
+                    .into()
+            },
+            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
+                self.builder
+                    .build_int_add(*lhs_value.as_int_value(),*rhs_value.as_int_value(),"add")
+                    .into()
+            }
+            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
+                self.builder
+                    .build_float_add(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"add")
+                    .into()
+            }
+            _ => unreachable!("Unsupported operation {0}+{1}", lhs_type.display(self.db), rhs_type.display(self.db)),
         }
+    }
+
+    fn cast_to_float(&mut self, value: BasicValueEnum) -> BasicValueEnum {
+        self.builder
+            .build_cast(
+                InstructionOpcode::SIToFP,
+                value,
+                try_convert_any_to_basic(ty_ir_query(self.db, Ty::simple(TypeCtor::Float))).expect("could not convert to basic value"),
+                &value
+                        .get_name()
+                        .map_or("cast".to_string(), |n| format!("{}_float", n)))
     }
 
     fn gen_sub(&mut self, lhs: ExprId, rhs: ExprId) -> BasicValueEnum {
         let lhs_value = self.gen_expr(lhs).expect("no lhs value");
         let rhs_value = self.gen_expr(rhs).expect("no rhs value");
-        let lhs_type = &self.infer[lhs];
-        let rhs_type = &self.infer[rhs];
+        let lhs_type = self.infer[lhs].clone();
+        let rhs_type = self.infer[rhs].clone();
 
-        match (lhs_type, rhs_type) {
-            (
-                Ty::Apply(ApplicationTy {
-                    ctor: TypeCtor::Number,
-                    ..
-                }),
-                Ty::Apply(ApplicationTy {
-                    ctor: TypeCtor::Number,
-                    ..
-                }),
-            ) => self
-                .builder
-                .build_float_sub(
-                    *lhs_value.as_float_value(),
-                    *rhs_value.as_float_value(),
-                    "sub",
-                )
-                .into(),
-            _ => unreachable!(),
+        match (lhs_type.as_simple(), rhs_type.as_simple()) {
+            (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
+                let rhs_value = self.cast_to_float(rhs_value);
+                self.builder
+                    .build_float_sub(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"sub")
+                    .into()
+            }
+            (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
+                let lhs_value = self.cast_to_float(lhs_value);
+                self.builder
+                    .build_float_sub(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"sub")
+                    .into()
+            },
+            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
+                self.builder
+                    .build_int_sub(*lhs_value.as_int_value(),*rhs_value.as_int_value(),"sub")
+                    .into()
+            }
+            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
+                self.builder
+                    .build_float_sub(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"sub")
+                    .into()
+            }
+            _ => unreachable!("Unsupported operation {0}-{1}", lhs_type.display(self.db), rhs_type.display(self.db)),
         }
     }
 
     fn gen_multiply(&mut self, lhs: ExprId, rhs: ExprId) -> BasicValueEnum {
         let lhs_value = self.gen_expr(lhs).expect("no lhs value");
         let rhs_value = self.gen_expr(rhs).expect("no rhs value");
-        let lhs_type = &self.infer[lhs];
-        let rhs_type = &self.infer[rhs];
+        let lhs_type = self.infer[lhs].clone();
+        let rhs_type = self.infer[rhs].clone();
 
-        match (lhs_type, rhs_type) {
-            (
-                Ty::Apply(ApplicationTy {
-                              ctor: TypeCtor::Number,
-                              ..
-                          }),
-                Ty::Apply(ApplicationTy {
-                              ctor: TypeCtor::Number,
-                              ..
-                          }),
-            ) => self
-                .builder
-                .build_float_mul(
-                    *lhs_value.as_float_value(),
-                    *rhs_value.as_float_value(),
-                    "sub",
-                )
-                .into(),
-            _ => unreachable!(),
+        match (lhs_type.as_simple(), rhs_type.as_simple()) {
+            (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
+                let rhs_value = self.cast_to_float(rhs_value);
+                self.builder
+                    .build_float_mul(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"mul")
+                    .into()
+            }
+            (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
+                let lhs_value = self.cast_to_float(lhs_value);
+                self.builder
+                    .build_float_mul(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"mul")
+                    .into()
+            },
+            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
+                self.builder
+                    .build_int_mul(*lhs_value.as_int_value(),*rhs_value.as_int_value(),"mul")
+                    .into()
+            }
+            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
+                self.builder
+                    .build_float_mul(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"mul")
+                    .into()
+            }
+            _ => unreachable!("Unsupported operation {0}*{1}", lhs_type.display(self.db), rhs_type.display(self.db)),
         }
     }
 
     fn gen_divide(&mut self, lhs: ExprId, rhs: ExprId) -> BasicValueEnum {
         let lhs_value = self.gen_expr(lhs).expect("no lhs value");
         let rhs_value = self.gen_expr(rhs).expect("no rhs value");
-        let lhs_type = &self.infer[lhs];
-        let rhs_type = &self.infer[rhs];
+        let lhs_type = self.infer[lhs].clone();
+        let rhs_type = self.infer[rhs].clone();
 
-        match (lhs_type, rhs_type) {
-            (
-                Ty::Apply(ApplicationTy {
-                              ctor: TypeCtor::Number,
-                              ..
-                          }),
-                Ty::Apply(ApplicationTy {
-                              ctor: TypeCtor::Number,
-                              ..
-                          }),
-            ) => self
-                .builder
-                .build_float_div(
-                    *lhs_value.as_float_value(),
-                    *rhs_value.as_float_value(),
-                    "sub",
-                )
-                .into(),
-            _ => unreachable!(),
+        match (lhs_type.as_simple(), rhs_type.as_simple()) {
+            (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
+                let rhs_value = self.cast_to_float(rhs_value);
+                self.builder
+                    .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
+                    .into()
+            }
+            (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
+                let lhs_value = self.cast_to_float(lhs_value);
+                self.builder
+                    .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
+                    .into()
+            },
+            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
+                let lhs_value = self.cast_to_float(lhs_value);
+                let rhs_value = self.cast_to_float(rhs_value);
+                self.builder
+                    .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
+                    .into()
+            }
+            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
+                self.builder
+                    .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
+                    .into()
+            }
+            _ => unreachable!("Unsupported operation {0}+{1}", lhs_type.display(self.db), rhs_type.display(self.db)),
         }
     }
 }
@@ -355,7 +403,8 @@ pub(crate) fn ty_ir_query(db: &impl IrDatabase, ty: Ty) -> AnyTypeEnum {
     match ty {
         Ty::Empty => AnyTypeEnum::VoidType(context.void_type()),
         Ty::Apply(ApplicationTy { ctor, .. }) => match ctor {
-            TypeCtor::Number => AnyTypeEnum::FloatType(context.f64_type()),
+            TypeCtor::Float => AnyTypeEnum::FloatType(context.f64_type()),
+            TypeCtor::Int => AnyTypeEnum::IntType(context.i64_type()),
             TypeCtor::FnDef(f) => {
                 let ty = db.fn_signature(f);
                 let ret_ty: BasicTypeEnum =
@@ -384,16 +433,31 @@ fn try_convert_any_to_basic(ty: AnyTypeEnum) -> Option<BasicTypeEnum> {
     }
 }
 
-fn try_set_name(ty: AnyValueEnum, name: &str) {
-    match ty {
-        AnyValueEnum::ArrayValue(v) => v.set_name(name),
-        AnyValueEnum::IntValue(v) => v.set_name(name),
-        AnyValueEnum::FloatValue(v) => v.set_name(name),
-        AnyValueEnum::PhiValue(v) => {},
-        AnyValueEnum::FunctionValue(v) => {},
-        AnyValueEnum::PointerValue(v) => v.set_name(name),
-        AnyValueEnum::StructValue(v) => v.set_name(name),
-        AnyValueEnum::VectorValue(v) => v.set_name(name),
-        AnyValueEnum::InstructionValue(v) => {},
+trait OptName {
+    fn get_name(&self) -> Option<&str>;
+    fn set_name<T: AsRef<str>>(&self, name: T);
+}
+
+impl OptName for BasicValueEnum {
+    fn get_name(&self) -> Option<&str> {
+        match self {
+            BasicValueEnum::ArrayValue(v) => v.get_name().to_str().ok(),
+            BasicValueEnum::IntValue(v) => v.get_name().to_str().ok(),
+            BasicValueEnum::FloatValue(v) => v.get_name().to_str().ok(),
+            BasicValueEnum::PointerValue(v) => v.get_name().to_str().ok(),
+            BasicValueEnum::StructValue(v) => v.get_name().to_str().ok(),
+            BasicValueEnum::VectorValue(v) => v.get_name().to_str().ok(),
+        }
+    }
+
+    fn set_name<T: AsRef<str>>(&self, name: T) {
+        match self {
+            BasicValueEnum::ArrayValue(v) => v.set_name(name.as_ref()),
+            BasicValueEnum::IntValue(v) => v.set_name(name.as_ref()),
+            BasicValueEnum::FloatValue(v) => v.set_name(name.as_ref()),
+            BasicValueEnum::PointerValue(v) => v.set_name(name.as_ref()),
+            BasicValueEnum::StructValue(v) => v.set_name(name.as_ref()),
+            BasicValueEnum::VectorValue(v) => v.set_name(name.as_ref()),
+        };
     }
 }

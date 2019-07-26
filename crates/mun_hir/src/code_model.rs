@@ -6,7 +6,6 @@ use crate::expr::{Body, BodySourceMap};
 use crate::ids::AstItemDef;
 use crate::ids::LocationCtx;
 use crate::input::ModuleId;
-use crate::name::NUMBER;
 use crate::name_resolution::Namespace;
 use crate::raw::{DefKind, RawFileItem};
 use crate::resolve::{Resolution, Resolver};
@@ -256,12 +255,15 @@ impl Function {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BuiltinType {
-    Number,
+    Float,
+    Int
 }
 
+use crate::name::*;
 impl BuiltinType {
     #[rustfmt::skip]
     pub(crate) const ALL: &'static [(Name, BuiltinType)] = &[
-        (NUMBER, BuiltinType::Number),
+        (FLOAT, BuiltinType::Float),
+        (INT, BuiltinType::Int),
     ];
 }
