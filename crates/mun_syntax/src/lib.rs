@@ -144,7 +144,7 @@ impl SourceFile {
     }
 }
 
-/// This test does not assert anything and instead just shows off the crate's API.
+/// This tests does not assert anything and instead just shows off the crate's API.
 #[test]
 fn api_walkthrough() {
     use ast::ModuleItemOwner;

@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 fn create_function_pass_manager(module: &Module) -> PassManager {
     let pass_builder = PassManagerBuilder::create();
-    pass_builder.set_optimization_level(OptimizationLevel::None);
+    pass_builder.set_optimization_level(OptimizationLevel::Default);
 
     let function_pass_manager = PassManager::create_for_function(module);
     pass_builder.populate_function_pass_manager(&function_pass_manager);
@@ -407,13 +407,16 @@ pub(crate) fn ty_ir_query(db: &impl IrDatabase, ty: Ty) -> AnyTypeEnum {
             TypeCtor::Int => AnyTypeEnum::IntType(context.i64_type()),
             TypeCtor::FnDef(f) => {
                 let ty = db.fn_signature(f);
-                let ret_ty: BasicTypeEnum =
-                    try_convert_any_to_basic(db.type_ir(ty.ret().clone())).unwrap();
                 let params: Vec<BasicTypeEnum> = ty
                     .params()
                     .iter()
                     .map(|p| try_convert_any_to_basic(db.type_ir(p.clone())).unwrap())
                     .collect();
+                let ret_ty = match db.type_ir(ty.ret().clone()) {
+                    AnyTypeEnum::VoidType(v) => return v.fn_type(&params, false).into(),
+                    v@_ => try_convert_any_to_basic(v).expect("could not convert return value")
+                };
+
                 ret_ty.fn_type(&params, false).into()
             }
         },

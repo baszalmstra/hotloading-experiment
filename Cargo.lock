@@ -381,6 +381,7 @@ dependencies = [
  "inkwell 0.1.0 (git+https://github.com/TheDan64/inkwell?branch=llvm7-0)",
  "mun_hir 0.1.0",
  "salsa 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "test_utils 0.1.0",
 ]
 
 [[package]]
