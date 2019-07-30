@@ -189,17 +189,27 @@ impl<'a, D: HirDatabase> InferenceContext<'a, D> {
             //            Expr::Block { statements: _, tail: _ } => {}
 
         };
+
         if expected.ty != Ty::Unknown && ty != Ty::Unknown && ty != expected.ty {
-            self.diagnostics.push(InferenceDiagnostic::MismatchedTypes {
-                expected: expected.ty.clone(),
-                found: ty.clone(),
-                id: tgt_expr
-            });
+            if !self.can_cast_implicit(&ty, &expected.ty) {
+                self.diagnostics.push(InferenceDiagnostic::MismatchedTypes {
+                    expected: expected.ty.clone(),
+                    found: ty.clone(),
+                    id: tgt_expr
+                });
+            }
             ty = expected.ty.clone();
         }
 
         self.write_expr_ty(tgt_expr, ty.clone());
         ty
+    }
+
+    fn can_cast_implicit(&self, from: &Ty, to: &Ty) -> bool {
+        match (from.as_simple(), to.as_simple()) {
+            (Some(TypeCtor::Int), Some(TypeCtor::Float)) => true,
+            _ => false
+        }
     }
 
     fn infer_path_expr(&mut self, resolver: &Resolver, path: &Path, id: ExprOrPatId) -> Option<Ty> {

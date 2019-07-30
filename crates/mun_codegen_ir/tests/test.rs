@@ -8,6 +8,8 @@ use std::error::Error;
 use std::sync::Arc;
 use test_utils::{dir_tests, project_dir};
 use crate::mun_codegen_ir::IrDatabase;
+use mun_hir::diagnostics::DiagnosticSink;
+use std::cell::RefCell;
 
 #[salsa::database(
 mun_hir::SourceDatabaseStorage,
@@ -45,6 +47,23 @@ fn ir_tests() {
         let context = mun_codegen_ir::Context::create();
         db.set_context(Arc::new(context));
 
-        format!("{}", db.module_ir(file_id).print_to_string().to_string())
+        let messages = RefCell::new(Vec::new());
+        let mut sink = DiagnosticSink::new(|diag| {
+            messages.borrow_mut().push(diag.message());
+        });
+        if let Some(module) = Module::package_modules(&db)
+            .iter()
+            .find(|m| m.file_id() == file_id)
+        {
+            module.diagnostics(&db, &mut sink)
+        }
+        drop(sink);
+        let messages = messages.into_inner();
+
+        if !messages.is_empty() {
+            messages.join("\n")
+        } else {
+            format!("{}", db.module_ir(file_id).print_to_string().to_string())
+        }
     });
 }

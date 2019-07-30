@@ -1,0 +1,7 @@
+; ModuleID = 'main.mun'
+source_filename = "main.mun"
+
+define double @main() {
+body:
+  ret double 3.000000e+00
+}

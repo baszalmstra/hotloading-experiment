@@ -131,7 +131,7 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
 
     fn gen_expr(&mut self, expr: ExprId) -> Option<inkwell::values::BasicValueEnum> {
         let body = self.body.clone();
-        match &body[expr] {
+        let mut value = match &body[expr] {
             &Expr::Block {
                 ref statements,
                 tail,
@@ -188,7 +188,20 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
                 _ => unreachable!(),
             },
             _ => None,
-        }
+        };
+
+        // Check expected type or perform implicit cast
+        value = value.map(|value| {
+            match (value.get_type(), try_convert_any_to_basic(self.db.type_ir(self.infer[expr].clone()))) {
+                (BasicTypeEnum::IntType(_), Some(target@BasicTypeEnum::FloatType(_))) => {
+                    self.builder.build_cast(InstructionOpcode::SIToFP, value, target, "implicit_cast").into()
+                }
+                (a, Some(b)) if a == b => value,
+                _=> unreachable!("could not perform implicit cast")
+            }
+        });
+
+        value
     }
 
     fn new_alloca_builder(&self) -> Builder {
