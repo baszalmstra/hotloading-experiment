@@ -1,0 +1,7 @@
+function add(a:float, b:float):float {
+    let temp = a;
+    temp += b
+    let result
+    result = temp
+    result
+}

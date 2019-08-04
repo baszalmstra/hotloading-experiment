@@ -1,0 +1,5 @@
+undefined type
+undefined type
+undefined type
+cannot apply binary operator
+cannot apply binary operator

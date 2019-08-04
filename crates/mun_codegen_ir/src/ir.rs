@@ -270,25 +270,25 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
         let lhs_type = self.infer[lhs].clone();
         let rhs_type = self.infer[rhs].clone();
 
-        match (lhs_type.as_simple(), rhs_type.as_simple()) {
-            (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
+        match (&lhs_type, &rhs_type) {
+            (Ty::Float, Ty::Int) => {
                 let rhs_value = self.cast_to_float(rhs_value);
                 self.builder
                     .build_float_add(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"add")
                     .into()
             }
-            (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
+            (Ty::Int, Ty::Float) => {
                 let lhs_value = self.cast_to_float(lhs_value);
                 self.builder
                     .build_float_add(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"add")
                     .into()
             },
-            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
+            (Ty::Int, Ty::Int) => {
                 self.builder
                     .build_int_add(*lhs_value.as_int_value(),*rhs_value.as_int_value(),"add")
                     .into()
             }
-            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
+            (Ty::Float, Ty::Float) => {
                 self.builder
                     .build_float_add(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"add")
                     .into()
@@ -302,7 +302,7 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
             .build_cast(
                 InstructionOpcode::SIToFP,
                 value,
-                try_convert_any_to_basic(ty_ir_query(self.db, Ty::simple(TypeCtor::Float))).expect("could not convert to basic value"),
+                try_convert_any_to_basic(ty_ir_query(self.db, Ty::Float)).expect("could not convert to basic value"),
                 &value
                         .get_name()
                         .map_or("cast".to_string(), |n| format!("{}_float", n)))
@@ -314,25 +314,25 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
         let lhs_type = self.infer[lhs].clone();
         let rhs_type = self.infer[rhs].clone();
 
-        match (lhs_type.as_simple(), rhs_type.as_simple()) {
-            (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
+        match (&lhs_type, &rhs_type) {
+            (Ty::Float, Ty::Int) => {
                 let rhs_value = self.cast_to_float(rhs_value);
                 self.builder
                     .build_float_sub(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"sub")
                     .into()
             }
-            (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
+            (Ty::Int, Ty::Float) => {
                 let lhs_value = self.cast_to_float(lhs_value);
                 self.builder
                     .build_float_sub(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"sub")
                     .into()
             },
-            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
+            (Ty::Int, Ty::Int) => {
                 self.builder
                     .build_int_sub(*lhs_value.as_int_value(),*rhs_value.as_int_value(),"sub")
                     .into()
             }
-            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
+            (Ty::Float, Ty::Float) => {
                 self.builder
                     .build_float_sub(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"sub")
                     .into()
@@ -347,25 +347,25 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
         let lhs_type = self.infer[lhs].clone();
         let rhs_type = self.infer[rhs].clone();
 
-        match (lhs_type.as_simple(), rhs_type.as_simple()) {
-            (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
+        match (&lhs_type, &rhs_type) {
+            (Ty::Float, Ty::Int) => {
                 let rhs_value = self.cast_to_float(rhs_value);
                 self.builder
                     .build_float_mul(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"mul")
                     .into()
             }
-            (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
+            (Ty::Int, Ty::Float) => {
                 let lhs_value = self.cast_to_float(lhs_value);
                 self.builder
                     .build_float_mul(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"mul")
                     .into()
             },
-            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
+            (Ty::Int, Ty::Int) => {
                 self.builder
                     .build_int_mul(*lhs_value.as_int_value(),*rhs_value.as_int_value(),"mul")
                     .into()
             }
-            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
+            (Ty::Float, Ty::Float) => {
                 self.builder
                     .build_float_mul(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"mul")
                     .into()
@@ -380,27 +380,27 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
         let lhs_type = self.infer[lhs].clone();
         let rhs_type = self.infer[rhs].clone();
 
-        match (lhs_type.as_simple(), rhs_type.as_simple()) {
-            (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
+        match (&lhs_type, &rhs_type) {
+            (Ty::Float, Ty::Int) => {
                 let rhs_value = self.cast_to_float(rhs_value);
                 self.builder
                     .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
                     .into()
             }
-            (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
+            (Ty::Int, Ty::Float) => {
                 let lhs_value = self.cast_to_float(lhs_value);
                 self.builder
                     .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
                     .into()
             },
-            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
+            (Ty::Int, Ty::Int) => {
                 let lhs_value = self.cast_to_float(lhs_value);
                 let rhs_value = self.cast_to_float(rhs_value);
                 self.builder
                     .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
                     .into()
             }
-            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
+            (Ty::Float, Ty::Float) => {
                 self.builder
                     .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
                     .into()
@@ -415,9 +415,9 @@ pub(crate) fn ty_ir_query(db: &impl IrDatabase, ty: Ty) -> AnyTypeEnum {
     let context = db.context();
     match ty {
         Ty::Empty => AnyTypeEnum::VoidType(context.void_type()),
+        Ty::Float => AnyTypeEnum::FloatType(context.f64_type()),
+        Ty::Int => AnyTypeEnum::IntType(context.i64_type()),
         Ty::Apply(ApplicationTy { ctor, .. }) => match ctor {
-            TypeCtor::Float => AnyTypeEnum::FloatType(context.f64_type()),
-            TypeCtor::Int => AnyTypeEnum::IntType(context.i64_type()),
             TypeCtor::FnDef(f) => {
                 let ty = db.fn_signature(f);
                 let params: Vec<BasicTypeEnum> = ty

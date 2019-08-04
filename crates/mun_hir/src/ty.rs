@@ -1,13 +1,17 @@
 mod infer;
 mod lower;
+mod op;
+mod type_variable;
 
 use crate::display::{HirDisplay, HirFormatter};
 use crate::{Function, HirDatabase};
 pub(crate) use infer::infer_query;
 pub use infer::InferenceResult;
 pub(crate) use lower::{fn_sig_for_fn, type_for_def, TypableDef};
-use std::fmt;
+use std::{fmt, mem};
 use std::sync::Arc;
+use crate::ty::infer::{InferTy};
+use crate::ty::type_variable::TypeVarId;
 
 /// This should be cheap to clone.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
@@ -15,6 +19,15 @@ pub enum Ty {
     Empty,
 
     Apply(ApplicationTy),
+
+    /// The primitive floating point type. Written as `float`.
+    Float,
+
+    /// The primitive integral type. Written as `int`.
+    Int,
+
+    /// A type variable used during type checking. Not to be confused with a type parameter.
+    Infer(TypeVarId),
 
     /// A placeholder for a type which could not be computed; this is propagated to avoid useless
     /// error messages. Doubles as a placeholder where type variables are inserted before type
@@ -37,12 +50,6 @@ pub struct ApplicationTy {
 /// tuples.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub enum TypeCtor {
-    /// The primitive floating point type. Written as `float`.
-    Float,
-
-    /// The primitive integral type. Written as `int`.
-    Int,
-
     /// The anonymous type of a function declaration/definition. Each
     /// function has a unique type, which is output (for a function
     /// named `foo` returning an `number`) as `fn() -> number {foo}`.
@@ -72,6 +79,28 @@ impl Ty {
             _ => None
         }
     }
+
+    fn walk_mut(&mut self, f: &mut impl FnMut(&mut Ty)) {
+        match self {
+            Ty::Apply(a_ty) => {
+                a_ty.parameters.walk_mut(f);
+            }
+            Ty::Empty
+            | Ty::Float
+            | Ty::Int
+            | Ty::Infer(_)
+            | Ty::Unknown => {}
+        }
+        f(self);
+    }
+
+    fn fold(mut self, f: &mut impl FnMut(Ty) -> Ty) -> Ty {
+        self.walk_mut(&mut |ty_mut| {
+            let ty = mem::replace(ty_mut, Ty::Unknown);
+            *ty_mut = f(ty);
+        });
+        self
+    }
 }
 
 /// A list of substitutions for generic parameters.
@@ -85,6 +114,15 @@ impl Substs {
 
     pub fn single(ty: Ty) -> Substs {
         Substs(Arc::new([ty]))
+    }
+
+    pub fn walk_mut(&mut self, f: &mut impl FnMut(&mut Ty)) {
+        // Without an Arc::make_mut_slice, we can't avoid the clone here:
+        let mut v: Vec<_> = self.0.iter().cloned().collect();
+        for t in &mut v {
+            t.walk_mut(f);
+        }
+        self.0 = v.into();
     }
 }
 
@@ -116,8 +154,11 @@ impl HirDisplay for Ty {
     fn hir_fmt(&self, f: &mut HirFormatter<impl HirDatabase>) -> fmt::Result {
         match self {
             Ty::Apply(a_ty) => a_ty.hir_fmt(f)?,
+            Ty::Float => write!(f, "float")?,
+            Ty::Int => write!(f, "int")?,
             Ty::Unknown => write!(f, "{{unknown}}")?,
             Ty::Empty => write!(f, "nothing")?,
+            Ty::Infer(tv) => write!(f, "'{}", tv.0)?,
         }
         Ok(())
     }
@@ -126,8 +167,6 @@ impl HirDisplay for Ty {
 impl HirDisplay for ApplicationTy {
     fn hir_fmt(&self, f: &mut HirFormatter<impl HirDatabase>) -> fmt::Result {
         match self.ctor {
-            TypeCtor::Float => write!(f, "float")?,
-            TypeCtor::Int => write!(f, "int")?,
             TypeCtor::FnDef(def) => {
                 let sig = f.db.fn_signature(def);
                 let name = def.name(f.db);

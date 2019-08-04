@@ -1,16 +1,6 @@
 // Function to add two floats
 function add(a:float, b:float):float {
-  let lit:int = 3+b*4+b
-  let result = a+b+lit
-  result
-}
-
-// Function to subtract two floats
-function subtract(a:float, b:float):float {
-  a-b
-}
-
-// Function to subtract two floats
-function multiply(a:float, b:float):float {
-  a*b
+  let c:float = 3
+  let d = c
+  d
 }
