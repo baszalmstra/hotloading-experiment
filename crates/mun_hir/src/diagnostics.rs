@@ -1,5 +1,5 @@
 use crate::{FileId, HirDatabase, Ty};
-use mun_syntax::{ast, AstNode, AstPtr, SyntaxNode, SyntaxNodePtr, TextRange};
+use mun_syntax::{ast, AstPtr, SyntaxNode, SyntaxNodePtr, TextRange};
 use std::{any::Any, fmt};
 
 /// Diagnostic defines hir API for errors and warnings.

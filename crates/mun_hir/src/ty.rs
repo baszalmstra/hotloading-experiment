@@ -1,7 +1,5 @@
 mod infer;
 mod lower;
-mod op;
-mod type_variable;
 
 use crate::display::{HirDisplay, HirFormatter};
 use crate::{Function, HirDatabase};
@@ -10,8 +8,7 @@ pub use infer::InferenceResult;
 pub(crate) use lower::{fn_sig_for_fn, type_for_def, TypableDef};
 use std::{fmt, mem};
 use std::sync::Arc;
-use crate::ty::infer::{InferTy};
-use crate::ty::type_variable::TypeVarId;
+use crate::ty::infer::{TypeVarId};
 
 /// This should be cheap to clone.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
@@ -158,7 +155,7 @@ impl HirDisplay for Ty {
             Ty::Int => write!(f, "int")?,
             Ty::Unknown => write!(f, "{{unknown}}")?,
             Ty::Empty => write!(f, "nothing")?,
-            Ty::Infer(tv) => write!(f, "'{}", tv.0)?,
+            Ty::Infer(tv) => write!(f, "{}", tv)?,
         }
         Ok(())
     }

@@ -2,7 +2,7 @@ pub(crate) use self::diagnostics::LowerDiagnostic;
 use crate::code_model::BuiltinType;
 use crate::name_resolution::Namespace;
 use crate::resolve::{Resolution, Resolver};
-use crate::ty::{FnSig, Substs, Ty, TypeCtor};
+use crate::ty::{FnSig, Ty, TypeCtor};
 use crate::type_ref::{TypeRef, TypeRefId, TypeRefMap};
 use crate::{Function, HirDatabase, ModuleDef, Path};
 

@@ -8,7 +8,6 @@ use crate::{
 //pub use mun_syntax::ast::PrefixOp as UnaryOp;
 use crate::code_model::src::HasSource;
 use crate::name::AsName;
-use crate::source_id::AstId;
 use crate::type_ref::{TypeRef, TypeRefBuilder, TypeRefId, TypeRefMap, TypeRefSourceMap};
 pub use mun_syntax::ast::BinOp as BinaryOp;
 pub use mun_syntax::ast::PrefixOp as UnaryOp;
@@ -441,7 +440,7 @@ where
     }
 
     fn finish(mut self) -> (Body, BodySourceMap) {
-        let (type_refs, mut type_ref_source_map) = self.type_ref_builder.finish();
+        let (type_refs, type_ref_source_map) = self.type_ref_builder.finish();
         let body = Body {
             owner: self.owner,
             exprs: self.exprs,

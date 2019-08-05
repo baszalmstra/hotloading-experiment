@@ -1,10 +1,17 @@
 use ena::unify::{UnifyValue, UnifyKey, NoError, InPlaceUnificationTable};
 use std::borrow::Cow;
-use super::{Ty, HirDisplay};
+use crate::{Ty};
+use std::fmt;
 
 /// The ID of a type variable.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct TypeVarId(pub(super) u32);
+
+impl fmt::Display for TypeVarId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "'{}", self.0)
+    }
+}
 
 impl UnifyKey for TypeVarId {
     type Value = TypeVarValue;
