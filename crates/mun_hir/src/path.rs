@@ -25,7 +25,7 @@ impl Path {
     pub fn from_ast(path: ast::Path) -> Option<Path> {
         let mut kind = PathKind::Plain;
         let mut segments = Vec::new();
-        loop {
+//        loop {
             let segment = path.segment()?;
 
             if segment.has_colon_colon() {
@@ -41,15 +41,15 @@ impl Path {
                 }
                 ast::PathSegmentKind::SelfKw => {
                     kind = PathKind::Self_;
-                    break;
+//                    break;
                 }
                 ast::PathSegmentKind::SuperKw => {
                     kind = PathKind::Super;
-                    break;
+//                    break;
                 }
             }
-            break;
-        }
+//            break;
+//        }
         segments.reverse();
         return Some(Path { kind, segments });
     }

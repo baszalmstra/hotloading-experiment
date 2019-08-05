@@ -9,7 +9,7 @@
 use std::{
     any::Any,
     borrow::Borrow,
-    fmt::{self, Write},
+    fmt::{self},
     iter::successors,
 };
 

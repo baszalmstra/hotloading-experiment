@@ -8,6 +8,8 @@
 //!     - full-fidelity representation (*any* text can be precisely represented as
 //!       a syntax tree)
 
+#![allow(dead_code)]
+
 #[macro_use]
 mod syntax_kind;
 
@@ -134,7 +136,7 @@ impl SourceFile {
     }
 
     pub fn parse(text: &str) -> Parse<SourceFile> {
-        let (green, mut errors) = parsing::parse_text(text);
+        let (green, errors) = parsing::parse_text(text);
         //errors.extend(validation::validate(&SourceFile::new(green.clone())));
         Parse {
             green,

@@ -43,7 +43,7 @@ fn path(p: &mut Parser, mode: Mode) {
     }
 }
 
-fn path_segment(p: &mut Parser, mode: Mode, first: bool) {
+fn path_segment(p: &mut Parser, _mode: Mode, first: bool) {
     let m = p.start();
     if first {
         p.eat(COLONCOLON);

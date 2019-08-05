@@ -9,8 +9,6 @@ the below applies to the result of this template
 //! `.borrowed` functions. Most of the code works with borrowed mode, and only
 //! this mode has all AST accessors.
 
-use rowan::TransparentNewType;
-
 use crate::{
     SyntaxNode, SyntaxKind::{self, *},
     ast::{self, AstNode},

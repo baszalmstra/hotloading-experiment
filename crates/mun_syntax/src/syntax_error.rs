@@ -1,5 +1,5 @@
 use crate::parsing::ParseError;
-use mun_errors::{Diagnostic, Location};
+use mun_errors::{Location};
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

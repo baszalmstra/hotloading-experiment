@@ -1,7 +1,7 @@
 use super::{children, BinExpr};
 use crate::ast::Literal;
 use crate::{
-    ast, AstNode, SmolStr, SyntaxElement,
+    ast, AstNode, SyntaxElement,
     SyntaxKind::{self, *},
     SyntaxToken,
 };
