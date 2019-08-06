@@ -29,7 +29,6 @@ use crate::{
 };
 use super::type_variable::TypeVariableTable;
 
-#[derive(Debug, Clone)]
 pub(crate) struct ConstraintGenerator<'a, D: HirDatabase> {
     db: &'a D,
     body: Arc<Body>,

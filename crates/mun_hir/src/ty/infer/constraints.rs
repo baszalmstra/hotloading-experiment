@@ -6,9 +6,14 @@ use crate::{
     HirDisplay, Pat, PatId, Resolver, Ty,
 };
 use std::{cell::RefCell, collections::VecDeque, fmt, rc::Rc, sync::Arc};
+use drop_bomb::DropBomb;
 
 mod generator;
 mod simplify;
+mod snapshot;
+mod solve;
+
+pub use self::solve::SolveResult;
 
 #[derive(Clone, Debug)]
 struct Constraint {
@@ -34,7 +39,6 @@ enum ConstraintKind {
     Convertible { from: Ty, to: Ty },
 }
 
-#[derive(Debug, Clone)]
 pub(crate) struct ConstraintSystem {
     constraints: VecDeque<Rc<Constraint>>,
     type_variables: RefCell<type_variable::TypeVariableTable>,
@@ -43,8 +47,8 @@ pub(crate) struct ConstraintSystem {
 }
 
 impl ConstraintSystem {
-    pub(super) fn from_body<'a, D: HirDatabase>(
-        db: &'a D,
+    pub(super) fn from_body<D: HirDatabase>(
+        db: &D,
         body: Arc<Body>,
         resolver: Resolver,
     ) -> (ConstraintSystem, Vec<InferenceDiagnostic>) {

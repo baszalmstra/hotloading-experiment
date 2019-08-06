@@ -415,6 +415,7 @@ dependencies = [
 name = "mun_hir"
 version = "0.1.0"
 dependencies = [
+ "drop_bomb 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "ena 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mun_syntax 0.1.0",
  "once_cell 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -3,6 +3,7 @@
 use std::marker::PhantomData;
 
 use super::ArenaId;
+use crate::arena::Arena;
 
 /// A map from arena IDs to some other type. Space requirement is O(highest ID).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -12,6 +13,14 @@ pub struct ArenaMap<ID, T> {
 }
 
 impl<ID: ArenaId, T> ArenaMap<ID, T> {
+    pub fn from_iter<I: IntoIterator<Item=(ID, T)>>(iter: I) -> Self {
+        let mut map = ArenaMap::default();
+        for (id, t) in iter.into_iter() {
+            map.insert(id, t)
+        }
+        map
+    }
+
     pub fn insert(&mut self, id: ID, t: T) {
         let idx = Self::to_idx(id);
         if self.v.capacity() <= idx {
