@@ -2,6 +2,8 @@ use super::ConstraintSystem;
 use crate::arena::map::ArenaMap;
 use crate::{Ty, ExprId, PatId};
 use crate::arena::Arena;
+use crate::ty::infer::constraints::Constraint;
+use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub enum SolveResult {
@@ -21,16 +23,35 @@ pub struct Solution {
     pub type_of_pat: ArenaMap<PatId, Ty>,
 }
 
+enum AllowedBindingKind {
+    // Only the exact type is permitted
+    Exact,
+
+    // Supertypes of the specified type are permitted
+    Supertypes,
+
+    // Subtypes of the specified type are permitted
+    Subtypes,
+}
+
+struct PotentialBinding {
+    // The type to which the type variable can be bound.
+    binding_ty: Ty,
+
+    // The kind of bindings that are permitted
+    binding_kind: AllowedBindingKind,
+
+    // The constraint that is the source of the binding
+    source: Rc<Constraint>,
+}
+
+struct PotentialBindings {
+    bindings: Vec<PotentialBinding>,
+}
+
 impl ConstraintSystem {
     /// Solve the system of constraints.
     pub fn solve(&mut self) -> SolveResult {
-        let snapshot = self.snapshot();
-        let result = self.solve_inner();
-        self.rollback_to(snapshot);
-        result
-    }
-
-    pub fn solve_inner(&mut self) -> SolveResult {
         // Start by simplifying
         if !self.simplify() {
             return SolveResult::Error;
@@ -41,8 +62,17 @@ impl ConstraintSystem {
             return SolveResult::Solution(self.build_solution())
         }
 
+        // Otherwise we'll have to guess at some type variable
+        let snapshot = self.snapshot();
+        let result = self.solve_inner();
+        self.rollback_to(snapshot);
+        result
+    }
+
+    pub fn solve_inner(&mut self) -> SolveResult {
         // Lets try and solve each type variable
         let type_variables = self.type_variables.borrow_mut().unsolved_variables();
+
 
 
         SolveResult::NoSolution
