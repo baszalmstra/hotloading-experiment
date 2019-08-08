@@ -60,9 +60,9 @@ pub fn infer_query(db: &impl HirDatabase, def: DefWithBody) -> Arc<InferenceResu
     constraints.print(db, &body);
 
     let solution = constraints.solve();
-    match solution {
-        SolveResult::Error => println!("SolveResult::Error"),
-        SolveResult::NoSolution => println!("SolveResult::NoSolution"),
+    let solution = match solution {
+        SolveResult::Error => unreachable!("SolveResult::Error"),
+        SolveResult::NoSolution => unreachable!("SolveResult::NoSolution"),
         SolveResult::Solution(solution) => {
             // Print all patterns
             for (pat, ty) in solution.type_of_pat.iter() {
@@ -73,10 +73,15 @@ pub fn infer_query(db: &impl HirDatabase, def: DefWithBody) -> Arc<InferenceResu
                     _ => {}
                 }
             }
+            solution
         },
-    }
+    };
 
-    unreachable!();
+    Arc::new(InferenceResult {
+        type_of_expr: solution.type_of_expr,
+        type_of_pat: solution.type_of_pat,
+        diagnostics
+    })
 }
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]

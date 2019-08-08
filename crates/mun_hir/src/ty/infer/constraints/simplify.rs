@@ -53,7 +53,8 @@ impl ConstraintSystem {
     /// Given a constraint try to simplify it.
     fn simplify_constraint(&mut self, constraint: &Constraint) -> SimplifyResult {
         match &constraint.kind {
-            ConstraintKind::Equal { a, b} => {
+            ConstraintKind::Equal { a, b}
+            | ConstraintKind::Bind { a, b} => {
                 let a = self.type_variables.borrow_mut().replace_if_possible(a);
                 let b = self.type_variables.borrow_mut().replace_if_possible(b);
                 if a == b {
@@ -87,7 +88,7 @@ impl ConstraintSystem {
 
                 match (&*from, &*to) {
                     // If there are still type variables involved, forget it
-                    (Ty::Infer(tv), ..) | (.., Ty::Infer(tv)) => SimplifyResult::Unresolved,
+                    (Ty::Infer(tv), _) | (_, Ty::Infer(tv)) => SimplifyResult::Unresolved,
 
                     // List of possible conversions
                     (Ty::Int, Ty::Float) => SimplifyResult::Solved,

@@ -123,9 +123,20 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
 
         let ret_value = self.gen_expr(self.body.body_expr());
         if let Some(value) = ret_value {
+            let body_ty = self.infer[self.body.body_expr()].clone();
+            let value = self.gen_cast(value, &body_ty);
             self.builder.build_return(Some(&value));
         } else {
             self.builder.build_return(None);
+        }
+    }
+
+    fn gen_cast(&mut self, value: BasicValueEnum, expected_ty: &Ty) -> BasicValueEnum {
+        match (value.get_type(), expected_ty) {
+            (BasicTypeEnum::IntType(_), Ty::Float) => {
+                self.cast_to_float(value)
+            },
+            _ => value
         }
     }
 
