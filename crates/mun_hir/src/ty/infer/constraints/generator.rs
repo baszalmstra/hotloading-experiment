@@ -114,7 +114,7 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
                 Literal::Float(_) => Ty::Float,
                 _ => unreachable!()
             },
-            Expr::Block { statements, tail} => self.visit_block(statements, tail),
+            Expr::Block { statements, tail} => self.visit_block(expr, statements, tail),
             Expr::Path(p) => self.visit_path(expr, p),
 //            Expr::UnaryOp { .. } => {},
 //            Expr::BinaryOp { .. } => {},
@@ -189,7 +189,7 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
         ty
     }
 
-    fn visit_block(&mut self, statements: &Vec<Statement>, tail: &Option<ExprId>) -> Ty {
+    fn visit_block(&mut self, block_expr: ExprId, statements: &Vec<Statement>, tail: &Option<ExprId>) -> Ty {
         for statement in statements.iter() {
             match statement {
                 Statement::Let { pat, type_ref, initializer} => self.visit_let(pat, type_ref, initializer),
@@ -198,7 +198,20 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
         }
 
         match tail {
-            Some(expr) => self.visit_expr(*expr),
+            Some(expr) => {
+                let tail_ty = self.visit_expr(*expr);
+
+                if self.body.body_expr() == block_expr {
+                    let block_ty = self.new_variable();
+                    self.add_constraint(Constraint {
+                        kind: ConstraintKind::Convertible { from: tail_ty, to: block_ty.clone() },
+                        location: ConstraintLocator::Expr(*expr)
+                    });
+                    block_ty
+                } else {
+                    tail_ty
+                }
+            },
             None => Ty::Empty
         }
     }
@@ -210,7 +223,7 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
         // The type of the body must be convertible to the actual return type of the function.
         let body_expr = self.visit_expr(body.body_expr());
         self.add_constraint(Constraint {
-            kind: ConstraintKind::Convertible { from: body_expr, to: ret_type },
+            kind: ConstraintKind::Equal { a: body_expr, b: ret_type },
             location: ConstraintLocator::Expr(body.body_expr())
         });
 

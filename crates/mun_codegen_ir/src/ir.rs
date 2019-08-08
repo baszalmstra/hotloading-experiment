@@ -121,6 +121,7 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
             }
         }
 
+        let fn_data = self.hir.data(self.db);
         let ret_value = self.gen_expr(self.body.body_expr());
         if let Some(value) = ret_value {
             let body_ty = self.infer[self.body.body_expr()].clone();
