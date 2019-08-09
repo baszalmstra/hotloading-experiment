@@ -1,7 +1,7 @@
 use crate::IrDatabase;
 use inkwell::builder::Builder;
 use inkwell::passes::{PassManager, PassManagerBuilder};
-use inkwell::values::{AnyValueEnum, BasicValueEnum, InstructionOpcode};
+use inkwell::values::{AnyValueEnum, BasicValueEnum, InstructionOpcode, PointerValue};
 use inkwell::{module::{Linkage, Module}, types::{AnyTypeEnum, BasicType, BasicTypeEnum, VoidType}, values::{BasicValue, FloatMathValue, FunctionValue}, OptimizationLevel};
 use mun_hir::{ApplicationTy, BinaryOp, Body, Expr, ExprId, FileId, Function, HirDatabase, InferenceResult, Literal, ModuleDef, Pat, PatId, Path, Resolution, Resolver, Statement, Ty, TypeCtor, HirDisplay};
 use std::collections::HashMap;
@@ -166,28 +166,31 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
                 let resolver = mun_hir::resolver_for_expr(self.body.clone(), self.db, expr);
                 Some(self.gen_path_expr(p, expr, &resolver))
             }
-            Expr::Literal(lit) => match lit {
-                Literal::Int(v) => Some(
-                    self.module
-                        .get_context()
-                        .i64_type()
-                        .const_int(unsafe { mem::transmute::<i64, u64>(*v) }, true)
-                        .into(),
-                ),
-                Literal::Float(v) => Some(
-                    self.module
-                        .get_context()
-                        .f64_type()
-                        .const_float(*v as f64)
-                        .into(),
-                ),
-                Literal::String(_) | Literal::Bool(_) => unreachable!(),
+            Expr::Literal(lit) => {
+                match lit {
+                    Literal::Int(v) => Some(
+                        self.module
+                            .get_context()
+                            .i64_type()
+                            .const_int(unsafe { mem::transmute::<i64, u64>(*v) }, true)
+                            .into(),
+                    ),
+                    Literal::Float(v) => Some(
+                        self.module
+                            .get_context()
+                            .f64_type()
+                            .const_float(*v as f64)
+                            .into(),
+                    ),
+                    Literal::String(_) | Literal::Bool(_) => unreachable!(),
+                }
             },
             &Expr::BinaryOp { lhs, rhs, op } => match op.expect("missing op") {
                 BinaryOp::Add => Some(self.gen_add(lhs, rhs)),
                 BinaryOp::Subtract => Some(self.gen_sub(lhs, rhs)),
                 BinaryOp::Divide => Some(self.gen_divide(lhs, rhs)),
                 BinaryOp::Multiply => Some(self.gen_multiply(lhs, rhs)),
+                BinaryOp::Assign => self.gen_assign(lhs, rhs),
                 //                BinaryOp::Remainder => Some(self.gen_remainder(lhs, rhs)),
                 //                BinaryOp::Power =>,
                 //                BinaryOp::Assign,
@@ -274,6 +277,44 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
             }
             Resolution::Def(_) => panic!("no support for module definitions"),
         }
+    }
+
+    fn get_path_expr_ptr(
+        &self,
+        path: &Path,
+        expr: ExprId,
+        resolver: &Resolver) -> PointerValue
+    {
+        let resolution = resolver
+            .resolve_path_without_assoc_items(self.db, path)
+            .take_values()
+            .expect("unknown path");
+
+        match resolution {
+            Resolution::LocalBinding(pat) => {
+                if let Some(ptr) = self.pat_to_local.get(&pat) {
+                    *ptr
+                } else {
+                    unreachable!("could not find the pattern..");
+                }
+            }
+            Resolution::Def(_) => panic!("no support for module definitions"),
+        }
+    }
+
+    fn gen_assign(&mut self, lhs:ExprId, rhs: ExprId) -> Option<BasicValueEnum> {
+        let ptr = match &self.body[lhs] {
+            Expr::Path(p) => {
+                let resolver = mun_hir::resolver_for_expr(self.body.clone(), self.db, lhs);
+                self.get_path_expr_ptr(p, lhs, &resolver)
+            },
+            _ => unreachable!("Cannot assign to rvalue")
+        };
+
+        let rhs_value = self.gen_expr(rhs).expect("no rhs value");
+        let rhs_value = self.gen_cast(rhs_value, &self.infer[lhs].clone());
+        self.builder.build_store(ptr, rhs_value);
+        None
     }
 
     fn gen_add(&mut self, lhs: ExprId, rhs: ExprId) -> BasicValueEnum {

@@ -101,6 +101,8 @@ impl ConstraintSystem {
                 location: binding.source.location.clone()
             }));
 
+            println!("-- Adding constraint {} binds to {:?}", best_binding.variable, binding.binding_ty.clone());
+
             let result = self.solve();
 
             // Roll back the snap shot
@@ -152,29 +154,32 @@ impl ConstraintSystem {
             ConstraintKind::Convertible { from, to } => {
                 let from = self.type_variables.borrow_mut().replace_if_possible(from);
                 let to = self.type_variables.borrow_mut().replace_if_possible(to);
-                match (&*from, &*to) {
+                let (kind, ty) = match (&*from, &*to) {
                     // If there is an error type involved, we cannot continue
                     (Ty::Unknown, _)
                     | (_, Ty::Unknown) => {
-                        None
+                        return None
                     }
 
                     (Ty::Infer(var), ty) => {
-                        Some(PotentialBinding {
-                            binding_kind: AllowedBindingKind::Supertypes,
-                            binding_ty: ty.clone(),
-                            source: constraint.clone()
-                        })
+                        (AllowedBindingKind::Supertypes, ty)
                     },
                     (ty, Ty::Infer(var)) => {
-                        Some(PotentialBinding {
-                            binding_kind: AllowedBindingKind::Subtypes,
-                            binding_ty: ty.clone(),
-                            source: constraint.clone()
-                        })
+                        (AllowedBindingKind::Subtypes, ty)
                     },
-                    _ => None
+                    _ => return None
+                };
+
+                // Do not allow binding to another type variable
+                if ty.is_type_variable() {
+                    return None;
                 }
+
+                Some(PotentialBinding {
+                    binding_kind: kind,
+                    binding_ty: ty.clone(),
+                    source: constraint.clone()
+                })
             },
             ConstraintKind::Bind { .. }
             | ConstraintKind ::Equal { .. } => None

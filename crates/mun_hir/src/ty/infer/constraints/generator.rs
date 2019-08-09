@@ -28,6 +28,7 @@ use crate::{
     ty::infer::diagnostics::{InferenceDiagnostic}
 };
 use super::type_variable::TypeVariableTable;
+use crate::expr::BinaryOp;
 
 pub(crate) struct ConstraintGenerator<'a, D: HirDatabase> {
     db: &'a D,
@@ -117,7 +118,27 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
             Expr::Block { statements, tail} => self.visit_block(expr, statements, tail),
             Expr::Path(p) => self.visit_path(expr, p),
 //            Expr::UnaryOp { .. } => {},
-//            Expr::BinaryOp { .. } => {},
+            Expr::BinaryOp { lhs, rhs, op } => {
+                let lhs_ty = self.visit_expr(*lhs);
+                let rhs_ty = self.visit_expr(*rhs);
+                match op {
+                    Some(BinaryOp::Assign) => {
+                        self.add_constraint(Constraint {
+                            kind: ConstraintKind::Convertible { from: rhs_ty, to: lhs_ty },
+                            location: ConstraintLocator::Expr(expr)
+                        });
+                        Ty::Empty
+                    }
+                    _ => {
+                        self.diagnostics.push(InferenceDiagnostic::CannotApplyBinaryOp {
+                            id: expr,
+                            lhs: lhs_ty,
+                            rhs: rhs_ty
+                        });
+                        Ty::Unknown
+                    }
+                }
+            },
             _ => unreachable!(),
         };
         self.write_expr_ty(expr, ty.clone());

@@ -98,6 +98,13 @@ impl Ty {
         });
         self
     }
+
+    pub fn is_type_variable(&self) -> bool {
+        match self {
+            Ty::Infer(_) => true,
+            _ => false
+        }
+    }
 }
 
 /// A list of substitutions for generic parameters.
