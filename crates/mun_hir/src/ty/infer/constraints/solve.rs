@@ -9,18 +9,6 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::hash_map::Entry::Vacant;
 
 #[derive(Clone, Debug)]
-pub enum SolveResult {
-    /// Could not find a solution
-    Error,
-
-    /// Could not find a solution with the given constraints
-    NoSolution,
-
-    /// Found a solution
-    Solution(Solution)
-}
-
-#[derive(Clone, Debug)]
 pub struct Solution {
     pub type_of_expr: ArenaMap<ExprId, Ty>,
     pub type_of_pat: ArenaMap<PatId, Ty>,
@@ -67,28 +55,27 @@ impl PotentialBindings {
 
 impl ConstraintSystem {
     /// Solve the system of constraints.
-    pub fn solve(&mut self) -> SolveResult {
+    pub fn solve(&mut self, solutions: &mut Vec<Solution>) -> bool {
         // Start by simplifying
         if !self.simplify() {
-            return SolveResult::Error;
+            return false;
         }
 
         // If there are no more constraints we found a solution
         if self.constraints.is_empty() {
-            return SolveResult::Solution(self.build_solution())
+            solutions.push(self.build_solution());
+            return true;
         }
 
         // Otherwise we'll have to guess at some type variable
-        let result = self.solve_inner();
-
-        result
+        self.solve_inner(solutions)
     }
 
-    pub fn solve_inner(&mut self) -> SolveResult {
+    pub fn solve_inner(&mut self, solutions: &mut Vec<Solution>) -> bool {
         // Get the best variable binding we can do to get to a result.
         let best_binding = match self.determine_best_bindings() {
             Some(best_binding) => best_binding,
-            None => return SolveResult::NoSolution
+            None => return false
         };
 
         for binding in best_binding.bindings.iter() {
@@ -97,23 +84,19 @@ impl ConstraintSystem {
 
             // Add the bind constraint
             self.constraints.push_back(Rc::new(Constraint {
-                kind: ConstraintKind::Bind { a: Ty::Infer(best_binding.variable), b: binding.binding_ty.clone() },
+                kind: ConstraintKind::Equal { a: Ty::Infer(best_binding.variable), b: binding.binding_ty.clone() },
                 location: binding.source.location.clone()
             }));
 
             println!("-- Adding constraint {} binds to {:?}", best_binding.variable, binding.binding_ty.clone());
 
-            let result = self.solve();
+            self.solve(solutions);
 
             // Roll back the snap shot
             self.rollback_to(snapshot);
-
-            if let SolveResult::Solution(solution) = result {
-                return SolveResult::Solution(solution)
-            }
         }
 
-        SolveResult::NoSolution
+        true
     }
 
     fn determine_best_bindings(&self) -> Option<PotentialBindings> {
@@ -181,8 +164,7 @@ impl ConstraintSystem {
                     source: constraint.clone()
                 })
             },
-            ConstraintKind::Bind { .. }
-            | ConstraintKind ::Equal { .. } => None
+            ConstraintKind ::Equal { .. } => None
         }
     }
 

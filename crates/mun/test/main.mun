@@ -1,6 +1,6 @@
 // Function to add two floats
 function foo():float {
   let c = 3
-  c = 4.0
-  c
+  let d = c
+  d
 }

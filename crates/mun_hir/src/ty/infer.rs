@@ -8,7 +8,6 @@ mod type_variable;
 pub use type_variable::TypeVarId;
 
 use crate::{arena::map::ArenaMap, ty::infer::constraints::ConstraintSystem, Ty, ExprId, PatId, HirDatabase, Function, diagnostics::DiagnosticSink, code_model::DefWithBody, Pat, HirDisplay};
-use crate::ty::infer::constraints::SolveResult;
 
 /// The result of type inference: A mapping from expressions and patterns to types.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -59,22 +58,26 @@ pub fn infer_query(db: &impl HirDatabase, def: DefWithBody) -> Arc<InferenceResu
     println!("-- Initial constraints");
     constraints.print(db, &body);
 
-    let solution = constraints.solve();
-    let solution = match solution {
-        SolveResult::Error => unreachable!("SolveResult::Error"),
-        SolveResult::NoSolution => unreachable!("SolveResult::NoSolution"),
-        SolveResult::Solution(solution) => {
-            // Print all patterns
-            for (pat, ty) in solution.type_of_pat.iter() {
-                match &body[pat] {
-                    Pat::Bind { name } => {
-                        println!("{} := {}", name, ty.display(db));
-                    }
-                    _ => {}
+    let mut solutions = Vec::new();
+    constraints.solve(&mut solutions);
+    assert_ne!(solutions.len(), 0);
+
+    for (i, solution) in solutions.iter().enumerate() {
+        println!("-- Solution #{}", i);
+        // Print all patterns
+        for (pat, ty) in solution.type_of_pat.iter() {
+            match &body[pat] {
+                Pat::Bind { name } => {
+                    println!("{} := {}", name, ty.display(db));
                 }
+                _ => {}
             }
-            solution
-        },
+        }
+    }
+
+    let solution = match solutions.into_iter().next() {
+        Some(solution) => solution,
+        None => panic!("Could not find a solution")
     };
 
     Arc::new(InferenceResult {

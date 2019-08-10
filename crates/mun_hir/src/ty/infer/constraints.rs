@@ -13,7 +13,6 @@ mod simplify;
 mod snapshot;
 mod solve;
 
-pub use self::solve::SolveResult;
 use crate::ty::infer::TypeVarId;
 
 #[derive(Clone, Debug)]
@@ -36,9 +35,6 @@ enum ConstraintKind {
     /// The two types must be bound to the same type
     Equal { a: Ty, b: Ty },
 
-    /// The specified type is bound to the variable
-    Bind { a: Ty, b: Ty },
-
     /// The first type is convertible to the second type
     Convertible { from: Ty, to: Ty },
 }
@@ -49,8 +45,6 @@ impl ConstraintKind {
         match &self {
             ConstraintKind::Equal { a: Ty::Infer(var), b: _ }
             | ConstraintKind::Equal { a: _, b: Ty::Infer(var) }
-            | ConstraintKind::Bind { a: Ty::Infer(var), b: _ }
-            | ConstraintKind::Bind { a: _, b: Ty::Infer(var) }
             | ConstraintKind::Convertible { from: Ty::Infer(var), to: _}
             | ConstraintKind::Convertible { from: _, to: Ty::Infer(var)} => true,
             _ => false,
@@ -96,11 +90,6 @@ impl ConstraintSystem {
                     let b = self.type_variables.borrow_mut().replace_if_possible(b);
                     println!("{} equals {}", a.display(db), b.display(db));
                 },
-                ConstraintKind::Bind { a, b } => {
-                    let a = self.type_variables.borrow_mut().replace_if_possible(a);
-                    let b = self.type_variables.borrow_mut().replace_if_possible(b);
-                    println!("{} binds {}", a.display(db), b.display(db));
-                }
                 ConstraintKind::Convertible { from, to } => {
                     let from = self.type_variables.borrow_mut().replace_if_possible(from);
                     let to = self.type_variables.borrow_mut().replace_if_possible(to);
