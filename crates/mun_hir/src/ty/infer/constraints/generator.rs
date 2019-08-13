@@ -208,7 +208,7 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
             Some(initializer) => {
                 let expr_ty = self.visit_expr(*initializer);
                 self.add_constraint(Constraint {
-                    kind: ConstraintKind::Equal { a: expr_ty, b: ty.clone() },
+                    kind: ConstraintKind::Equal { a: ty.clone(), b: expr_ty },
                     location: ConstraintLocator::Pat(*pat)
                 })
             }
@@ -248,9 +248,15 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
 
     pub(super) fn build(mut self) -> (ConstraintSystem, Vec<InferenceDiagnostic>) {
         let body = self.body.clone();
-        let ret_type = self.make_ty(&body.ret_type());
+
+        // Add arguments
+        for (pat, ty) in body.params().iter() {
+            let ty = self.make_ty(ty);
+            self.write_pat_ty(*pat, ty);
+        }
 
         // The type of the body must be convertible to the actual return type of the function.
+        let ret_type = self.make_ty(&body.ret_type());
         let body_expr = self.visit_expr(body.body_expr());
         self.add_constraint(Constraint {
             kind: ConstraintKind::Equal { a: body_expr, b: ret_type },
