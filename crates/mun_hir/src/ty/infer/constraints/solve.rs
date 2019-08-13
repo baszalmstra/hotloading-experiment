@@ -2,7 +2,7 @@ use super::ConstraintSystem;
 use crate::arena::map::ArenaMap;
 use crate::{Ty, ExprId, PatId};
 use crate::arena::Arena;
-use crate::ty::infer::constraints::{Constraint, ConstraintKind};
+use crate::ty::infer::constraints::{Constraint, ConstraintKind, NumberType};
 use std::rc::Rc;
 use crate::ty::infer::TypeVarId;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -72,34 +72,32 @@ impl ConstraintSystem {
     }
 
     pub fn solve_inner(&mut self, solutions: &mut Vec<Solution>) -> bool {
-        // Get the best variable binding we can do to get to a result.
-        let best_binding = match self.determine_best_bindings() {
-            Some(best_binding) => best_binding,
-            None => return false
-        };
+         for bindings in self.determine_best_bindings() {
+            for binding in bindings.bindings.iter() {
+                // Construct a snapshot that we can roll back later
+                let snapshot = self.snapshot();
 
-        for binding in best_binding.bindings.iter() {
-            // Construct a snapshot that we can roll back later
-            let snapshot = self.snapshot();
+                // Add the bind constraint
+                self.constraints.push_back(Rc::new(Constraint {
+                    kind: ConstraintKind::Equal { a: Ty::Infer(bindings.variable), b: binding.binding_ty.clone() },
+                    location: binding.source.location.clone()
+                }));
 
-            // Add the bind constraint
-            self.constraints.push_back(Rc::new(Constraint {
-                kind: ConstraintKind::Equal { a: Ty::Infer(best_binding.variable), b: binding.binding_ty.clone() },
-                location: binding.source.location.clone()
-            }));
+                println!("-- Adding constraint {} binds to {:?} {:?}", bindings.variable, binding.binding_ty.clone(), binding.source);
 
-            println!("-- Adding constraint {} binds to {:?}", best_binding.variable, binding.binding_ty.clone());
+                if !self.solve(solutions) {
+                    println!("--   Failed");
+                }
 
-            self.solve(solutions);
-
-            // Roll back the snap shot
-            self.rollback_to(snapshot);
+                // Roll back the snap shot
+                self.rollback_to(snapshot);
+            }
         }
 
         true
     }
 
-    fn determine_best_bindings(&self) -> Option<PotentialBindings> {
+    fn determine_best_bindings(&self) -> Vec<PotentialBindings> {
         let mut cache = FxHashMap::default();
         let unsolved_type_variables = self.type_variables.borrow_mut().unsolved_variables();
 
@@ -112,8 +110,7 @@ impl ConstraintSystem {
         };
 
         // TODO: Score the different bindings against each other
-        // Return the first entry
-        cache.into_iter().map(|(k,v)| v).next()
+        cache.into_iter().map(|(v, binding)| binding).collect()
     }
 
     fn get_potential_bindings(&self, var: TypeVarId) -> PotentialBindings {
@@ -164,6 +161,14 @@ impl ConstraintSystem {
                     source: constraint.clone()
                 })
             },
+            ConstraintKind::NumberLiteral { ty: ty, number_ty } => Some(PotentialBinding {
+                binding_ty: match number_ty {
+                    NumberType::Float => Ty::Float,
+                    NumberType::Integer => Ty::Int,
+                },
+                source: constraint.clone(),
+                binding_kind: AllowedBindingKind::Exact,
+            }),
             ConstraintKind ::Equal { .. } => None
         }
     }

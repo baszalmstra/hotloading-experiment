@@ -1,5 +1,6 @@
 use super::{ConstraintSystem, Constraint, ConstraintKind};
 use crate::Ty;
+use crate::ty::infer::constraints::NumberType;
 
 enum SimplifyResult {
     /// Indicates that a simplification resulted in an error
@@ -89,11 +90,20 @@ impl ConstraintSystem {
                     // If there are still type variables involved, forget it
                     (Ty::Infer(tv), _) | (_, Ty::Infer(tv)) => SimplifyResult::Unresolved,
 
-                    // List of possible conversions
-                    (Ty::Int, Ty::Float) => SimplifyResult::Solved,
-
                     // Everything else is an error
                     _ => SimplifyResult::Error
+                }
+            }
+            ConstraintKind::NumberLiteral { ty, number_ty} => {
+                let ty = self.type_variables.borrow_mut().replace_if_possible(ty);
+                match (&*ty, number_ty){
+                    (Ty::Float, NumberType::Float)|
+                    (Ty::Float, NumberType::Integer)|
+                    (Ty::Int, NumberType::Integer) => return SimplifyResult::Solved,
+
+                    (Ty::Infer(_), _) => return SimplifyResult::Unresolved,
+
+                     _ => SimplifyResult::Error
                 }
             }
         }

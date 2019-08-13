@@ -37,16 +37,26 @@ enum ConstraintKind {
 
     /// The first type is convertible to the second type
     Convertible { from: Ty, to: Ty },
+
+    /// A literal type that should conform to some type
+    NumberLiteral { ty: Ty, number_ty: NumberType },
+}
+
+#[derive(Clone, Debug, Copy)]
+enum NumberType {
+    Float,
+    Integer
 }
 
 impl ConstraintKind {
     /// Returns true if the specified variable is directly mentioned in the constraint.
-    pub fn references_variable(&self, var:TypeVarId) -> bool {
+    pub fn references_variable(&self, var_to_check:TypeVarId) -> bool {
         match &self {
             ConstraintKind::Equal { a: Ty::Infer(var), b: _ }
             | ConstraintKind::Equal { a: _, b: Ty::Infer(var) }
             | ConstraintKind::Convertible { from: Ty::Infer(var), to: _}
-            | ConstraintKind::Convertible { from: _, to: Ty::Infer(var)} => true,
+            | ConstraintKind::Convertible { from: _, to: Ty::Infer(var)}
+            | ConstraintKind::NumberLiteral { ty: Ty::Infer(var), .. } if *var == var_to_check => true,
             _ => false,
         }
     }
@@ -94,7 +104,10 @@ impl ConstraintSystem {
                     let from = self.type_variables.borrow_mut().replace_if_possible(from);
                     let to = self.type_variables.borrow_mut().replace_if_possible(to);
                     println!("{} is convertible to {}", from.display(db), to.display(db));
-                }
+                },
+                ConstraintKind::NumberLiteral { ty: ty, number_ty: number_ty } => {
+                    println!("{} is a number type ({:?})", ty.display(db), number_ty);
+                },
             };
         }
 

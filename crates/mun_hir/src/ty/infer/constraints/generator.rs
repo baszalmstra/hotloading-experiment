@@ -1,4 +1,4 @@
-use super::{ConstraintKind, ConstraintLocator, ConstraintSystem, Constraint};
+use super::{ConstraintKind, ConstraintLocator, ConstraintSystem, Constraint, NumberType};
 use std::{
     cell::RefCell,
     sync::Arc,
@@ -29,6 +29,8 @@ use crate::{
 };
 use super::type_variable::TypeVariableTable;
 use crate::expr::BinaryOp;
+use crate::arena::Arena;
+use rustc_hash::FxHashMap;
 
 pub(crate) struct ConstraintGenerator<'a, D: HirDatabase> {
     db: &'a D,
@@ -111,7 +113,14 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
         let ty = match &body[expr] {
             Expr::Missing => Ty::Unknown,
             Expr::Literal(l) => match l {
-                Literal::Int(_) => Ty::Int,
+                Literal::Int(_) => {
+                    let var = self.new_variable();
+                    self.constraints.push(Constraint {
+                        kind: ConstraintKind::NumberLiteral { ty: var.clone(), number_ty: NumberType::Integer },
+                        location: ConstraintLocator::Expr(expr)
+                    });
+                    var
+                }
                 Literal::Float(_) => Ty::Float,
                 _ => unreachable!()
             },
@@ -124,7 +133,7 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
                 match op {
                     Some(BinaryOp::Assign) => {
                         self.add_constraint(Constraint {
-                            kind: ConstraintKind::Convertible { from: rhs_ty, to: lhs_ty },
+                            kind: ConstraintKind::Equal { a: rhs_ty, b: lhs_ty },
                             location: ConstraintLocator::Expr(expr)
                         });
                         Ty::Empty
@@ -199,7 +208,7 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
             Some(initializer) => {
                 let expr_ty = self.visit_expr(*initializer);
                 self.add_constraint(Constraint {
-                    kind: ConstraintKind::Convertible { from: expr_ty, to: ty.clone() },
+                    kind: ConstraintKind::Equal { a: expr_ty, b: ty.clone() },
                     location: ConstraintLocator::Pat(*pat)
                 })
             }
