@@ -42,6 +42,10 @@ pub(crate) struct ConstraintGenerator<'a, D: HirDatabase> {
     type_of_pat: ArenaMap<PatId, Ty>,
     type_of_expr: ArenaMap<ExprId, Ty>,
 
+    // Contains whether or not a pattern has already been assigned to. This is used to determine
+    // if an equals or conversion constraint is introduces for assignments.
+    pat_assigned: FxHashMap<PatId, bool>,
+
     constraints: Vec<Constraint>,
     type_variables: RefCell<TypeVariableTable>,
 }
@@ -57,6 +61,8 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
 
             type_of_pat: ArenaMap::default(),
             type_of_expr: ArenaMap::default(),
+
+            pat_assigned: FxHashMap::default(),
 
             constraints: Vec::new(),
             type_variables: RefCell::new(TypeVariableTable::default())
@@ -132,11 +138,7 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
                 let rhs_ty = self.visit_expr(*rhs);
                 match op {
                     Some(BinaryOp::Assign) => {
-                        self.add_constraint(Constraint {
-                            kind: ConstraintKind::Equal { a: rhs_ty, b: lhs_ty },
-                            location: ConstraintLocator::Expr(expr)
-                        });
-                        Ty::Empty
+                        self.visit_assignment(expr, *lhs, rhs_ty)
                     }
                     _ => {
                         self.diagnostics.push(InferenceDiagnostic::CannotApplyBinaryOp {
@@ -152,6 +154,37 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
         };
         self.write_expr_ty(expr, ty.clone());
         ty
+    }
+
+    fn visit_assignment(&mut self, tgt_expr: ExprId, lvalue: ExprId, value_ty: Ty) -> Ty {
+        // Determine the type of pattern
+        match &self.body[lvalue] {
+            Expr::Path(path) => {
+                let resolver = expr::resolver_for_expr(self.body.clone(), self.db, tgt_expr);
+                if let Some(resolution) = resolver.resolve_path_without_assoc_items(self.db, path)
+                    .take_values() {
+                    match resolution {
+                        Resolution::LocalBinding(pat) => {
+                            let is_assigned = *self.pat_assigned.get(&pat).unwrap_or(&true);
+                            let lhs_ty = self.type_of_pat.get(pat).unwrap_or(&Ty::Unknown).clone();
+                            self.constraints.push(Constraint {
+                                kind: if is_assigned {
+                                    ConstraintKind::Convertible { from: value_ty, to: lhs_ty }
+                                } else {
+                                    self.pat_assigned.entry(pat).and_modify(|v| *v = true );
+                                    ConstraintKind::Equal { a: value_ty, b: lhs_ty }
+                                },
+                                location: ConstraintLocator::Expr(tgt_expr)
+                            })
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        Ty::Empty
     }
 
     fn visit_path(&mut self, tgt_expr: ExprId, p: &Path) -> Ty {
@@ -191,30 +224,36 @@ impl<'a, D: HirDatabase> ConstraintGenerator<'a, D> {
 
     fn visit_let(&mut self, pat: &PatId, type_ref: &Option<TypeRefId>, initializer: &Option<ExprId>) -> Ty {
         // If there is a type specified, use that as the type of the binding.
-        let ty = match type_ref.map(|tr| self.make_ty(&tr)) {
+        let (ty, has_fixed_type) = match type_ref.map(|tr| self.make_ty(&tr)) {
             // If no type was specified introduce a type variable
-            None => self.new_variable(),
+            None => (self.new_variable(), false),
 
             // If the type is unknown (because the TypeRef is unknown), also introduce a new
             // type variable
-            Some(Ty::Unknown) => self.new_variable(),
+            Some(Ty::Unknown) => (self.new_variable(), false),
 
             // Otherwise, just use the assigned type
-            Some(ty) => ty
+            Some(ty) => (ty, true)
         };
 
         // If there is an initializer it must be convertible to the binding
-        match initializer {
+        let has_been_assigned = match initializer {
             Some(initializer) => {
                 let expr_ty = self.visit_expr(*initializer);
                 self.add_constraint(Constraint {
-                    kind: ConstraintKind::Equal { a: ty.clone(), b: expr_ty },
+                    kind: if has_fixed_type {
+                        ConstraintKind::Convertible { from: expr_ty, to: ty.clone() }
+                    } else {
+                        ConstraintKind::Equal { a: ty.clone(), b: expr_ty }
+                    },
                     location: ConstraintLocator::Pat(*pat)
-                })
+                });
+                true
             }
-            None => {}
+            None => false
         };
 
+        self.pat_assigned.insert(*pat, has_been_assigned || has_fixed_type);
         self.write_pat_ty(*pat, ty.clone());
         ty
     }
