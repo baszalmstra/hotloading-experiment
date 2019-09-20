@@ -7,6 +7,7 @@ use crate::name_resolution::Namespace;
 use crate::resolve::{Resolution, Resolver};
 use crate::ty::infer::diagnostics::InferenceDiagnostic;
 use crate::ty::lower::LowerDiagnostic;
+use crate::ty::op;
 use crate::ty::{Ty, TypableDef};
 use crate::type_ref::{TypeRef, TypeRefId};
 use crate::{expr, BinaryOp, FnData, Function, HirDatabase, Path, TypeCtor};
@@ -15,11 +16,10 @@ use mun_syntax::{ast, AstPtr};
 use std::mem;
 use std::ops::Index;
 use std::sync::Arc;
-use crate::ty::{op};
 
 mod type_variable;
-pub use type_variable::TypeVarId;
 use crate::ty::infer::type_variable::TypeVariableTable;
+pub use type_variable::TypeVarId;
 
 /// The result of type inference: A mapping from expressions and patterns to types.
 #[derive(Clone, PartialEq, Eq, Debug)]

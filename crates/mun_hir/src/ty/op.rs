@@ -1,4 +1,4 @@
-use crate::{Ty, BinaryOp};
+use crate::{BinaryOp, Ty, TypeCtor};
 
 pub(super) fn binary_op_rhs_expectation(op: BinaryOp, lhs_ty: Ty) -> Ty {
     lhs_ty
@@ -6,19 +6,8 @@ pub(super) fn binary_op_rhs_expectation(op: BinaryOp, lhs_ty: Ty) -> Ty {
 
 pub(super) fn binary_op_return_ty(op: BinaryOp, rhs_ty: Ty) -> Ty {
     match op {
-        BinaryOp::Add
-        |BinaryOp::Subtract
-        |BinaryOp::Divide
-        |BinaryOp::Multiply
-        |BinaryOp::Remainder
-        |BinaryOp::Power => rhs_ty,
-
-        BinaryOp::Assign
-        |BinaryOp::AddAssign
-        |BinaryOp::SubtractAssign
-        |BinaryOp::DivideAssign
-        |BinaryOp::MultiplyAssign
-        |BinaryOp::RemainderAssign
-        |BinaryOp::PowerAssign => Ty::Empty,
+        BinaryOp::ArithOp(_) | BinaryOp::CmpOp(_) => rhs_ty,
+        BinaryOp::LogicOp(_) => Ty::simple(TypeCtor::Bool),
+        BinaryOp::Assignment => Ty::Empty,
     }
 }

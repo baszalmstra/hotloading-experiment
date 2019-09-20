@@ -2,13 +2,13 @@ mod infer;
 mod lower;
 
 use crate::display::{HirDisplay, HirFormatter};
+use crate::ty::infer::TypeVarId;
 use crate::{Function, HirDatabase};
 pub(crate) use infer::infer_query;
 pub use infer::InferenceResult;
 pub(crate) use lower::{fn_sig_for_fn, type_for_def, TypableDef};
 use std::fmt;
 use std::sync::Arc;
-use crate::ty::infer::TypeVarId;
 
 mod op;
 
@@ -49,6 +49,9 @@ pub enum TypeCtor {
     /// The primitive integral type. Written as `int`.
     Int,
 
+    /// The primitive boolean type. Written as `bool`.
+    Bool,
+
     /// The anonymous type of a function declaration/definition. Each
     /// function has a unique type, which is output (for a function
     /// named `foo` returning an `number`) as `fn() -> number {foo}`.
@@ -74,8 +77,8 @@ impl Ty {
 
     pub fn as_simple(&self) -> Option<TypeCtor> {
         match self {
-            Ty::Apply(ApplicationTy { ctor, parameters}) if parameters.0.is_empty() => Some(*ctor),
-            _ => None
+            Ty::Apply(ApplicationTy { ctor, parameters }) if parameters.0.is_empty() => Some(*ctor),
+            _ => None,
         }
     }
 }
@@ -135,6 +138,7 @@ impl HirDisplay for ApplicationTy {
         match self.ctor {
             TypeCtor::Float => write!(f, "float")?,
             TypeCtor::Int => write!(f, "int")?,
+            TypeCtor::Bool => write!(f, "bool")?,
             TypeCtor::FnDef(def) => {
                 let sig = f.db.fn_signature(def);
                 let name = def.name(f.db);

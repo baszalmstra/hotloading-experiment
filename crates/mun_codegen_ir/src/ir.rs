@@ -2,8 +2,17 @@ use crate::IrDatabase;
 use inkwell::builder::Builder;
 use inkwell::passes::{PassManager, PassManagerBuilder};
 use inkwell::values::{AnyValueEnum, BasicValueEnum, InstructionOpcode};
-use inkwell::{module::{Linkage, Module}, types::{AnyTypeEnum, BasicType, BasicTypeEnum, VoidType}, values::{BasicValue, FloatMathValue, FunctionValue}, OptimizationLevel};
-use mun_hir::{ApplicationTy, BinaryOp, Body, Expr, ExprId, FileId, Function, HirDatabase, InferenceResult, Literal, ModuleDef, Pat, PatId, Path, Resolution, Resolver, Statement, Ty, TypeCtor, HirDisplay};
+use inkwell::{
+    module::{Linkage, Module},
+    types::{AnyTypeEnum, BasicType, BasicTypeEnum, VoidType},
+    values::{BasicValue, FloatMathValue, FunctionValue},
+    OptimizationLevel,
+};
+use mun_hir::{
+    ApplicationTy, ArithOp, BinaryOp, Body, Expr, ExprId, FileId, Function, HirDatabase,
+    HirDisplay, InferenceResult, Literal, ModuleDef, Pat, PatId, Path, Resolution, Resolver,
+    Statement, Ty, TypeCtor,
+};
 use std::collections::HashMap;
 use std::mem;
 use std::sync::Arc;
@@ -172,10 +181,10 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
                 Literal::String(_) | Literal::Bool(_) => unreachable!(),
             },
             &Expr::BinaryOp { lhs, rhs, op } => match op.expect("missing op") {
-                BinaryOp::Add => Some(self.gen_add(lhs, rhs)),
-                BinaryOp::Subtract => Some(self.gen_sub(lhs, rhs)),
-                BinaryOp::Divide => Some(self.gen_divide(lhs, rhs)),
-                BinaryOp::Multiply => Some(self.gen_multiply(lhs, rhs)),
+                BinaryOp::ArithOp(ArithOp::Add) => Some(self.gen_add(lhs, rhs)),
+                BinaryOp::ArithOp(ArithOp::Subtract) => Some(self.gen_sub(lhs, rhs)),
+                BinaryOp::ArithOp(ArithOp::Divide) => Some(self.gen_divide(lhs, rhs)),
+                BinaryOp::ArithOp(ArithOp::Multiply) => Some(self.gen_multiply(lhs, rhs)),
                 //                BinaryOp::Remainder => Some(self.gen_remainder(lhs, rhs)),
                 //                BinaryOp::Power =>,
                 //                BinaryOp::Assign,
@@ -192,12 +201,16 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
 
         // Check expected type or perform implicit cast
         value = value.map(|value| {
-            match (value.get_type(), try_convert_any_to_basic(self.db.type_ir(self.infer[expr].clone()))) {
-                (BasicTypeEnum::IntType(_), Some(target@BasicTypeEnum::FloatType(_))) => {
-                    self.builder.build_cast(InstructionOpcode::SIToFP, value, target, "implicit_cast").into()
-                }
+            match (
+                value.get_type(),
+                try_convert_any_to_basic(self.db.type_ir(self.infer[expr].clone())),
+            ) {
+                (BasicTypeEnum::IntType(_), Some(target @ BasicTypeEnum::FloatType(_))) => self
+                    .builder
+                    .build_cast(InstructionOpcode::SIToFP, value, target, "implicit_cast")
+                    .into(),
                 (a, Some(b)) if a == b => value,
-                _=> unreachable!("could not perform implicit cast")
+                _ => unreachable!("could not perform implicit cast"),
             }
         });
 
@@ -274,38 +287,53 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
             (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
                 let rhs_value = self.cast_to_float(rhs_value);
                 self.builder
-                    .build_float_add(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"add")
+                    .build_float_add(
+                        *lhs_value.as_float_value(),
+                        *rhs_value.as_float_value(),
+                        "add",
+                    )
                     .into()
             }
             (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
                 let lhs_value = self.cast_to_float(lhs_value);
                 self.builder
-                    .build_float_add(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"add")
-                    .into()
-            },
-            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
-                self.builder
-                    .build_int_add(*lhs_value.as_int_value(),*rhs_value.as_int_value(),"add")
-                    .into()
-            }
-            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
-                self.builder
-                    .build_float_add(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"add")
+                    .build_float_add(
+                        *lhs_value.as_float_value(),
+                        *rhs_value.as_float_value(),
+                        "add",
+                    )
                     .into()
             }
-            _ => unreachable!("Unsupported operation {0}+{1}", lhs_type.display(self.db), rhs_type.display(self.db)),
+            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => self
+                .builder
+                .build_int_add(*lhs_value.as_int_value(), *rhs_value.as_int_value(), "add")
+                .into(),
+            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => self
+                .builder
+                .build_float_add(
+                    *lhs_value.as_float_value(),
+                    *rhs_value.as_float_value(),
+                    "add",
+                )
+                .into(),
+            _ => unreachable!(
+                "Unsupported operation {0}+{1}",
+                lhs_type.display(self.db),
+                rhs_type.display(self.db)
+            ),
         }
     }
 
     fn cast_to_float(&mut self, value: BasicValueEnum) -> BasicValueEnum {
-        self.builder
-            .build_cast(
-                InstructionOpcode::SIToFP,
-                value,
-                try_convert_any_to_basic(ty_ir_query(self.db, Ty::simple(TypeCtor::Float))).expect("could not convert to basic value"),
-                &value
-                        .get_name()
-                        .map_or("cast".to_string(), |n| format!("{}_float", n)))
+        self.builder.build_cast(
+            InstructionOpcode::SIToFP,
+            value,
+            try_convert_any_to_basic(ty_ir_query(self.db, Ty::simple(TypeCtor::Float)))
+                .expect("could not convert to basic value"),
+            &value
+                .get_name()
+                .map_or("cast".to_string(), |n| format!("{}_float", n)),
+        )
     }
 
     fn gen_sub(&mut self, lhs: ExprId, rhs: ExprId) -> BasicValueEnum {
@@ -318,26 +346,40 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
             (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
                 let rhs_value = self.cast_to_float(rhs_value);
                 self.builder
-                    .build_float_sub(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"sub")
+                    .build_float_sub(
+                        *lhs_value.as_float_value(),
+                        *rhs_value.as_float_value(),
+                        "sub",
+                    )
                     .into()
             }
             (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
                 let lhs_value = self.cast_to_float(lhs_value);
                 self.builder
-                    .build_float_sub(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"sub")
-                    .into()
-            },
-            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
-                self.builder
-                    .build_int_sub(*lhs_value.as_int_value(),*rhs_value.as_int_value(),"sub")
-                    .into()
-            }
-            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
-                self.builder
-                    .build_float_sub(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"sub")
+                    .build_float_sub(
+                        *lhs_value.as_float_value(),
+                        *rhs_value.as_float_value(),
+                        "sub",
+                    )
                     .into()
             }
-            _ => unreachable!("Unsupported operation {0}-{1}", lhs_type.display(self.db), rhs_type.display(self.db)),
+            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => self
+                .builder
+                .build_int_sub(*lhs_value.as_int_value(), *rhs_value.as_int_value(), "sub")
+                .into(),
+            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => self
+                .builder
+                .build_float_sub(
+                    *lhs_value.as_float_value(),
+                    *rhs_value.as_float_value(),
+                    "sub",
+                )
+                .into(),
+            _ => unreachable!(
+                "Unsupported operation {0}-{1}",
+                lhs_type.display(self.db),
+                rhs_type.display(self.db)
+            ),
         }
     }
 
@@ -351,26 +393,40 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
             (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
                 let rhs_value = self.cast_to_float(rhs_value);
                 self.builder
-                    .build_float_mul(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"mul")
+                    .build_float_mul(
+                        *lhs_value.as_float_value(),
+                        *rhs_value.as_float_value(),
+                        "mul",
+                    )
                     .into()
             }
             (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
                 let lhs_value = self.cast_to_float(lhs_value);
                 self.builder
-                    .build_float_mul(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"mul")
-                    .into()
-            },
-            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
-                self.builder
-                    .build_int_mul(*lhs_value.as_int_value(),*rhs_value.as_int_value(),"mul")
-                    .into()
-            }
-            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
-                self.builder
-                    .build_float_mul(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"mul")
+                    .build_float_mul(
+                        *lhs_value.as_float_value(),
+                        *rhs_value.as_float_value(),
+                        "mul",
+                    )
                     .into()
             }
-            _ => unreachable!("Unsupported operation {0}*{1}", lhs_type.display(self.db), rhs_type.display(self.db)),
+            (Some(TypeCtor::Int), Some(TypeCtor::Int)) => self
+                .builder
+                .build_int_mul(*lhs_value.as_int_value(), *rhs_value.as_int_value(), "mul")
+                .into(),
+            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => self
+                .builder
+                .build_float_mul(
+                    *lhs_value.as_float_value(),
+                    *rhs_value.as_float_value(),
+                    "mul",
+                )
+                .into(),
+            _ => unreachable!(
+                "Unsupported operation {0}*{1}",
+                lhs_type.display(self.db),
+                rhs_type.display(self.db)
+            ),
         }
     }
 
@@ -384,28 +440,47 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
             (Some(TypeCtor::Float), Some(TypeCtor::Int)) => {
                 let rhs_value = self.cast_to_float(rhs_value);
                 self.builder
-                    .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
+                    .build_float_div(
+                        *lhs_value.as_float_value(),
+                        *rhs_value.as_float_value(),
+                        "div",
+                    )
                     .into()
             }
             (Some(TypeCtor::Int), Some(TypeCtor::Float)) => {
                 let lhs_value = self.cast_to_float(lhs_value);
                 self.builder
-                    .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
+                    .build_float_div(
+                        *lhs_value.as_float_value(),
+                        *rhs_value.as_float_value(),
+                        "div",
+                    )
                     .into()
-            },
+            }
             (Some(TypeCtor::Int), Some(TypeCtor::Int)) => {
                 let lhs_value = self.cast_to_float(lhs_value);
                 let rhs_value = self.cast_to_float(rhs_value);
                 self.builder
-                    .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
+                    .build_float_div(
+                        *lhs_value.as_float_value(),
+                        *rhs_value.as_float_value(),
+                        "div",
+                    )
                     .into()
             }
-            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => {
-                self.builder
-                    .build_float_div(*lhs_value.as_float_value(),*rhs_value.as_float_value(),"div")
-                    .into()
-            }
-            _ => unreachable!("Unsupported operation {0}+{1}", lhs_type.display(self.db), rhs_type.display(self.db)),
+            (Some(TypeCtor::Float), Some(TypeCtor::Float)) => self
+                .builder
+                .build_float_div(
+                    *lhs_value.as_float_value(),
+                    *rhs_value.as_float_value(),
+                    "div",
+                )
+                .into(),
+            _ => unreachable!(
+                "Unsupported operation {0}+{1}",
+                lhs_type.display(self.db),
+                rhs_type.display(self.db)
+            ),
         }
     }
 }
@@ -418,6 +493,7 @@ pub(crate) fn ty_ir_query(db: &impl IrDatabase, ty: Ty) -> AnyTypeEnum {
         Ty::Apply(ApplicationTy { ctor, .. }) => match ctor {
             TypeCtor::Float => AnyTypeEnum::FloatType(context.f64_type()),
             TypeCtor::Int => AnyTypeEnum::IntType(context.i64_type()),
+            TypeCtor::Bool => AnyTypeEnum::IntType(context.bool_type()),
             TypeCtor::FnDef(f) => {
                 let ty = db.fn_signature(f);
                 let params: Vec<BasicTypeEnum> = ty
@@ -427,7 +503,7 @@ pub(crate) fn ty_ir_query(db: &impl IrDatabase, ty: Ty) -> AnyTypeEnum {
                     .collect();
                 let ret_ty = match db.type_ir(ty.ret().clone()) {
                     AnyTypeEnum::VoidType(v) => return v.fn_type(&params, false).into(),
-                    v@_ => try_convert_any_to_basic(v).expect("could not convert return value")
+                    v @ _ => try_convert_any_to_basic(v).expect("could not convert return value"),
                 };
 
                 ret_ty.fn_type(&params, false).into()

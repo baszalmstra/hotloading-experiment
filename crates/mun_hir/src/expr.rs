@@ -10,9 +10,8 @@ use crate::code_model::src::HasSource;
 use crate::name::AsName;
 use crate::source_id::AstId;
 use crate::type_ref::{TypeRef, TypeRefBuilder, TypeRefId, TypeRefMap, TypeRefSourceMap};
-pub use mun_syntax::ast::BinOp as BinaryOp;
 pub use mun_syntax::ast::PrefixOp as UnaryOp;
-use mun_syntax::ast::{ArgListOwner, NameOwner, TypeAscriptionOwner};
+use mun_syntax::ast::{ArgListOwner, BinOp, NameOwner, TypeAscriptionOwner};
 use mun_syntax::{ast, AstNode, AstPtr, SyntaxNodePtr, T};
 use rustc_hash::FxHashMap;
 use std::ops::Index;
@@ -167,9 +166,7 @@ pub enum Literal {
     Float(f64),
 }
 
-impl Eq for Literal {
-
-}
+impl Eq for Literal {}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Expr {
@@ -194,6 +191,42 @@ pub enum Expr {
         tail: Option<ExprId>,
     },
     Literal(Literal),
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum BinaryOp {
+    LogicOp(LogicOp),
+    ArithOp(ArithOp),
+    CmpOp(CmpOp),
+    Assignment, // { op: Option<ArithOp> }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum LogicOp {
+    And,
+    Or,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum CmpOp {
+    Eq { negated: bool },
+    Ord { ordering: Ordering, strict: bool },
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Ordering {
+    Less,
+    Greater,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum ArithOp {
+    Add,
+    Multiply,
+    Subtract,
+    Divide,
+    Remainder,
+    Power,
 }
 
 impl Expr {
@@ -378,8 +411,12 @@ where
             ast::ExprKind::Literal(e) => {
                 let lit = match e.kind() {
                     ast::LiteralKind::Bool => Literal::Bool(e.syntax().kind() == T![true]),
-                    ast::LiteralKind::IntNumber => Literal::Int(e.syntax().text().to_string().parse().unwrap()),
-                    ast::LiteralKind::FloatNumber => Literal::Float(e.syntax().text().to_string().parse().unwrap()),
+                    ast::LiteralKind::IntNumber => {
+                        Literal::Int(e.syntax().text().to_string().parse().unwrap())
+                    }
+                    ast::LiteralKind::FloatNumber => {
+                        Literal::Float(e.syntax().text().to_string().parse().unwrap())
+                    }
                     ast::LiteralKind::String => Literal::String(Default::default()),
                 };
                 self.alloc_expr(Expr::Literal(lit), syntax_ptr)
@@ -393,10 +430,88 @@ where
                 }
             }
             ast::ExprKind::BinExpr(e) => {
-                let lhs = self.collect_expr_opt(e.lhs());
-                let rhs = self.collect_expr_opt(e.rhs());
                 let op = e.op_kind();
-                self.alloc_expr(Expr::BinaryOp { lhs, rhs, op }, syntax_ptr)
+                if let Some(op) = op {
+                    match op {
+                        op @ BinOp::Add
+                        | op @ BinOp::Subtract
+                        | op @ BinOp::Divide
+                        | op @ BinOp::Multiply
+                        | op @ BinOp::Remainder
+                        | op @ BinOp::Power => {
+                            let op = match op {
+                                BinOp::Add => BinaryOp::ArithOp(ArithOp::Add),
+                                BinOp::Subtract => BinaryOp::ArithOp(ArithOp::Subtract),
+                                BinOp::Divide => BinaryOp::ArithOp(ArithOp::Divide),
+                                BinOp::Multiply => BinaryOp::ArithOp(ArithOp::Multiply),
+                                BinOp::Remainder => BinaryOp::ArithOp(ArithOp::Remainder),
+                                BinOp::Power => BinaryOp::ArithOp(ArithOp::Power),
+                                _ => unreachable!(),
+                            };
+                            let lhs = self.collect_expr_opt(e.lhs());
+                            let rhs = self.collect_expr_opt(e.rhs());
+                            self.alloc_expr(
+                                Expr::BinaryOp {
+                                    lhs,
+                                    rhs,
+                                    op: Some(op),
+                                },
+                                syntax_ptr,
+                            )
+                        }
+                        BinOp::Assign => {
+                            let lhs = self.collect_expr_opt(e.lhs());
+                            let rhs = self.collect_expr_opt(e.rhs());
+                            self.alloc_expr(
+                                Expr::BinaryOp {
+                                    lhs,
+                                    rhs,
+                                    op: Some(BinaryOp::Assignment),
+                                },
+                                syntax_ptr,
+                            )
+                        }
+                        op @ BinOp::AddAssign
+                        | op @ BinOp::SubtractAssign
+                        | op @ BinOp::DivideAssign
+                        | op @ BinOp::MultiplyAssign
+                        | op @ BinOp::RemainderAssign
+                        | op @ BinOp::PowerAssign => {
+                            let op = match op {
+                                BinOp::AddAssign => BinaryOp::ArithOp(ArithOp::Add),
+                                BinOp::SubtractAssign => BinaryOp::ArithOp(ArithOp::Subtract),
+                                BinOp::DivideAssign => BinaryOp::ArithOp(ArithOp::Divide),
+                                BinOp::MultiplyAssign => BinaryOp::ArithOp(ArithOp::Multiply),
+                                BinOp::RemainderAssign => BinaryOp::ArithOp(ArithOp::Remainder),
+                                BinOp::PowerAssign => BinaryOp::ArithOp(ArithOp::Power),
+                                _ => unreachable!(),
+                            };
+                            let lhs = self.collect_expr_opt(e.lhs());
+                            let lhs_rhs = self.collect_expr_opt(e.lhs());
+                            let rhs = self.collect_expr_opt(e.rhs());
+                            let update_expr = self.alloc_expr(
+                                Expr::BinaryOp {
+                                    lhs: lhs_rhs,
+                                    rhs,
+                                    op: Some(op),
+                                },
+                                syntax_ptr,
+                            );
+                            self.alloc_expr(
+                                Expr::BinaryOp {
+                                    lhs,
+                                    rhs: update_expr,
+                                    op: Some(op),
+                                },
+                                syntax_ptr,
+                            )
+                        }
+                    }
+                } else {
+                    let lhs = self.collect_expr_opt(e.lhs());
+                    let rhs = self.collect_expr_opt(e.rhs());
+                    self.alloc_expr(Expr::BinaryOp { lhs, rhs, op: None }, syntax_ptr)
+                }
             }
             ast::ExprKind::PathExpr(e) => {
                 let path = e
