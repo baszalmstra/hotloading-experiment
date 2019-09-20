@@ -1,21 +1,18 @@
 extern crate mun_codegen_ir;
 
-use mun_hir::{
-    salsa, FileId, HirDisplay, Module, ModuleDef, PackageInput, RelativePathBuf, SourceDatabase,
-};
-use std::path::{Path, PathBuf};
-use std::error::Error;
+use crate::mun_codegen_ir::{IrDatabase, OptimizationLevel};
+use mun_hir::diagnostics::DiagnosticSink;
+use mun_hir::{salsa, FileId, Module, PackageInput, RelativePathBuf, SourceDatabase};
+use std::cell::RefCell;
+use std::path::PathBuf;
 use std::sync::Arc;
 use test_utils::{dir_tests, project_dir};
-use crate::mun_codegen_ir::IrDatabase;
-use mun_hir::diagnostics::DiagnosticSink;
-use std::cell::RefCell;
 
 #[salsa::database(
-mun_hir::SourceDatabaseStorage,
-mun_hir::DefDatabaseStorage,
-mun_hir::HirDatabaseStorage,
-mun_codegen_ir::IrDatabaseStorage
+    mun_hir::SourceDatabaseStorage,
+    mun_hir::DefDatabaseStorage,
+    mun_hir::HirDatabaseStorage,
+    mun_codegen_ir::IrDatabaseStorage
 )]
 #[derive(Default, Debug)]
 struct MockDatabase {
@@ -43,6 +40,7 @@ fn ir_tests() {
         let mut package_input = PackageInput::default();
         package_input.add_module(file_id);
         db.set_package_input(Arc::new(package_input));
+        db.set_optimization_lvl(OptimizationLevel::Default);
 
         let context = mun_codegen_ir::Context::create();
         db.set_context(Arc::new(context));

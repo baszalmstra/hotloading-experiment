@@ -1,6 +1,5 @@
 use mun_errors::Diagnostic;
-use mun_hir::line_index::LineIndex;
-use mun_hir::{FileId, RelativePathBuf, SourceDatabase};
+use mun_hir::{FileId, SourceDatabase};
 use std::io;
 use termcolor::{Color, ColorSpec, WriteColor};
 
@@ -80,8 +79,6 @@ impl Emit for Diagnostic {
                 "^".to_string()
                     .repeat((line_col_end.col - line_col.col) as usize)
             )?;
-
-
         }
 
         //        // Write the start location

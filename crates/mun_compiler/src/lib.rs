@@ -6,18 +6,19 @@ use failure::Error;
 use mun_codegen_ir::IrDatabase;
 use mun_errors::{Diagnostic, Level};
 use mun_hir::diagnostics::{Diagnostic as HirDiagnostic, DiagnosticSink};
-use mun_hir::{
-    salsa, FileId, HirDisplay, Module, ModuleDef, PackageInput, RelativePathBuf, SourceDatabase,
-};
+use mun_hir::{salsa, FileId, HirDisplay, Module, PackageInput, RelativePathBuf, SourceDatabase};
 use mun_syntax::ast::AstNode;
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use termcolor::{ColorChoice, StandardStream};
 
+pub use mun_codegen_ir::OptimizationLevel;
+
 #[derive(Debug, Clone)]
 pub struct CompilerOptions {
     pub input: PathBuf,
+    pub optimization_lvl: OptimizationLevel,
 }
 
 #[salsa::database(
@@ -80,6 +81,7 @@ impl CompilerDatabase {
         let mut package_input = PackageInput::default();
         package_input.add_module(file_id);
         db.set_package_input(Arc::new(package_input));
+        db.set_optimization_lvl(OptimizationLevel::Default);
 
         let context = mun_codegen_ir::Context::create();
         db.set_context(Arc::new(context));
@@ -151,7 +153,8 @@ fn diagnostics(db: &CompilerDatabase, file_id: FileId) -> Vec<Diagnostic> {
 }
 
 pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
-    let (db, file_id) = CompilerDatabase::from_file(&options.input)?;
+    let (mut db, file_id) = CompilerDatabase::from_file(&options.input)?;
+    db.set_optimization_lvl(options.optimization_lvl);
 
     let diagnostics = diagnostics(&db, file_id);
     if !diagnostics.is_empty() {

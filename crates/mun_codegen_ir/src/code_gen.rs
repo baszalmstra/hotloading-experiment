@@ -1,5 +1,4 @@
 use crate::IrDatabase;
-use inkwell::context::Context;
 use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target};
 use inkwell::OptimizationLevel;
 use mun_hir::FileId;
