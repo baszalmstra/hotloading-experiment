@@ -1,5 +1,6 @@
 mod db;
 mod ir;
+pub(crate) mod symbols;
 
 pub use inkwell::{builder, context::Context, module, values};
 
