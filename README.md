@@ -6,6 +6,41 @@ An experiment to:
 * Generate machine code
 * Hotload Mun
 
+## How to compile (MacOS / Linux)
+
+1. Install [llvmenv](https://github.com/termoshtt/llvmenv)
+2. Run `llvmenv init`
+3. Open the `$XDG_CONFIG_HOME/llvmenv/entry.toml` file, and add the following settings (On MacOS
+   `$XDG_CONFIG_HOME` is `~/Library/Preferences`):
+
+```toml
+[release_70]
+url = "https://github.com/llvm-mirror/llvm#release_70"
+build_type = "Release"
+```
+
+4. Build LLVM 7.0 `llvmenv build-entry release_70`
+
+## How to compile (Windows)
+
+1. Install the prerequisites for [llvmenv](https://github.com/termoshtt/llvmenv)
+2. Clone *llvmenv* `git clone https://github.com/termoshtt/llvmenv.git`
+3. Change directories `cd llvmenv`
+4. Run `cargo build`
+5. Execute `cargo run init`
+6. Open the `%appdata%\llvmenv\entry.toml` file, and add the following settings:
+
+```toml
+[release_70]
+url = "https://github.com/llvm-mirror/llvm#release_70"
+build_type="Release"
+builder="VisualStudioWin64"
+tools=[{ name = "lld", url = "https://github.com/llvm-mirror/lld.git#release_70" }]
+```
+
+7. Build LLVM 7.0 `cargo run build-entry release_70`
+8. Set the `LLVM_SYS_70_PREFIX` environment variable to `%appdata%\llvmenv\release_70`
+
 ## Used resourced
 
 - Difference between and AST and a CST: https://eli.thegreenplace.net/2009/02/16/abstract-vs-concrete-syntax-trees
