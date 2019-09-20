@@ -1,4 +1,0 @@
-function main():float {
-  let a:int = 3
-  a
-}

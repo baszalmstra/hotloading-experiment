@@ -124,7 +124,7 @@ impl DefWithBody {
         db.body_with_source_map(self).1
     }
 
-    /// Builds a resolver for code inside this item.
+    /// Builds a `Resolver` for code inside this item. A `Resolver` enables name resolution.
     pub(crate) fn resolver(self, db: &impl HirDatabase) -> Resolver {
         match self {
             DefWithBody::Function(f) => f.resolver(db),

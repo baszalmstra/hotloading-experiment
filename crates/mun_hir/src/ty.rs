@@ -8,6 +8,9 @@ pub use infer::InferenceResult;
 pub(crate) use lower::{fn_sig_for_fn, type_for_def, TypableDef};
 use std::fmt;
 use std::sync::Arc;
+use crate::ty::infer::TypeVarId;
+
+mod op;
 
 /// This should be cheap to clone.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
@@ -15,6 +18,9 @@ pub enum Ty {
     Empty,
 
     Apply(ApplicationTy),
+
+    /// A type variable used during type checking. Not to be confused with a type parameter.
+    Infer(TypeVarId),
 
     /// A placeholder for a type which could not be computed; this is propagated to avoid useless
     /// error messages. Doubles as a placeholder where type variables are inserted before type
@@ -118,6 +124,7 @@ impl HirDisplay for Ty {
             Ty::Apply(a_ty) => a_ty.hir_fmt(f)?,
             Ty::Unknown => write!(f, "{{unknown}}")?,
             Ty::Empty => write!(f, "nothing")?,
+            Ty::Infer(tv) => write!(f, "'{}", tv.0)?,
         }
         Ok(())
     }

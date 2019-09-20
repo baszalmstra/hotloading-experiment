@@ -153,7 +153,7 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
     if !diagnostics.is_empty() {
         let mut writer = StandardStream::stderr(ColorChoice::Auto);
         for diagnostic in diagnostics {
-            diagnostic.emit(&mut writer, &db, file_id);
+            diagnostic.emit(&mut writer, &db, file_id)?;
         }
         return Ok(());
     }
