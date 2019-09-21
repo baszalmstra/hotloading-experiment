@@ -388,6 +388,7 @@ dependencies = [
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "inkwell 0.1.0 (git+https://github.com/TheDan64/inkwell?branch=llvm7-0)",
  "mun_hir 0.1.0",
+ "mun_target 0.1.0",
  "salsa 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "test_utils 0.1.0",
 ]
@@ -401,6 +402,7 @@ dependencies = [
  "mun_errors 0.1.0",
  "mun_hir 0.1.0",
  "mun_syntax 0.1.0",
+ "mun_target 0.1.0",
  "termcolor 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

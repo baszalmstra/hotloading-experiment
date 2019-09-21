@@ -28,11 +28,22 @@ pub struct Target {
 pub struct TargetOptions {
     /// True if this is a built-in target
     pub is_builtin: bool,
+
+    /// Default CPU to pass to LLVM. Corresponds to `llc -mcpu=$cpu`. Defaults to "generic".
+    pub cpu: String,
+
+    /// Default target features to pass to LLVM. These features will *always* be passed, and cannot
+    /// be disabled even via `-C`. Corresponds to `llc -mattr=$features`.
+    pub features: String,
 }
 
 impl Default for TargetOptions {
     fn default() -> Self {
-        TargetOptions { is_builtin: false }
+        TargetOptions {
+            is_builtin: false,
+            cpu: "generic".to_string(),
+            features: "".to_string(),
+        }
     }
 }
 
@@ -77,4 +88,17 @@ macro_rules! supported_targets {
     }
 }
 
-supported_targets!(("x86_64_apple_darwin", x86_64_apple_darwin),);
+supported_targets!(("x86_64-apple-darwin", x86_64_apple_darwin),);
+
+impl Target {
+    pub fn search(target_triple: &str) -> Result<Target, String> {
+        match load_specific(target_triple) {
+            Ok(t) => Ok(t),
+            Err(LoadTargetError::BuiltinTargetNotFound(_)) => Err(format!(
+                "Could not find specification for target {:?}",
+                target_triple
+            )),
+            Err(LoadTargetError::Other(e)) => Err(e),
+        }
+    }
+}

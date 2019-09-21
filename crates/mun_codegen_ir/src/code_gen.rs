@@ -14,19 +14,26 @@ pub fn write_module_shared_object(db: &impl IrDatabase, file_id: FileId) -> bool
     let context = db.context();
     let module = db.module_ir(file_id);
 
+    // Clone the module so we can modify it safely
     let llvm_module = module.llvm_module.clone();
 
+    // Generate the `get_symbols` method.
     gen_symbols(db, file_id, &module.functions, &llvm_module);
 
     Target::initialize_x86(&InitializationConfig::default());
 
-    let opt = OptimizationLevel::Default;
-    let reloc = RelocMode::Default;
-    let model = CodeModel::Default;
+    let target = db.target();
     let path = Path::new("test.o");
-    let target = Target::from_name("x86-64").unwrap();
-    let target_machine = target
-        .create_target_machine("x86_64-apple-darwin", "x86-64", "", opt, reloc, model)
+    let llvm_target = Target::from_triple(&target.llvm_target).unwrap();
+    let target_machine = llvm_target
+        .create_target_machine(
+            &target.llvm_target,
+            &target.options.cpu,
+            &target.options.features,
+            db.optimization_lvl(),
+            RelocMode::Default,
+            CodeModel::Default,
+        )
         .unwrap();
 
     let buf = target_machine
