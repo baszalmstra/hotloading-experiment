@@ -1,3 +1,4 @@
+mod code_gen;
 mod db;
 mod ir;
 pub(crate) mod symbols;

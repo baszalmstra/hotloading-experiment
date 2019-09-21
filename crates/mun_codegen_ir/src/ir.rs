@@ -68,7 +68,7 @@ fn gen_symbols(
     let context = module.get_context();
     let str_type = context.i8_type().ptr_type(AddressSpace::Const);
 
-    let guid_type = context.i128_type();
+    let guid_type = context.i8_type().array_type(16);
     let privacy_type = context.i8_type();
 
     let type_info_type = context.opaque_struct_type("TypeInfo");
@@ -105,11 +105,21 @@ fn gen_symbols(
     let method_infos: Vec<StructValue> = function_map
         .iter()
         .map(|(f, value)| {
+            let name_const = context.const_string(&f.name(db).to_string(), true);
+            let name_str = module.add_global(name_const.get_type(), None, "");
+            name_str.set_linkage(Linkage::Internal);
+            name_str.set_initializer(&name_const);
             context.const_struct(
                 &[
-                    context.const_string(&f.name(db).to_string(), true).into(),
-                    type_info_type.const_null().into(),
-                    type_info_type.const_null().into(),
+                    name_str.as_pointer_value().into(),
+                    type_info_type
+                        .ptr_type(AddressSpace::Const)
+                        .const_null()
+                        .into(),
+                    type_info_type
+                        .ptr_type(AddressSpace::Const)
+                        .const_null()
+                        .into(),
                     value.as_global_value().as_pointer_value().into(),
                     context.i16_type().const_int(0, false).into(),
                     context.i8_type().const_int(0, false).into(),
@@ -120,11 +130,8 @@ fn gen_symbols(
         .collect();
 
     let method_info_array = method_info_type.const_array(&method_infos);
-    let method_info = module.add_global(
-        method_info_array.get_type(),
-        Some(AddressSpace::Const),
-        "methods",
-    );
+    let method_info = module.add_global(method_info_array.get_type(), None, "");
+    method_info.set_linkage(Linkage::Internal);
     method_info.set_initializer(&method_info_array);
     let module_info = context.const_struct(
         &[
@@ -155,7 +162,7 @@ pub(crate) fn gen_function_signature(
 ) -> FunctionValue {
     let name = f.name(db).to_string();
     if let AnyTypeEnum::FunctionType(ty) = db.type_ir(f.ty(db)) {
-        module.add_function(&name, ty, None)
+        module.add_function(&name, ty, Some(Linkage::Private))
     } else {
         panic!("not a function type")
     }

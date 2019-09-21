@@ -15,4 +15,7 @@ pub trait IrDatabase: hir::HirDatabase {
 
     #[salsa::invoke(crate::ir::module_ir_query)]
     fn module_ir(&self, file: hir::FileId) -> Module;
+
+    #[salsa::invoke(crate::code_gen::write_module_shared_object)]
+    fn write_module_shared_object(&self, file: hir::FileId) -> bool;
 }

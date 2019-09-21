@@ -14,3 +14,7 @@ function subtract(a:float, b:float):float {
 function multiply(a:float, b:float):float {
   a*b
 }
+
+function main():int {
+  5
+}

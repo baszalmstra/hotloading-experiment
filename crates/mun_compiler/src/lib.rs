@@ -131,7 +131,11 @@ fn diagnostics(db: &CompilerDatabase, file_id: FileId) -> Vec<Diagnostic> {
         result.borrow_mut().push(Diagnostic {
             level: Level::Error,
             loc: d.highlight_range().into(),
-            message: format!("expected `{}`, found `{}`", d.expected.display(db), d.found.display(db)),
+            message: format!(
+                "expected `{}`, found `{}`",
+                d.expected.display(db),
+                d.found.display(db)
+            ),
         });
     });
 
@@ -158,7 +162,10 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
         return Ok(());
     }
 
-    println!("{}", db.module_ir(file_id).print_to_string().to_string());
+    let module: mun_codegen_ir::module::Module = db.module_ir(file_id);
+    println!("{}", module.print_to_string().to_string());
+
+    db.write_module_shared_object(file_id);
 
     Ok(())
 }
