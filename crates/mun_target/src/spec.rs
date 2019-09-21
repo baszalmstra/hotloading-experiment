@@ -1,6 +1,12 @@
 mod apple_base;
 mod windows_msvc_base;
 
+#[derive(Debug, Clone, Copy, Eq, Ord, PartialOrd, PartialEq, Hash)]
+pub enum LinkerFlavor {
+    Ld64,
+    Msvc,
+}
+
 /// Everything Mun knows a bout a target.
 /// Every field must be specified, there are no default values.
 #[derive(PartialEq, Clone, Debug)]
@@ -20,6 +26,9 @@ pub struct Target {
     /// The name of the architecture. For example "x86" or "x86_64"
     pub arch: String,
 
+    /// Linker flavor
+    pub linker_flavor: LinkerFlavor,
+
     /// Optional settings
     pub options: TargetOptions,
 }
@@ -36,6 +45,12 @@ pub struct TargetOptions {
     /// Default target features to pass to LLVM. These features will *always* be passed, and cannot
     /// be disabled even via `-C`. Corresponds to `llc -mattr=$features`.
     pub features: String,
+
+    /// String to prepend to the name of every dynamic library. Defaults to "lib".
+    pub dll_prefix: String,
+
+    /// String to append to the name of every dynamic library. Defaults to ".so".
+    pub dll_suffix: String,
 }
 
 impl Default for TargetOptions {
@@ -44,6 +59,8 @@ impl Default for TargetOptions {
             is_builtin: false,
             cpu: "generic".to_string(),
             features: "".to_string(),
+            dll_prefix: "lib".to_string(),
+            dll_suffix: ".so".to_string(),
         }
     }
 }

@@ -20,22 +20,34 @@ fn main() -> Result<(), failure::Error> {
                 .arg(
                     Arg::with_name("opt-level")
                         .short("O")
+                        .long("opt-level")
+                        .takes_value(true)
                         .help("optimize with possible levels 0-3"),
+                )
+                .arg(
+                    Arg::with_name("target")
+                        .long("target")
+                        .takes_value(true)
+                        .help("target triple for which code is compiled"),
                 )
                 .about("Compiles a local Mun file into a module"),
         )
         .get_matches();
 
-    let optimization_lvl = match matches.occurrences_of("opt-level") {
-        0 => mun_compiler::OptimizationLevel::None,
-        1 => mun_compiler::OptimizationLevel::Less,
-        2 => mun_compiler::OptimizationLevel::Default,
-        3 => mun_compiler::OptimizationLevel::Aggressive,
-        _ => return Err(format_err!("Only optimization levels 0-3 are supported")),
-    };
-
     match matches.subcommand() {
-        ("build", Some(matches)) => build(matches, optimization_lvl)?,
+        ("build", Some(matches)) => {
+            let optimization_lvl = match matches.value_of("opt-level") {
+                Some("0") => mun_compiler::OptimizationLevel::None,
+                Some("1") => mun_compiler::OptimizationLevel::Less,
+                None | Some("2") => mun_compiler::OptimizationLevel::Default,
+                Some("3") => mun_compiler::OptimizationLevel::Aggressive,
+                _ => return Err(format_err!("Only optimization levels 0-3 are supported")),
+            };
+
+            let target = matches.value_of("target").map(|t| t.to_string());
+
+            build(matches, optimization_lvl, target)?
+        }
         _ => unreachable!(),
     }
 
@@ -46,9 +58,11 @@ fn main() -> Result<(), failure::Error> {
 fn build(
     matches: &ArgMatches,
     optimization_lvl: mun_compiler::OptimizationLevel,
+    target: Option<String>,
 ) -> Result<(), failure::Error> {
     let options = mun_compiler::CompilerOptions {
         input: matches.value_of("INPUT").unwrap().into(), // Safe because its a required arg
+        target,
         optimization_lvl,
     };
     mun_compiler::main(options)

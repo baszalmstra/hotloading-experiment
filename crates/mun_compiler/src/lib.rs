@@ -14,10 +14,12 @@ use std::sync::{Arc, Mutex};
 use termcolor::{ColorChoice, StandardStream};
 
 pub use mun_codegen_ir::OptimizationLevel;
+use mun_target::spec;
 
 #[derive(Debug, Clone)]
 pub struct CompilerOptions {
     pub input: PathBuf,
+    pub target: Option<String>,
     pub optimization_lvl: OptimizationLevel,
 }
 
@@ -168,6 +170,9 @@ fn diagnostics(db: &CompilerDatabase, file_id: FileId) -> Vec<Diagnostic> {
 pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
     let (mut db, file_id) = CompilerDatabase::from_file(&options.input)?;
     db.set_optimization_lvl(options.optimization_lvl);
+    if let Some(target) = options.target {
+        db.set_target(spec::Target::search(&target).unwrap());
+    }
 
     let diagnostics = diagnostics(&db, file_id);
     if !diagnostics.is_empty() {

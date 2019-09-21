@@ -18,7 +18,7 @@ use std::sync::Arc;
 pub(crate) fn gen_signature(db: &impl IrDatabase, f: Function, module: &Module) -> FunctionValue {
     let name = f.name(db).to_string();
     if let AnyTypeEnum::FunctionType(ty) = db.type_ir(f.ty(db)) {
-        module.add_function(&name, ty, None)
+        module.add_function(&name, ty, Some(Linkage::Private))
     } else {
         panic!("not a function type")
     }

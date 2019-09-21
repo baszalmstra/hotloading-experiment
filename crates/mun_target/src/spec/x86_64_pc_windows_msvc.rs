@@ -1,4 +1,4 @@
-use crate::spec::{Target, TargetResult};
+use crate::spec::{LinkerFlavor, Target, TargetResult};
 
 pub fn target() -> TargetResult {
     let mut base = super::apple_base::opts();
@@ -10,6 +10,7 @@ pub fn target() -> TargetResult {
         target_env: "msvc".to_string(),
         target_vendor: "pc".to_string(),
         arch: "x86_64".to_string(),
+        linker_flavor: LinkerFlavor::Msvc,
         options: base,
     })
 }

@@ -7,8 +7,12 @@ use inkwell::{
     AddressSpace, OptimizationLevel,
 };
 use mun_hir::{FileId, Function};
+use mun_target::spec;
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+
+mod linker;
 
 pub fn write_module_shared_object(db: &impl IrDatabase, file_id: FileId) -> bool {
     let context = db.context();
@@ -40,7 +44,24 @@ pub fn write_module_shared_object(db: &impl IrDatabase, file_id: FileId) -> bool
         .write_to_file(&llvm_module, FileType::Object, &path)
         .unwrap();
 
+    link_obj_to_shared_object(&target, &path);
+
     true
+}
+
+fn link_obj_to_shared_object(target: &spec::Target, path: &Path) {
+    let mut linker = linker::create_with_target(target);
+    linker.add_object(path);
+
+    // Determine output file
+    let output_path = format!(
+        "{}test{}",
+        target.options.dll_prefix, target.options.dll_suffix
+    );
+    linker.build_shared_object(Path::new(&output_path));
+
+    let mut cmd = linker.finalize();
+    cmd.spawn().unwrap().wait().unwrap();
 }
 
 fn gen_symbols(
@@ -93,6 +114,10 @@ fn gen_symbols(
             let name_str = module.add_global(name_const.get_type(), None, "");
             name_str.set_linkage(Linkage::Internal);
             name_str.set_initializer(&name_const);
+            // Get the function from the clone module.
+            let value = module
+                .get_function(value.get_name().to_str().unwrap())
+                .unwrap();
             context.const_struct(
                 &[
                     name_str.as_pointer_value().into(),
