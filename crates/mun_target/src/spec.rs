@@ -1,4 +1,5 @@
 mod apple_base;
+mod windows_msvc_base;
 
 /// Everything Mun knows a bout a target.
 /// Every field must be specified, there are no default values.
@@ -88,7 +89,10 @@ macro_rules! supported_targets {
     }
 }
 
-supported_targets!(("x86_64-apple-darwin", x86_64_apple_darwin),);
+supported_targets!(
+    ("x86_64-apple-darwin", x86_64_apple_darwin),
+    ("x86_64-pc-windows-msvc", x86_64_pc_windows_msvc),
+);
 
 impl Target {
     pub fn search(target_triple: &str) -> Result<Target, String> {
