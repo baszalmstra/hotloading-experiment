@@ -61,7 +61,13 @@ fn ir_tests() {
         if !messages.is_empty() {
             messages.join("\n")
         } else {
-            format!("{}", db.module_ir(file_id).print_to_string().to_string())
+            format!(
+                "{}",
+                db.module_ir(file_id)
+                    .llvm_module
+                    .print_to_string()
+                    .to_string()
+            )
         }
     });
 }

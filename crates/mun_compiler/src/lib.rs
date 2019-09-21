@@ -165,10 +165,10 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
         return Ok(());
     }
 
-    let module: mun_codegen_ir::module::Module = db.module_ir(file_id);
-    println!("{}", module.print_to_string().to_string());
+    let module = db.module_ir(file_id);
+    println!("{}", module.llvm_module.print_to_string().to_string());
 
-    db.write_module_shared_object(file_id);
+    mun_codegen_ir::write_module_shared_object(&db, file_id);
 
     Ok(())
 }

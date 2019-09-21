@@ -3,6 +3,9 @@ mod db;
 mod ir;
 pub(crate) mod symbols;
 
-pub use inkwell::{builder, context::Context, module, values, OptimizationLevel};
+pub use inkwell::{builder, context::Context, module::Module, values, OptimizationLevel};
 
-pub use crate::db::{IrDatabase, IrDatabaseStorage};
+pub use crate::{
+    code_gen::write_module_shared_object,
+    db::{IrDatabase, IrDatabaseStorage},
+};
