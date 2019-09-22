@@ -1,22 +1,22 @@
-use inkwell::{
-    values::{FunctionValue, StructValue},
-    AddressSpace,
-    module::{Module, Linkage}
-};
 use crate::IrDatabase;
-use std::collections::HashMap;
-use mun_hir::{Ty, TypeCtor};
 use failure::_core::hint::unreachable_unchecked;
 use inkwell::context::ContextRef;
+use inkwell::values::{BasicValueEnum, GlobalValue, IntValue, PointerValue};
+use inkwell::{
+    module::{Linkage, Module},
+    values::{FunctionValue, StructValue},
+    AddressSpace,
+};
+use mun_hir::{Ty, TypeCtor};
+use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
-use inkwell::values::{GlobalValue, PointerValue, IntValue, BasicValueEnum};
 
 pub type Guid = [u8; 16];
 
 #[derive(Clone, Eq, Ord, PartialOrd, PartialEq, Debug)]
 pub struct TypeInfo {
     pub guid: Guid,
-    pub name: String
+    pub name: String,
 }
 
 impl Hash for TypeInfo {
@@ -29,21 +29,18 @@ impl TypeInfo {
     fn from_name<S: AsRef<str>>(name: S) -> TypeInfo {
         TypeInfo {
             name: name.as_ref().to_string(),
-            guid: md5::compute(name.as_ref()).0
+            guid: md5::compute(name.as_ref()).0,
         }
     }
 }
 
-pub fn type_info_query(
-    db: &impl IrDatabase,
-    ty: Ty
-) -> TypeInfo {
+pub fn type_info_query(db: &impl IrDatabase, ty: Ty) -> TypeInfo {
     match ty {
         Ty::Apply(ctor) => match ctor.ctor {
             TypeCtor::Float => TypeInfo::from_name("@core::float"),
             TypeCtor::Int => TypeInfo::from_name("@core::int"),
             TypeCtor::Bool => TypeInfo::from_name("@core::bool"),
-            _ => unreachable!()
+            _ => unreachable!(),
         },
         _ => unreachable!(),
     }
@@ -51,11 +48,15 @@ pub fn type_info_query(
 
 fn type_info_ir(ty: &TypeInfo, module: &Module) -> StructValue {
     let context = module.get_context();
-    let guid_values:[IntValue;8] = array_init::array_init(|i| context.i8_type().const_int(ty.guid[i] as u64, false));
-    context.const_struct(&[
-        context.i8_type().const_array(&guid_values).into(),
-        intern_string(module, &ty.name).into()
-    ], false)
+    let guid_values: [IntValue; 16] =
+        array_init::array_init(|i| context.i8_type().const_int(ty.guid[i] as u64, false));
+    context.const_struct(
+        &[
+            context.i8_type().const_array(&guid_values).into(),
+            intern_string(module, &ty.name).into(),
+        ],
+        false,
+    )
 }
 
 fn intern_string(module: &Module, str: &str) -> PointerValue {
@@ -125,10 +126,8 @@ pub(super) fn gen_symbols(
             let body = f.body(db);
             let infer = f.infer(db);
             let ret_type = infer[body.body_expr()].clone();
-            let ret_type_ir:PointerValue = if ret_type.is_empty() {
-                type_info_type
-                    .ptr_type(AddressSpace::Const)
-                    .const_null()
+            let ret_type_ir: PointerValue = if ret_type.is_empty() {
+                type_info_type.ptr_type(AddressSpace::Const).const_null()
             } else {
                 let ret_type_const = type_info_ir(&db.type_info(ret_type), &module);
                 let ret_type_ir = module.add_global(ret_type_const.get_type(), None, "");
@@ -138,16 +137,15 @@ pub(super) fn gen_symbols(
             };
 
             // Get the argument types
-            let params_type_ir:PointerValue = if body.params().is_empty() {
-                type_info_type
-                    .ptr_type(AddressSpace::Const)
-                    .const_null()
+            let params_type_ir: PointerValue = if body.params().is_empty() {
+                type_info_type.ptr_type(AddressSpace::Const).const_null()
             } else {
                 let params_type_array_ir = type_info_type.const_array(
-                    &body.params()
+                    &body
+                        .params()
                         .iter()
                         .map(|(p, _)| type_info_ir(&db.type_info(infer[*p].clone()), &module))
-                        .collect::<Vec<StructValue>>()
+                        .collect::<Vec<StructValue>>(),
                 );
                 let params_type_ir = module.add_global(params_type_array_ir.get_type(), None, "");
                 params_type_ir.set_linkage(Linkage::Internal);
@@ -161,7 +159,10 @@ pub(super) fn gen_symbols(
                     params_type_ir.into(),
                     ret_type_ir.into(),
                     value.as_global_value().as_pointer_value().into(),
-                    context.i16_type().const_int(0, false).into(),
+                    context
+                        .i16_type()
+                        .const_int(body.params().len() as u64, false)
+                        .into(),
                     context.i8_type().const_int(0, false).into(),
                 ],
                 false,
