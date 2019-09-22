@@ -12,6 +12,7 @@ failure = "0.1.5"
 salsa="0.12"
 md5="0.6.1"
 array-init="0.1.0"
+tempfile = "3"
 
 [dev-dependencies]
 test_utils = { path="../test_utils"}

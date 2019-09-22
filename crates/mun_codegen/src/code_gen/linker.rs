@@ -1,5 +1,6 @@
 use mun_target::spec;
 use mun_target::spec::LinkerFlavor;
+use std::ffi::OsString;
 use std::path::Path;
 use std::process;
 use std::process::Command;
@@ -74,8 +75,14 @@ impl Linker for MsvcLinker {
         self.cmd.arg("/DLL");
         self.cmd.arg("/NOENTRY");
         self.cmd.arg("/EXPORT:get_symbols");
-        self.cmd.arg("/OUT");
-        self.cmd.arg(path);
+
+        let mut arg = OsString::from("/IMPLIB:");
+        arg.push(path.with_extension("dll.lib"));
+        self.cmd.arg(arg);
+
+        let mut arg = OsString::from("/OUT:");
+        arg.push(path);
+        self.cmd.arg(arg);
     }
 
     fn finalize(&mut self) -> process::Command {
