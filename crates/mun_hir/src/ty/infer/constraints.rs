@@ -40,6 +40,9 @@ enum ConstraintKind {
 
     /// A literal type that should conform to some type
     NumberLiteral { ty: Ty, number_ty: NumberType },
+
+    /// A disjunction constraint that specifies, one or more of the sub constraints must match.
+    Disjunction { constraints: Vec<Constraint> }
 }
 
 #[derive(Clone, Debug, Copy)]
@@ -106,8 +109,12 @@ impl ConstraintSystem {
                     println!("{} is convertible to {}", from.display(db), to.display(db));
                 },
                 ConstraintKind::NumberLiteral { ty: ty, number_ty: number_ty } => {
+                    let ty = self.type_variables.borrow_mut().replace_if_possible(ty);
                     println!("{} is a number type ({:?})", ty.display(db), number_ty);
                 },
+                ConstraintKind::Disjunction { constraints } => {
+
+                }
             };
         }
 

@@ -1,5 +1,5 @@
 // Function to add two floats
-function foo(a:float):float {
+function foo(a:float):int {
   let c = 3;
   let d = c;
   d

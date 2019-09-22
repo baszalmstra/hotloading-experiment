@@ -126,7 +126,14 @@ impl TypeVariableTable {
             Ty::Infer(tv) => {
                 match self.eq_relations.probe_value(*tv).known() {
                     Some(known_ty) => Cow::Owned(known_ty.clone()),
-                    _ => ty,
+                    _ => {
+                        let root_tv = self.eq_relations.find(*tv);
+                        if root_tv != *tv {
+                            Cow::Owned(Ty::Infer(root_tv))
+                        } else {
+                            ty
+                        }
+                    },
                 }
             }
             _ => ty,

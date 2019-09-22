@@ -31,7 +31,7 @@ impl ConstraintSystem {
             while let Some(constraint) = constraints.pop_front() {
                 match self.simplify_constraint(&constraint) {
                     SimplifyResult::Error => {
-                        self.constraints.retain(|c| &**c as *const Constraint != &*constraint as *const Constraint);
+                        //self.constraints.retain(|c| &**c as *const Constraint != &*constraint as *const Constraint);
                         return false;
                     },
                     SimplifyResult::Solved => {

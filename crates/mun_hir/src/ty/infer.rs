@@ -55,12 +55,16 @@ pub fn infer_query(db: &impl HirDatabase, def: DefWithBody) -> Arc<InferenceResu
     // Build a constraint system from the body and resolver
     let (mut constraints, diagnostics) = ConstraintSystem::from_body(db, body.clone(), resolver);
 
+    let mut solutions = Vec::new();
+
     println!("-- Initial constraints");
+    let could_simplify = constraints.simplify();
     constraints.print(db, &body);
 
-    let mut solutions = Vec::new();
-    constraints.solve(&mut solutions);
-    assert_ne!(solutions.len(), 0);
+    if could_simplify {
+        constraints.solve(&mut solutions);
+        assert_ne!(solutions.len(), 0);
+    }
 
     for (i, solution) in solutions.iter().enumerate() {
         println!("-- Solution #{}", i);
