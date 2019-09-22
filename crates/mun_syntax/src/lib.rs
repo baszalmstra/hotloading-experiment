@@ -134,7 +134,7 @@ impl SourceFile {
     }
 
     pub fn parse(text: &str) -> Parse<SourceFile> {
-        let (green, mut errors) = parsing::parse_text(text);
+        let (green, errors) = parsing::parse_text(text);
         //errors.extend(validation::validate(&SourceFile::new(green.clone())));
         Parse {
             green,
@@ -172,7 +172,6 @@ fn api_walkthrough() {
     for item in file.items() {
         match item.kind() {
             ast::ModuleItemKind::FunctionDef(f) => func = Some(f),
-            _ => unreachable!(),
         }
     }
 

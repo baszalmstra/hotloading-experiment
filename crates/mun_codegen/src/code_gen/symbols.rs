@@ -1,7 +1,5 @@
 use crate::IrDatabase;
-use failure::_core::hint::unreachable_unchecked;
-use inkwell::context::ContextRef;
-use inkwell::values::{BasicValueEnum, GlobalValue, IntValue, PointerValue};
+use inkwell::values::{IntValue, PointerValue};
 use inkwell::{
     module::{Linkage, Module},
     values::{FunctionValue, StructValue},
@@ -34,7 +32,7 @@ impl TypeInfo {
     }
 }
 
-pub fn type_info_query(db: &impl IrDatabase, ty: Ty) -> TypeInfo {
+pub fn type_info_query(_db: &impl IrDatabase, ty: Ty) -> TypeInfo {
     match ty {
         Ty::Apply(ctor) => match ctor.ctor {
             TypeCtor::Float => TypeInfo::from_name("@core::float"),
@@ -69,7 +67,6 @@ fn intern_string(module: &Module, str: &str) -> PointerValue {
 
 pub(super) fn gen_symbols(
     db: &impl IrDatabase,
-    file_id: mun_hir::FileId,
     function_map: &HashMap<mun_hir::Function, FunctionValue>,
     module: &Module,
 ) {

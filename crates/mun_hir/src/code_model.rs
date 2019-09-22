@@ -5,15 +5,13 @@ use crate::diagnostics::DiagnosticSink;
 use crate::expr::{Body, BodySourceMap};
 use crate::ids::AstItemDef;
 use crate::ids::LocationCtx;
-use crate::input::ModuleId;
 use crate::name_resolution::Namespace;
 use crate::raw::{DefKind, RawFileItem};
 use crate::resolve::{Resolution, Resolver};
 use crate::ty::InferenceResult;
-use crate::type_ref::{TypeRef, TypeRefBuilder, TypeRefId, TypeRefMap, TypeRefSourceMap};
+use crate::type_ref::{TypeRefBuilder, TypeRefId, TypeRefMap, TypeRefSourceMap};
 use crate::{ids::FunctionId, AsName, DefDatabase, FileId, HirDatabase, Name, Ty};
-use mun_syntax::ast::{self, NameOwner, TypeAscriptionOwner};
-use mun_syntax::AstPtr;
+use mun_syntax::ast::{NameOwner, TypeAscriptionOwner};
 use rustc_hash::FxHashMap;
 use std::sync::Arc;
 
@@ -39,7 +37,7 @@ impl Module {
         db.module_data(self.file_id).definitions.clone()
     }
 
-    fn resolver(self, db: &impl DefDatabase) -> Resolver {
+    fn resolver(self, _db: &impl DefDatabase) -> Resolver {
         Resolver::default().push_module_scope(self.file_id)
     }
 
@@ -256,7 +254,7 @@ impl Function {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BuiltinType {
     Float,
-    Int
+    Int,
 }
 
 use crate::name::*;

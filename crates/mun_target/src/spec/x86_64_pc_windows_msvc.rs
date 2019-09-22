@@ -1,7 +1,7 @@
 use crate::spec::{LinkerFlavor, Target, TargetResult};
 
 pub fn target() -> TargetResult {
-    let mut base = super::apple_base::opts();
+    let mut base = super::windows_msvc_base::opts();
     base.cpu = "x86-64".to_string();
 
     Ok(Target {

@@ -7,7 +7,7 @@ use crate::{
     name_resolution::ModuleScope,
     source_id::ErasedFileAstId,
     ty::InferenceResult,
-    AstIdMap, ExprScopes, FileId, Module, PackageInput, RawItems,
+    AstIdMap, ExprScopes, FileId, PackageInput, RawItems,
 };
 use mun_syntax::{ast, Parse, SourceFile, SyntaxNode};
 pub use relative_path::RelativePathBuf;

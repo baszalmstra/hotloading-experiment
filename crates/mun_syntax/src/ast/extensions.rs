@@ -1,4 +1,3 @@
-use crate::SyntaxKind;
 use crate::{
     ast::{self, AstNode},
     T,

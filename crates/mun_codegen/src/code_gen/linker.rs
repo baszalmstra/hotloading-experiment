@@ -1,6 +1,5 @@
 use mun_target::spec;
 use mun_target::spec::LinkerFlavor;
-use std::ffi::OsString;
 use std::path::Path;
 use std::process;
 use std::process::Command;
@@ -27,7 +26,7 @@ struct MsvcLinker {
 }
 
 impl Ld64Linker {
-    fn new(target: &spec::Target) -> Self {
+    fn new(_target: &spec::Target) -> Self {
         let mut cmd = process::Command::new("lld");
         cmd.arg("-flavor");
         cmd.arg("ld64");
@@ -37,7 +36,7 @@ impl Ld64Linker {
 }
 
 impl MsvcLinker {
-    fn new(target: &spec::Target) -> Self {
+    fn new(_target: &spec::Target) -> Self {
         let mut cmd = process::Command::new("lld");
         cmd.arg("-flavor");
         cmd.arg("link");
@@ -75,6 +74,8 @@ impl Linker for MsvcLinker {
         self.cmd.arg("/DLL");
         self.cmd.arg("/NOENTRY");
         self.cmd.arg("/EXPORT:get_symbols");
+        self.cmd.arg("/OUT");
+        self.cmd.arg(path);
     }
 
     fn finalize(&mut self) -> process::Command {

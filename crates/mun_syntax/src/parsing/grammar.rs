@@ -17,17 +17,17 @@ pub(crate) fn root(p: &mut Parser) {
     m.complete(p, SOURCE_FILE);
 }
 
-pub(crate) fn pattern(p: &mut Parser) {
-    patterns::pattern(p)
-}
-
-pub(crate) fn expr(p: &mut Parser) {
-    expressions::expr(p);
-}
-
-pub(crate) fn type_(p: &mut Parser) {
-    types::type_(p)
-}
+//pub(crate) fn pattern(p: &mut Parser) {
+//    patterns::pattern(p)
+//}
+//
+//pub(crate) fn expr(p: &mut Parser) {
+//    expressions::expr(p);
+//}
+//
+//pub(crate) fn type_(p: &mut Parser) {
+//    types::type_(p)
+//}
 
 fn name_recovery(p: &mut Parser, recovery: TokenSet) {
     if p.matches(IDENT) {
@@ -72,8 +72,4 @@ fn error_block(p: &mut Parser, message: &str) {
     expressions::expr_block_contents(p);
     p.eat(R_CURLY);
     m.complete(p, ERROR);
-}
-
-pub(crate) fn path(p: &mut Parser) {
-    paths::type_path(p);
 }

@@ -1,5 +1,5 @@
 use crate::{FileId, HirDatabase, Ty};
-use mun_syntax::{ast, AstNode, AstPtr, SyntaxNode, SyntaxNodePtr, TextRange};
+use mun_syntax::{ast, AstPtr, SyntaxNode, SyntaxNodePtr, TextRange};
 use std::{any::Any, fmt};
 
 /// Diagnostic defines hir API for errors and warnings.
@@ -153,7 +153,7 @@ pub struct CannotApplyBinaryOp {
     pub file: FileId,
     pub expr: SyntaxNodePtr,
     pub lhs: Ty,
-    pub rhs: Ty
+    pub rhs: Ty,
 }
 
 impl Diagnostic for CannotApplyBinaryOp {

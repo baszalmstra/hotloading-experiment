@@ -6,12 +6,7 @@
 //! The *real* implementation is in the (language-agnostic) `rowan` crate, this
 //! modules just wraps its API.
 
-use std::{
-    any::Any,
-    borrow::Borrow,
-    fmt::{self, Write},
-    iter::successors,
-};
+use std::{fmt, iter::successors};
 
 use crate::{
     parsing::ParseError,
@@ -370,9 +365,9 @@ impl SyntaxToken {
         self.0.prev_token().map(SyntaxToken)
     }
 
-    pub(crate) fn replace_with(&self, new_token: GreenToken) -> GreenNode {
-        self.0.replace_with(new_token)
-    }
+    //    pub(crate) fn replace_with(&self, new_token: GreenToken) -> GreenNode {
+    //        self.0.replace_with(new_token)
+    //    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]

@@ -2,7 +2,7 @@ pub(crate) use self::diagnostics::LowerDiagnostic;
 use crate::code_model::BuiltinType;
 use crate::name_resolution::Namespace;
 use crate::resolve::{Resolution, Resolver};
-use crate::ty::{FnSig, Substs, Ty, TypeCtor};
+use crate::ty::{FnSig, Ty, TypeCtor};
 use crate::type_ref::{TypeRef, TypeRefId, TypeRefMap};
 use crate::{Function, HirDatabase, ModuleDef, Path};
 
@@ -127,7 +127,7 @@ fn type_for_builtin(def: BuiltinType) -> Ty {
 
 /// Build the declared type of a function. This should not need to look at the
 /// function body.
-fn type_for_fn(db: &impl HirDatabase, def: Function) -> Ty {
+fn type_for_fn(_db: &impl HirDatabase, def: Function) -> Ty {
     Ty::simple(TypeCtor::FnDef(def))
 }
 

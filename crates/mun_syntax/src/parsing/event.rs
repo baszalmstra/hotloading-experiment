@@ -54,7 +54,7 @@ impl Event {
 pub(super) fn process(sink: &mut dyn TreeSink, mut events: Vec<Event>) {
     let mut forward_parents = Vec::new();
 
-    for i in 0..events.len() {
+    for _i in 0..events.len() {
         for i in 0..events.len() {
             match mem::replace(&mut events[i], Event::tombstone()) {
                 Event::Start {

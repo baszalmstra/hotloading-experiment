@@ -1,24 +1,25 @@
-use crate::arena::map::ArenaMap;
-use crate::code_model::src::HasSource;
-use crate::code_model::DefWithBody;
-use crate::diagnostics::{DiagnosticSink, UnresolvedValue};
-use crate::expr::{Body, Expr, ExprId, Literal, Pat, PatId, Statement};
-use crate::name_resolution::Namespace;
-use crate::resolve::{Resolution, Resolver};
-use crate::ty::infer::diagnostics::InferenceDiagnostic;
-use crate::ty::lower::LowerDiagnostic;
-use crate::ty::op;
-use crate::ty::{Ty, TypableDef};
-use crate::type_ref::{TypeRef, TypeRefId};
-use crate::{expr, BinaryOp, FnData, Function, HirDatabase, Path, TypeCtor};
-use mun_syntax::ast::{BinOp, TypeRefKind};
-use mun_syntax::{ast, AstPtr};
+use crate::{
+    arena::map::ArenaMap,
+    code_model::DefWithBody,
+    diagnostics::DiagnosticSink,
+    expr,
+    expr::{Body, Expr, ExprId, Literal, Pat, PatId, Statement},
+    name_resolution::Namespace,
+    resolve::{Resolution, Resolver},
+    ty::infer::diagnostics::InferenceDiagnostic,
+    ty::infer::type_variable::TypeVariableTable,
+    ty::lower::LowerDiagnostic,
+    ty::op,
+    ty::{Ty, TypableDef},
+    type_ref::TypeRefId,
+    Function, HirDatabase, Path, TypeCtor,
+};
 use std::mem;
 use std::ops::Index;
 use std::sync::Arc;
 
 mod type_variable;
-use crate::ty::infer::type_variable::TypeVariableTable;
+
 pub use type_variable::TypeVarId;
 
 /// The result of type inference: A mapping from expressions and patterns to types.
@@ -65,7 +66,7 @@ pub fn infer_query(db: &impl HirDatabase, def: DefWithBody) -> Arc<InferenceResu
     let mut ctx = InferenceResultBuilder::new(db, body, resolver);
 
     match def {
-        DefWithBody::Function(ref f) => ctx.infer_signature(),
+        DefWithBody::Function(_) => ctx.infer_signature(),
     }
 
     ctx.infer_body();
@@ -244,7 +245,7 @@ impl<'a, D: HirDatabase> InferenceResultBuilder<'a, D> {
             Resolution::Def(def) => {
                 let typable: Option<TypableDef> = def.into();
                 let typable = typable?;
-                let mut ty = self.db.type_for_def(typable, Namespace::Values);
+                let ty = self.db.type_for_def(typable, Namespace::Values);
                 Some(ty)
             }
         }
@@ -320,13 +321,13 @@ impl<'a, D: HirDatabase> InferenceResultBuilder<'a, D> {
         ty
     }
 
-    pub fn report_pat_inference_failure(&mut self, pat: PatId) {
+    pub fn report_pat_inference_failure(&mut self, _pat: PatId) {
         //        self.diagnostics.push(InferenceDiagnostic::PatInferenceFailed {
         //            pat
         //        });
     }
 
-    pub fn report_expr_inference_failure(&mut self, expr: ExprId) {
+    pub fn report_expr_inference_failure(&mut self, _expr: ExprId) {
         //        self.diagnostics.push(InferenceDiagnostic::ExprInferenceFailed {
         //            expr
         //        });
@@ -381,7 +382,7 @@ mod diagnostics {
         diagnostics::{DiagnosticSink, UnresolvedType, UnresolvedValue},
         ty::infer::ExprOrPatId,
         type_ref::TypeRefId,
-        BinaryOp, ExprId, Function, HirDatabase, Ty,
+        ExprId, Function, HirDatabase, Ty,
     };
 
     #[derive(Debug, PartialEq, Eq, Clone)]

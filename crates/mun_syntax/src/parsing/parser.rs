@@ -50,20 +50,6 @@ impl<'t> Parser<'t> {
         }
     }
 
-    /// Returns the kinds of the current three tokens, if they are not separated by trivia.
-    pub(crate) fn current3(&self) -> Option<(SyntaxKind, SyntaxKind, SyntaxKind)> {
-        let c1 = self.nth(0);
-        let c2 = self.nth(1);
-        let c3 = self.nth(2);
-        if self.token_source.is_token_joint_to_next(self.token_pos)
-            && self.token_source.is_token_joint_to_next(self.token_pos + 1)
-        {
-            Some((c1, c2, c3))
-        } else {
-            None
-        }
-    }
-
     /// Lookahead operation: returns the kind of the next nth token.
     pub(crate) fn nth(&self, n: usize) -> SyntaxKind {
         let steps = self.steps.get();

@@ -5,9 +5,7 @@ use crate::{
 };
 
 /// An implementation of `TokenSource` for text.
-pub(crate) struct TextTokenSource<'t> {
-    text: &'t str,
-
+pub(crate) struct TextTokenSource {
     /// Holds the start position of each token
     start_offsets: Vec<TextUnit>,
 
@@ -15,7 +13,7 @@ pub(crate) struct TextTokenSource<'t> {
     tokens: Vec<Token>,
 }
 
-impl<'t> TokenSource for TextTokenSource<'t> {
+impl TokenSource for TextTokenSource {
     fn token_kind(&self, pos: usize) -> SyntaxKind {
         if pos >= self.tokens.len() {
             EOF
@@ -33,9 +31,9 @@ impl<'t> TokenSource for TextTokenSource<'t> {
     }
 }
 
-impl<'t> TextTokenSource<'t> {
+impl TextTokenSource {
     /// Generate input for tokens (expect comment and whitespace).
-    pub fn new(text: &'t str, raw_tokens: &'t [Token]) -> TextTokenSource<'t> {
+    pub fn new(_text: &str, raw_tokens: &[Token]) -> Self {
         let mut tokens = Vec::new();
         let mut start_offsets = Vec::new();
         let mut len = 0.into();
@@ -48,7 +46,6 @@ impl<'t> TextTokenSource<'t> {
         }
 
         TextTokenSource {
-            text,
             start_offsets,
             tokens,
         }

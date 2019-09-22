@@ -1,4 +1,4 @@
-use crate::{type_ref::TypeRef, AsName, Name};
+use crate::{AsName, Name};
 use mun_syntax::ast;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -22,7 +22,7 @@ pub enum PathKind {
 
 impl Path {
     /// Converts an `ast::Path` to `Path`.
-    pub fn from_ast(mut path: ast::Path) -> Option<Path> {
+    pub fn from_ast(path: ast::Path) -> Option<Path> {
         let mut kind = PathKind::Plain;
         let mut segments = Vec::new();
         loop {

@@ -44,10 +44,10 @@ impl<'s> Cursor<'s> {
         chars.as_str().starts_with(s)
     }
 
-    /// Checks whether the current character satisfies the specified predicate
-    pub fn matches_if<F: Fn(char) -> bool>(&self, predicate: F) -> bool {
-        self.current().map(predicate) == Some(true)
-    }
+    //    /// Checks whether the current character satisfies the specified predicate
+    //    pub fn matches_if<F: Fn(char) -> bool>(&self, predicate: F) -> bool {
+    //        self.current().map(predicate) == Some(true)
+    //    }
 
     /// Checks whether the nth character satisfies the specified predicate
     pub fn matches_nth_if<F: Fn(char) -> bool>(&self, n: u32, predicate: F) -> bool {
@@ -124,12 +124,12 @@ mod tests {
         assert!(!cursor.matches_str("world"));
     }
 
-    #[test]
-    fn test_matches_if() {
-        let cursor = Cursor::new("hello");
-        assert!(cursor.matches_if(|c| c == 'h'));
-        assert!(!cursor.matches_if(|c| c == 't'));
-    }
+    //    #[test]
+    //    fn test_matches_if() {
+    //        let cursor = Cursor::new("hello");
+    //        assert!(cursor.matches_if(|c| c == 'h'));
+    //        assert!(!cursor.matches_if(|c| c == 't'));
+    //    }
 
     #[test]
     fn test_matches_nth_if() {

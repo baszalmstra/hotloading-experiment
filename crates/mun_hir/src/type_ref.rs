@@ -3,7 +3,7 @@ use crate::arena::{Arena, RawId};
 ///! HIR for references to types. These paths are not yet resolved. They can be directly created
 /// from an `ast::TypeRef`, without further queries.
 use crate::Path;
-use mun_syntax::ast::{self, TypeRefKind};
+use mun_syntax::ast;
 use mun_syntax::AstPtr;
 use rustc_hash::FxHashMap;
 use std::ops::Index;

@@ -1,8 +1,7 @@
-use mun_syntax::ast::{self, FunctionDef, ModuleItemOwner, NameOwner};
+use mun_syntax::ast::{self, ModuleItemOwner, NameOwner};
 
 use crate::name::AsName;
 use crate::{Arena, DefDatabase, FileAstId, FileId, Name, RawId};
-use core::borrow::BorrowMut;
 use std::ops::Index;
 use std::sync::Arc;
 

@@ -8,7 +8,6 @@ use crate::{
 //pub use mun_syntax::ast::PrefixOp as UnaryOp;
 use crate::code_model::src::HasSource;
 use crate::name::AsName;
-use crate::source_id::AstId;
 use crate::type_ref::{TypeRef, TypeRefBuilder, TypeRefId, TypeRefMap, TypeRefSourceMap};
 pub use mun_syntax::ast::PrefixOp as UnaryOp;
 use mun_syntax::ast::{ArgListOwner, BinOp, NameOwner, TypeAscriptionOwner};
@@ -277,7 +276,9 @@ pub enum Pat {
 }
 
 impl Pat {
-    pub fn walk_child_pats(&self, mut f: impl FnMut(PatId)) {}
+    pub fn walk_child_pats(&self, mut _f: impl FnMut(PatId)) {
+        unreachable!()
+    }
 }
 
 // Queries
@@ -298,7 +299,7 @@ impl<'a, DB> ExprCollector<&'a DB>
 where
     DB: HirDatabase,
 {
-    pub fn new(owner: DefWithBody, file_id: FileId, db: &'a DB) -> Self {
+    pub fn new(owner: DefWithBody, _file_id: FileId, db: &'a DB) -> Self {
         ExprCollector {
             owner,
             db,
@@ -536,7 +537,6 @@ where
                 };
                 self.alloc_expr(Expr::Call { callee, args }, syntax_ptr)
             }
-            _ => unreachable!(),
         }
     }
 
@@ -556,7 +556,7 @@ where
     }
 
     fn finish(mut self) -> (Body, BodySourceMap) {
-        let (type_refs, mut type_ref_source_map) = self.type_ref_builder.finish();
+        let (type_refs, type_ref_source_map) = self.type_ref_builder.finish();
         let body = Body {
             owner: self.owner,
             exprs: self.exprs,

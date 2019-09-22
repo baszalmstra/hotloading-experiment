@@ -151,7 +151,6 @@ impl HirDisplay for ApplicationTy {
                 f.write_joined(sig.params(), ", ")?;
                 write!(f, ") -> {}", sig.ret().display(f.db))?;
             }
-            _ => write!(f, "fn")?,
         }
         Ok(())
     }

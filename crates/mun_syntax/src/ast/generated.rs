@@ -7,8 +7,6 @@
 //! `.borrowed` functions. Most of the code works with borrowed mode, and only
 //! this mode has all AST accessors.
 
-use rowan::TransparentNewType;
-
 use crate::{
     ast::{self, AstNode},
     SyntaxKind::{self, *},

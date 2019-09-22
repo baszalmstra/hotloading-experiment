@@ -3,7 +3,7 @@ use crate::IrDatabase;
 use inkwell::builder::Builder;
 use inkwell::values::{BasicValueEnum, FloatValue, InstructionOpcode, IntValue};
 use inkwell::{
-    module::{Linkage, Module},
+    module::Module,
     types::{AnyTypeEnum, BasicTypeEnum},
     values::FunctionValue,
 };
@@ -81,9 +81,7 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
     }
 
     fn gen_fn_body(&mut self) {
-        let sig = self.db.fn_signature(self.hir);
-
-        for (i, (pat, ty)) in self.body.params().iter().enumerate() {
+        for (i, (pat, _ty)) in self.body.params().iter().enumerate() {
             let body = self.body.clone(); // Avoid borrow issues
             match &body[*pat] {
                 Pat::Bind { name } => {
@@ -209,7 +207,7 @@ impl<'a, D: IrDatabase> BodyIrGenerator<'a, D> {
     fn gen_path_expr(
         &self,
         path: &Path,
-        expr: ExprId,
+        _expr: ExprId,
         resolver: &Resolver,
     ) -> inkwell::values::BasicValueEnum {
         let resolution = resolver

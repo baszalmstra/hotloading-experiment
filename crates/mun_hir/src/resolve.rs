@@ -1,9 +1,7 @@
-use crate::expr::PatId;
 use crate::{
-    expr::scope::ScopeId, input::ModuleId, ExprScopes, FileId, HirDatabase, ModuleDef, Name,
+    expr::scope::ScopeId, expr::PatId, ExprScopes, FileId, HirDatabase, ModuleDef, Name, Path,
+    PerNs,
 };
-use crate::{Path, PerNs};
-use rustc_hash::FxHashMap;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Default)]

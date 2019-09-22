@@ -1,12 +1,8 @@
 use crate::ir::function;
 use crate::IrDatabase;
 use inkwell::passes::{PassManager, PassManagerBuilder};
-use inkwell::{
-    module::{Linkage, Module},
-    values::{FunctionValue, StructValue},
-    AddressSpace, OptimizationLevel,
-};
-use mun_hir::{FileId, Function, ModuleDef};
+use inkwell::{module::Module, values::FunctionValue, OptimizationLevel};
+use mun_hir::{FileId, ModuleDef};
 use std::collections::HashMap;
 use std::sync::Arc;
 

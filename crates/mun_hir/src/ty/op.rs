@@ -1,6 +1,6 @@
 use crate::{BinaryOp, Ty, TypeCtor};
 
-pub(super) fn binary_op_rhs_expectation(op: BinaryOp, lhs_ty: Ty) -> Ty {
+pub(super) fn binary_op_rhs_expectation(_op: BinaryOp, lhs_ty: Ty) -> Ty {
     lhs_ty
 }
 

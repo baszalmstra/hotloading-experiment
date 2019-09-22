@@ -1,11 +1,6 @@
 use mun_hir as hir;
 
-use crate::{
-    Context,
-    Module,
-    ir::module::ModuleIR,
-    code_gen::symbols::TypeInfo
-};
+use crate::{code_gen::symbols::TypeInfo, ir::module::ModuleIR, Context};
 use inkwell::{types::AnyTypeEnum, OptimizationLevel};
 use mun_target::spec::Target;
 use std::sync::Arc;

@@ -1,5 +1,7 @@
 //! HIR provides a high-level object oriented access to Mun code.
 
+#![allow(dead_code)]
+
 #[macro_use]
 mod arena;
 mod code_model;
@@ -44,9 +46,8 @@ pub use crate::{
 
 use crate::{
     arena::{Arena, ArenaId, RawId},
-    line_index::LineIndex,
     name::AsName,
-    source_id::{AstId, AstIdMap, FileAstId},
+    source_id::{AstIdMap, FileAstId},
 };
 
 pub use self::code_model::{FnData, Function, Module, ModuleDef};

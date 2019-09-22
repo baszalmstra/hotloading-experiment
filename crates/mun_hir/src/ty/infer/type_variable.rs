@@ -1,9 +1,9 @@
-use ena::unify::{UnifyValue, UnifyKey, NoError, InPlaceUnificationTable, InPlace};
-use std::borrow::Cow;
-use crate::{Ty};
-use std::fmt;
+use crate::Ty;
 use drop_bomb::DropBomb;
 use ena::snapshot_vec::{SnapshotVec, SnapshotVecDelegate};
+use ena::unify::{InPlace, InPlaceUnificationTable, NoError, UnifyKey, UnifyValue};
+use std::borrow::Cow;
+use std::fmt;
 
 /// The ID of a type variable.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -50,7 +50,7 @@ impl TypeVarValue {
     fn is_unknown(&self) -> bool {
         match self {
             TypeVarValue::Known(_) => false,
-            TypeVarValue::Unknown => true
+            TypeVarValue::Unknown => true,
         }
     }
 }
@@ -79,11 +79,11 @@ impl UnifyValue for TypeVarValue {
 #[derive(Default)]
 pub struct TypeVariableTable {
     values: SnapshotVec<Delegate>,
-    eq_relations: InPlaceUnificationTable<TypeVarId>
+    eq_relations: InPlaceUnificationTable<TypeVarId>,
 }
 
 struct TypeVariableData {
-//    origin: TypeVariableOrigin,
+    //    origin: TypeVariableOrigin,
 //    diverging: bool,
 }
 
@@ -95,8 +95,7 @@ struct Delegate;
 
 impl TypeVariableTable {
     /// Creates a new generic infer type variable
-    pub fn new_type_var(&mut self) -> TypeVarId
-    {
+    pub fn new_type_var(&mut self) -> TypeVarId {
         let eq_key = self.eq_relations.new_key(TypeVarValue::Unknown);
         let index = self.values.push(TypeVariableData {});
         assert_eq!(eq_key.0, index as u32);
@@ -104,31 +103,33 @@ impl TypeVariableTable {
     }
 
     /// Records that `a == b`
-    pub fn equate(&mut self, a: TypeVarId, b:TypeVarId) {
+    pub fn equate(&mut self, a: TypeVarId, b: TypeVarId) {
         debug_assert!(self.eq_relations.probe_value(a).is_unknown());
         debug_assert!(self.eq_relations.probe_value(b).is_unknown());
-        self.eq_relations.union(a,b);
+        self.eq_relations.union(a, b);
     }
 
     /// Instantiates `tv` with the type `ty`.
     pub fn instantiate(&mut self, tv: TypeVarId, ty: Ty) {
-        debug_assert!(self.eq_relations.probe_value(tv).is_unknown(),
-                      "instantiating type variable `{:?}` twice: new-value = {:?}, old-value={:?}",
-                      tv, ty, self.eq_relations.probe_value(tv).known().unwrap());
+        debug_assert!(
+            self.eq_relations.probe_value(tv).is_unknown(),
+            "instantiating type variable `{:?}` twice: new-value = {:?}, old-value={:?}",
+            tv,
+            ty,
+            self.eq_relations.probe_value(tv).known().unwrap()
+        );
         self.eq_relations.union_value(tv, TypeVarValue::Known(ty));
     }
 
     /// If `ty` is a type-inference variable, and it has been instantiated, then return the
     /// instantiated type; otherwise returns `ty`.
     pub fn replace_if_possible<'t>(&mut self, ty: &'t Ty) -> Cow<'t, Ty> {
-        let mut ty = Cow::Borrowed(ty);
+        let ty = Cow::Borrowed(ty);
         match &*ty {
-            Ty::Infer(tv) => {
-                match self.eq_relations.probe_value(*tv).known() {
-                    Some(known_ty) => Cow::Owned(known_ty.clone()),
-                    _ => ty,
-                }
-            }
+            Ty::Infer(tv) => match self.eq_relations.probe_value(*tv).known() {
+                Some(known_ty) => Cow::Owned(known_ty.clone()),
+                _ => ty,
+            },
             _ => ty,
         }
     }
@@ -148,21 +149,20 @@ impl TypeVariableTable {
 
     /// Returns true if the table still contains unresolved type variables
     pub fn has_unsolved_variables(&mut self) -> bool {
-        (0..self.values.len())
-            .any(|i| {
-                let tv = TypeVarId::from_index(i as u32);
-                match self.eq_relations.probe_value(tv) {
-                    TypeVarValue::Unknown { .. } => true,
-                    TypeVarValue::Known { .. } => false,
-                }
-            })
+        (0..self.values.len()).any(|i| {
+            let tv = TypeVarId::from_index(i as u32);
+            match self.eq_relations.probe_value(tv) {
+                TypeVarValue::Unknown { .. } => true,
+                TypeVarValue::Known { .. } => false,
+            }
+        })
     }
 }
 
 pub struct Snapshot {
     snapshot: ena::snapshot_vec::Snapshot,
     eq_snapshot: ena::unify::Snapshot<InPlace<TypeVarId>>,
-    bomb: DropBomb
+    bomb: DropBomb,
 }
 
 impl TypeVariableTable {
@@ -180,7 +180,11 @@ impl TypeVariableTable {
     /// Undoes all changes since the snapshot was created. Any snapshot created since that point
     /// must already have been committed or rolled back.
     pub fn rollback_to(&mut self, s: Snapshot) {
-        let Snapshot { snapshot, eq_snapshot, mut bomb } = s;
+        let Snapshot {
+            snapshot,
+            eq_snapshot,
+            mut bomb,
+        } = s;
         self.values.rollback_to(snapshot);
         self.eq_relations.rollback_to(eq_snapshot);
         bomb.defuse();
@@ -189,8 +193,12 @@ impl TypeVariableTable {
     /// Commits all changes since the snapshot was created, making them permanent (unless this
     /// snapshot was created within another snapshot). Any snapshot created since that point
     /// must already have been committed or rolled back.
-    pub fn commit(&mut self, s:Snapshot) {
-        let Snapshot { snapshot, eq_snapshot, mut bomb } = s;
+    pub fn commit(&mut self, s: Snapshot) {
+        let Snapshot {
+            snapshot,
+            eq_snapshot,
+            mut bomb,
+        } = s;
         self.values.commit(snapshot);
         self.eq_relations.commit(eq_snapshot);
         bomb.defuse();
