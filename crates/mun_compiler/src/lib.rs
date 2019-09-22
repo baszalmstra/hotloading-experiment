@@ -183,8 +183,8 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
         return Ok(());
     }
 
-    let module = db.module_ir(file_id);
-    println!("{}", module.llvm_module.print_to_string().to_string());
+    //let module = db.module_ir(file_id);
+    //println!("{}", module.llvm_module.print_to_string().to_string());
 
     mun_codegen::write_module_shared_object(&db, file_id);
 
