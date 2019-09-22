@@ -10,6 +10,8 @@ mun_hir = { path = "../mun_hir" }
 mun_target = { path = "../mun_target" }
 failure = "0.1.5"
 salsa="0.12"
+md5="0.6.1"
+array-init="0.1.0"
 
 [dev-dependencies]
 test_utils = { path="../test_utils"}

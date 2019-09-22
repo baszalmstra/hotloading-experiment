@@ -81,6 +81,10 @@ impl Ty {
             _ => None,
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        *self == Ty::Empty
+    }
 }
 
 /// A list of substitutions for generic parameters.

@@ -1,7 +1,11 @@
 use mun_hir as hir;
 
-use crate::ir::module::ModuleIR;
-use crate::{Context, Module};
+use crate::{
+    Context,
+    Module,
+    ir::module::ModuleIR,
+    code_gen::symbols::TypeInfo
+};
 use inkwell::{types::AnyTypeEnum, OptimizationLevel};
 use mun_target::spec::Target;
 use std::sync::Arc;
@@ -22,4 +26,7 @@ pub trait IrDatabase: hir::HirDatabase {
 
     #[salsa::invoke(crate::ir::module::ir_query)]
     fn module_ir(&self, file: hir::FileId) -> Arc<ModuleIR>;
+
+    #[salsa::invoke(crate::code_gen::symbols::type_info_query)]
+    fn type_info(&self, ty: hir::Ty) -> TypeInfo;
 }

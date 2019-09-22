@@ -6,3 +6,10 @@ crates/*/target
 *.log
 *.iml
 .vscode/settings.json
+
+# All types of build artifacts should not be included
+*.dll
+*.o
+*.lib
+*.dylib
+*.so
