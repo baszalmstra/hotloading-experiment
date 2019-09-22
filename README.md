@@ -1,10 +1,6 @@
-# Hotloading Experiment 
+# Mun
 
-An experiment to:
-   
-* Parse Mun
-* Generate machine code
-* Hotload Mun
+This is the main source code repository for [Mun](https://mun-lang.org). It contains the compiler and runtime.
 
 ## How to compile (MacOS / Linux)
 

@@ -3,7 +3,7 @@ mod diagnostic;
 
 use crate::diagnostic::Emit;
 use failure::Error;
-use mun_codegen_ir::IrDatabase;
+use mun_codegen::IrDatabase;
 use mun_errors::{Diagnostic, Level};
 use mun_hir::diagnostics::{Diagnostic as HirDiagnostic, DiagnosticSink};
 use mun_hir::{salsa, FileId, HirDisplay, Module, PackageInput, RelativePathBuf, SourceDatabase};
@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use termcolor::{ColorChoice, StandardStream};
 
-pub use mun_codegen_ir::OptimizationLevel;
+pub use mun_codegen::OptimizationLevel;
 use mun_target::spec;
 
 #[derive(Debug, Clone)]
@@ -27,7 +27,7 @@ pub struct CompilerOptions {
     mun_hir::SourceDatabaseStorage,
     mun_hir::DefDatabaseStorage,
     mun_hir::HirDatabaseStorage,
-    mun_codegen_ir::IrDatabaseStorage
+    mun_codegen::IrDatabaseStorage
 )]
 #[derive(Debug)]
 pub struct CompilerDatabase {
@@ -86,7 +86,7 @@ impl CompilerDatabase {
         db.set_optimization_lvl(OptimizationLevel::Default);
         db.set_target(mun_target::spec::Target::search(host_triple()).unwrap());
 
-        let context = mun_codegen_ir::Context::create();
+        let context = mun_codegen::Context::create();
         db.set_context(Arc::new(context));
 
         Ok((db, file_id))
@@ -186,7 +186,7 @@ pub fn main(options: CompilerOptions) -> Result<(), failure::Error> {
     let module = db.module_ir(file_id);
     println!("{}", module.llvm_module.print_to_string().to_string());
 
-    mun_codegen_ir::write_module_shared_object(&db, file_id);
+    mun_codegen::write_module_shared_object(&db, file_id);
 
     Ok(())
 }

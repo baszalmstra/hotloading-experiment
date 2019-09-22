@@ -1,6 +1,4 @@
-extern crate mun_codegen_ir;
-
-use crate::mun_codegen_ir::{IrDatabase, OptimizationLevel};
+use mun_codegen::{IrDatabase, OptimizationLevel};
 use mun_hir::diagnostics::DiagnosticSink;
 use mun_hir::{salsa, FileId, Module, PackageInput, RelativePathBuf, SourceDatabase};
 use std::cell::RefCell;
@@ -12,7 +10,7 @@ use test_utils::{dir_tests, project_dir};
     mun_hir::SourceDatabaseStorage,
     mun_hir::DefDatabaseStorage,
     mun_hir::HirDatabaseStorage,
-    mun_codegen_ir::IrDatabaseStorage
+    mun_codegen::IrDatabaseStorage
 )]
 #[derive(Default, Debug)]
 struct MockDatabase {
@@ -26,7 +24,7 @@ impl salsa::Database for MockDatabase {
 }
 
 fn test_data_dir() -> PathBuf {
-    project_dir().join("crates/mun_codegen_ir/tests/data/")
+    project_dir().join("crates/mun_codegen/tests/data/")
 }
 
 #[test]
@@ -42,7 +40,7 @@ fn ir_tests() {
         db.set_package_input(Arc::new(package_input));
         db.set_optimization_lvl(OptimizationLevel::Default);
 
-        let context = mun_codegen_ir::Context::create();
+        let context = mun_codegen::Context::create();
         db.set_context(Arc::new(context));
 
         let messages = RefCell::new(Vec::new());

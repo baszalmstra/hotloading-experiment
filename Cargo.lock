@@ -395,7 +395,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mun_codegen_ir"
+name = "mun_codegen"
 version = "0.1.0"
 dependencies = [
  "array-init 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -413,7 +413,7 @@ name = "mun_compiler"
 version = "0.1.0"
 dependencies = [
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "mun_codegen_ir 0.1.0",
+ "mun_codegen 0.1.0",
  "mun_errors 0.1.0",
  "mun_hir 0.1.0",
  "mun_syntax 0.1.0",
