@@ -51,6 +51,9 @@ pub struct TargetOptions {
 
     /// String to append to the name of every dynamic library. Defaults to ".so".
     pub dll_suffix: String,
+
+    /// Whether the target toolchain is like Windows
+    pub is_like_windows: bool
 }
 
 impl Default for TargetOptions {
@@ -61,6 +64,7 @@ impl Default for TargetOptions {
             features: "".to_string(),
             dll_prefix: "lib".to_string(),
             dll_suffix: ".so".to_string(),
+            is_like_windows: false
         }
     }
 }

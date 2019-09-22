@@ -2,11 +2,7 @@ use super::try_convert_any_to_basic;
 use crate::IrDatabase;
 use inkwell::builder::Builder;
 use inkwell::values::{BasicValueEnum, FloatValue, InstructionOpcode, IntValue};
-use inkwell::{
-    module::Module,
-    types::{AnyTypeEnum, BasicTypeEnum},
-    values::FunctionValue,
-};
+use inkwell::{module::Module, types::{AnyTypeEnum, BasicTypeEnum}, values::FunctionValue, OptimizationLevel};
 use mun_hir::{
     ArithOp, BinaryOp, Body, Expr, ExprId, Function, HirDisplay, InferenceResult, Literal, Pat,
     PatId, Path, Resolution, Resolver, Statement, TypeCtor,
@@ -14,6 +10,21 @@ use mun_hir::{
 use std::collections::HashMap;
 use std::mem;
 use std::sync::Arc;
+use inkwell::passes::{PassManagerBuilder, PassManager};
+
+pub(crate) fn create_pass_manager(
+    module: &Module,
+    optimization_lvl: OptimizationLevel,
+) -> PassManager {
+    let pass_builder = PassManagerBuilder::create();
+    pass_builder.set_optimization_level(optimization_lvl);
+
+    let function_pass_manager = PassManager::create_for_function(module);
+    pass_builder.populate_function_pass_manager(&function_pass_manager);
+    function_pass_manager.initialize();
+
+    function_pass_manager
+}
 
 pub(crate) fn gen_signature(db: &impl IrDatabase, f: Function, module: &Module) -> FunctionValue {
     let name = f.name(db).to_string();

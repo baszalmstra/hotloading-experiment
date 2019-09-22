@@ -8,6 +8,8 @@ use inkwell::{
 use mun_hir::{Ty, TypeCtor};
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
+use inkwell::attributes::Attribute;
+use crate::ir::function;
 
 pub type Guid = [u8; 16];
 
@@ -72,11 +74,12 @@ pub(super) fn gen_symbols(
 ) {
     let context = module.get_context();
     let str_type = context.i8_type().ptr_type(AddressSpace::Const);
+    let target = db.target();
 
     let guid_type = context.i8_type().array_type(16);
     let privacy_type = context.i8_type();
 
-    let type_info_type = context.opaque_struct_type("TypeInfo");
+    let type_info_type = context.opaque_struct_type("struct.MunTypeInfo");
     type_info_type.set_body(
         &[
             guid_type.into(), // guid
@@ -85,7 +88,7 @@ pub(super) fn gen_symbols(
         false,
     );
 
-    let method_info_type = context.opaque_struct_type("MethodInfo");
+    let method_info_type = context.opaque_struct_type("struct.MunFunctionInfo");
     method_info_type.set_body(
         &[
             str_type.into(),                                          // name
@@ -98,7 +101,7 @@ pub(super) fn gen_symbols(
         false,
     );
 
-    let module_info_type = context.opaque_struct_type("ModuleInfo");
+    let module_info_type = context.opaque_struct_type("struct.MunModuleInfo");
     module_info_type.set_body(
         &[
             method_info_type.ptr_type(AddressSpace::Const).into(),
@@ -171,24 +174,57 @@ pub(super) fn gen_symbols(
     let method_info = module.add_global(method_info_array.get_type(), None, "");
     method_info.set_linkage(Linkage::Internal);
     method_info.set_initializer(&method_info_array);
-    let module_info = context.const_struct(
-        &[
-            method_info.as_pointer_value().into(),
-            context
-                .i32_type()
-                .const_int(method_infos.len() as u64, false)
-                .into(),
-        ],
-        false,
-    );
 
-    let get_symbols_type = module_info.get_type().fn_type(&[], false);
+//    let get_symbols_type = module_info.get_type().fn_type(&[], false);
+//    let get_symbols_fn =
+//        module.add_function("get_symbols", get_symbols_type, Some(Linkage::DLLExport));
+//
+//    let builder = db.context().create_builder();
+//    let body_ir = get_symbols_fn.append_basic_block("body");
+//    builder.position_at_end(&body_ir);
+//
+//    builder.build_return(Some(&module_info));
+
+    let get_symbols_type = if target.options.is_like_windows {
+        context.void_type().fn_type(&[module_info_type.ptr_type(AddressSpace::Generic).into()], false)
+    } else {
+        module_info_type.fn_type(&[], false)
+    };
+
     let get_symbols_fn =
         module.add_function("get_symbols", get_symbols_type, Some(Linkage::DLLExport));
+
+    if target.options.is_like_windows {
+        get_symbols_fn.add_attribute(1, context.create_enum_attribute(Attribute::get_named_enum_kind_id("sret"), 1));
+    }
 
     let builder = db.context().create_builder();
     let body_ir = get_symbols_fn.append_basic_block("body");
     builder.position_at_end(&body_ir);
 
-    builder.build_return(Some(&module_info));
+    let result_ptr = if target.options.is_like_windows {
+        get_symbols_fn.get_nth_param(0).unwrap().into_pointer_value()
+    } else {
+        builder.build_alloca(module_info_type, "")
+    };
+
+    // Get access to the structs internals
+    let function_info_addr = unsafe{builder.build_struct_gep(result_ptr, 0, "")};
+    let function_count_addr = unsafe{builder.build_struct_gep(result_ptr, 1, "")};
+
+    // Fill them with values
+    builder.build_store(function_info_addr, method_info.as_pointer_value());
+    builder.build_store(function_count_addr, context
+        .i32_type()
+        .const_int(method_infos.len() as u64, false));
+
+    if target.options.is_like_windows {
+        builder.build_return(None);
+    } else {
+        builder.build_return(Some(&builder.build_load(result_ptr,"")));
+    }
+
+    function::create_pass_manager(&module, db.optimization_lvl()).run_on_function(&get_symbols_fn);
+
+    println!("{}", module.print_to_string().to_string())
 }

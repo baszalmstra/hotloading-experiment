@@ -1,24 +1,9 @@
 use crate::ir::function;
 use crate::IrDatabase;
-use inkwell::passes::{PassManager, PassManagerBuilder};
-use inkwell::{module::Module, values::FunctionValue, OptimizationLevel};
+use inkwell::{module::Module, values::FunctionValue};
 use mun_hir::{FileId, ModuleDef};
 use std::collections::HashMap;
 use std::sync::Arc;
-
-fn create_function_pass_manager(
-    module: &Module,
-    optimization_lvl: OptimizationLevel,
-) -> PassManager {
-    let pass_builder = PassManagerBuilder::create();
-    pass_builder.set_optimization_level(optimization_lvl);
-
-    let function_pass_manager = PassManager::create_for_function(module);
-    pass_builder.populate_function_pass_manager(&function_pass_manager);
-    function_pass_manager.initialize();
-
-    function_pass_manager
-}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ModuleIR {
@@ -51,7 +36,7 @@ pub(crate) fn ir_query(db: &impl IrDatabase, file_id: FileId) -> Arc<ModuleIR> {
     }
 
     // Generate the function bodies
-    let fn_pass_manager = create_function_pass_manager(&llvm_module, db.optimization_lvl());
+    let fn_pass_manager = function::create_pass_manager(&llvm_module, db.optimization_lvl());
     for (f, value) in functions.iter() {
         function::gen_body(db, *f, *value, &llvm_module);
         fn_pass_manager.run_on_function(value);
