@@ -73,9 +73,8 @@ impl Linker for MsvcLinker {
 
     fn build_shared_object(&mut self, path: &Path) {
         self.cmd.arg("/DLL");
-        let mut arg: OsString = "/IMPLIB:".into();
-        arg.push(path.with_extension("dll.lib"));
-        self.cmd.arg(arg);
+        self.cmd.arg("/NOENTRY");
+        self.cmd.arg("/EXPORT:get_symbols");
     }
 
     fn finalize(&mut self) -> process::Command {

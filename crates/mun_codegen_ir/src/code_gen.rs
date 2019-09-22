@@ -121,6 +121,7 @@ fn gen_symbols(
             let value = module
                 .get_function(value.get_name().to_str().unwrap())
                 .unwrap();
+            value.set_linkage(Linkage::Private);
             context.const_struct(
                 &[
                     name_str.as_pointer_value().into(),
@@ -168,9 +169,9 @@ fn gen_symbols(
 }
 
 fn generate_startup_proc(target: &spec::Target, module: &Module) {
-    if target.target_os == "windows" {
-        generate_dll_main_proc(module);
-    }
+//    if target.target_os == "windows" {
+//        generate_dll_main_proc(module);
+//    }
 }
 
 fn generate_dll_main_proc(module: &Module) {
