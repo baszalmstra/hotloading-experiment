@@ -15,27 +15,27 @@ const LLVM_VERSION_MINOR: u32 = 0;
 lazy_static! {
     /// A single path to search for LLVM in (containing bin/llvm-config)
     static ref ENV_LLVM_PREFIX: String =
-        format!("LLVM_SYS_{}_PREFIX", LLVM_VERSION_MAJOR);
+        format!("LLVM_SYS_{}_PREFIX", LLVM_VERSION_MAJOR*10);
 
     /// If exactly "YES", ignore the version blacklist
     static ref ENV_IGNORE_BLACKLIST: String =
-        format!("LLVM_SYS_{}_IGNORE_BLACKLIST", LLVM_VERSION_MAJOR);
+        format!("LLVM_SYS_{}_IGNORE_BLACKLIST", LLVM_VERSION_MAJOR*10);
 
     /// If set, enforce precise correspondence between crate and binary versions.
     static ref ENV_STRICT_VERSIONING: String =
-        format!("LLVM_SYS_{}_STRICT_VERSIONING", LLVM_VERSION_MAJOR);
+        format!("LLVM_SYS_{}_STRICT_VERSIONING", LLVM_VERSION_MAJOR*10);
 
     /// If set, do not attempt to strip irrelevant options for llvm-config --cflags
     static ref ENV_NO_CLEAN_CFLAGS: String =
-        format!("LLVM_SYS_{}_NO_CLEAN_CFLAGS", LLVM_VERSION_MAJOR);
+        format!("LLVM_SYS_{}_NO_CLEAN_CFLAGS", LLVM_VERSION_MAJOR*10);
 
     /// If set and targeting MSVC, force the debug runtime library
     static ref ENV_USE_DEBUG_MSVCRT: String =
-        format!("LLVM_SYS_{}_USE_DEBUG_MSVCRT", LLVM_VERSION_MAJOR);
+        format!("LLVM_SYS_{}_USE_DEBUG_MSVCRT", LLVM_VERSION_MAJOR*10);
 
     /// If set, always link against libffi
     static ref ENV_FORCE_FFI: String =
-        format!("LLVM_SYS_{}_FFI_WORKAROUND", LLVM_VERSION_MAJOR);
+        format!("LLVM_SYS_{}_FFI_WORKAROUND", LLVM_VERSION_MAJOR*10);
 }
 
 lazy_static! {
