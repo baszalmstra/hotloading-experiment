@@ -1,6 +1,7 @@
 // Function to add two floats
 function add(a:float, b:float):float {
-  a+b
+  let c = a+b+5.0
+  c
 }
 
 // Function to subtract two floats

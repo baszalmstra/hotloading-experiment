@@ -1,5 +1,6 @@
 mod apple_base;
 mod windows_msvc_base;
+mod linux_base;
 
 #[derive(Debug, Clone, Copy, Eq, Ord, PartialOrd, PartialEq, Hash)]
 pub enum LinkerFlavor {
@@ -113,6 +114,7 @@ macro_rules! supported_targets {
 supported_targets!(
     ("x86_64-apple-darwin", x86_64_apple_darwin),
     ("x86_64-pc-windows-msvc", x86_64_pc_windows_msvc),
+    ("x86_64-unknown-linux-gnu", x86_64_unknown_linux_gnu),
 );
 
 impl Target {
