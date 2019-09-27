@@ -94,7 +94,7 @@ pub(super) fn gen_symbols(
             str_type.into(),                                          // name
             type_info_type.ptr_type(AddressSpace::Const).into(),      // arg_types
             type_info_type.ptr_type(AddressSpace::Const).into(),      // return_type
-            context.void_type().ptr_type(AddressSpace::Const).into(), // fn_ptr
+            context.void_type().fn_type(&[], false).ptr_type(AddressSpace::Const).into(), // fn_ptr
             context.i16_type().into(),                                // num_arg_types
             privacy_type.into(),                                      // privacy
         ],
@@ -189,7 +189,7 @@ pub(super) fn gen_symbols(
 
     if target.options.is_like_windows {
         get_symbols_fn.add_attribute(
-            1,
+            inkwell::attributes::AttributeLoc::Param(0),
             context.create_enum_attribute(Attribute::get_named_enum_kind_id("sret"), 1),
         );
     }
@@ -226,7 +226,7 @@ pub(super) fn gen_symbols(
         builder.build_return(Some(&builder.build_load(result_ptr, "")));
     }
 
-    function::create_pass_manager(&module, db.optimization_lvl()).run_on_function(&get_symbols_fn);
+    function::create_pass_manager(&module, db.optimization_lvl()).run_on(&get_symbols_fn);
 
     //println!("{}", module.print_to_string().to_string())
 }
