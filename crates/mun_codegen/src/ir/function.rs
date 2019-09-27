@@ -15,11 +15,11 @@ use inkwell::passes::{PassManagerBuilder, PassManager};
 pub(crate) fn create_pass_manager(
     module: &Module,
     optimization_lvl: OptimizationLevel,
-) -> PassManager {
+) -> PassManager<FunctionValue> {
     let pass_builder = PassManagerBuilder::create();
     pass_builder.set_optimization_level(optimization_lvl);
 
-    let function_pass_manager = PassManager::create_for_function(module);
+    let function_pass_manager = PassManager::create(module);
     pass_builder.populate_function_pass_manager(&function_pass_manager);
     function_pass_manager.initialize();
 

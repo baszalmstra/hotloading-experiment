@@ -39,7 +39,7 @@ pub(crate) fn ir_query(db: &impl IrDatabase, file_id: FileId) -> Arc<ModuleIR> {
     let fn_pass_manager = function::create_pass_manager(&llvm_module, db.optimization_lvl());
     for (f, value) in functions.iter() {
         function::gen_body(db, *f, *value, &llvm_module);
-        fn_pass_manager.run_on_function(value);
+        fn_pass_manager.run_on(value);
     }
 
     Arc::new(ModuleIR {
