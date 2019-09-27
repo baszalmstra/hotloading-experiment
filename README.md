@@ -181,3 +181,11 @@ Installing LLVM on windows is not a very pleasant experience. Especially if you 
    ```
    LLVM_SYS_70_PREFIX=%appdata%\llvmenv\7_0_0
    ```
+
+## Installing on Linux
+
+For `ubuntu 18.04` use the following:
+
+```bash
+sudo apt install llvm-7 llvm-7-* lld-7
+```
