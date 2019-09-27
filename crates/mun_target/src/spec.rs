@@ -4,6 +4,7 @@ mod linux_base;
 
 #[derive(Debug, Clone, Copy, Eq, Ord, PartialOrd, PartialEq, Hash)]
 pub enum LinkerFlavor {
+    Ld,
     Ld64,
     Msvc,
 }

@@ -24,7 +24,7 @@ pub fn write_module_shared_object(db: &impl IrDatabase, file_id: FileId) -> bool
             &target.options.cpu,
             &target.options.features,
             db.optimization_lvl(),
-            RelocMode::Default,
+            RelocMode::PIC,
             CodeModel::Default,
         )
         .unwrap();

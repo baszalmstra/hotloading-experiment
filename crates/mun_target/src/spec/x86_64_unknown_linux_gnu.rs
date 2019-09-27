@@ -10,7 +10,7 @@ pub fn target() -> TargetResult {
         target_env: "gnu".to_string(),
         target_vendor: "unknown".to_string(),
         arch: "x86_64".to_string(),
-        linker_flavor: LinkerFlavor::Ld64,
+        linker_flavor: LinkerFlavor::Ld,
         options: base,
     })
 }
