@@ -13,3 +13,6 @@ crates/*/target
 *.lib
 *.dylib
 *.so
+tags
+*.lock
+*.temp
