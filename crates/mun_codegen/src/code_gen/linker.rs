@@ -4,6 +4,7 @@ use std::ffi::OsString;
 use std::path::Path;
 use std::process;
 use std::process::Command;
+use std::path::PathBuf;
 
 pub fn create_with_target(target: &spec::Target) -> Box<dyn Linker> {
     match target.linker_flavor {
@@ -33,7 +34,7 @@ struct MsvcLinker {
 
 impl LdLinker {
     fn new(_target: &spec::Target) -> Self {
-        let mut cmd = process::Command::new("lld");
+        let mut cmd = process::Command::new(LLD_PATH.as_os_str());
         cmd.arg("-flavor");
         cmd.arg("ld");
 
@@ -43,7 +44,7 @@ impl LdLinker {
 
 impl Ld64Linker {
     fn new(target: &spec::Target) -> Self {
-        let mut cmd = process::Command::new("lld");
+        let mut cmd = process::Command::new(LLD_PATH.as_os_str());
         cmd.arg("-flavor");
         cmd.arg("ld64");
 
@@ -54,9 +55,17 @@ impl Ld64Linker {
     }
 }
 
+lazy_static! {
+    static ref LLD_PATH:PathBuf = {
+        let mut path = std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
+        path.push(format!("lld{}", std::env::consts::EXE_SUFFIX));
+        path
+    };
+}
+
 impl MsvcLinker {
     fn new(_target: &spec::Target) -> Self {
-        let mut cmd = process::Command::new("lld");
+        let mut cmd = process::Command::new(LLD_PATH.as_os_str());
         cmd.arg("-flavor");
         cmd.arg("link");
 
